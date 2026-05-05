@@ -31,6 +31,22 @@ function ensureSocket(): void {
     return
   }
 
+  // Defensive: if a previous socket is in CLOSING / CLOSED state, sever
+  // its handlers and explicitly close it before we replace the module
+  // ref. Without this, a late `message` event firing on the dying
+  // connection would still iterate `listeners` and double-deliver.
+  if (socket) {
+    socket.onopen = null
+    socket.onmessage = null
+    socket.onclose = null
+    socket.onerror = null
+    try {
+      socket.close()
+    } catch {
+      // Already closed. Ignore.
+    }
+  }
+
   // Same-origin WebSocket. In dev, Vite at :3540 proxies /cable to the
   // Go server at :3550 (configured in vite.config.ts).
   const url = new URL('/cable', window.location.href)
