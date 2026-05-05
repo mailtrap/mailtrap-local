@@ -14,7 +14,7 @@ A local **email sandbox + catcher** for **individual developers**. Runs on your 
 
 - **Not a team tool.** No user accounts, no authentication, no multi-tenancy, no shared sandboxes, no API tokens, no RBAC.
 - **Not infrastructure.** No Postgres support, no high-availability, no Prometheus metrics, no Kubernetes probes. SQLite only. Localhost only.
-- **Not a Mailtrap replacement.** If you need team features, use [Mailtrap](https://mailtrap.io) — the hosted product this tool complements.
+- **Not a Mailtrap Sandbox replacement.** If you need team features and cloud setup, use [Mailtrap](https://mailtrap.io) — the hosted product this tool complements.
 
 ## Stack
 
