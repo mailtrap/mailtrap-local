@@ -82,13 +82,13 @@ type Report struct {
 // ---------------------------------------------------------------------
 
 const (
-	parserHTML            = "html"
-	parserCSS             = "css"
-	parserCSSPropValue    = "css_prop_value"
-	parserCSSRegexpValue  = "css_regexp_value"
-	parserCSSSelector     = "css_selector"
-	parserCSSMedia        = "css_media"
-	parserCSSSpecialSel   = "css_special_selector"
+	parserHTML           = "html"
+	parserCSS            = "css"
+	parserCSSPropValue   = "css_prop_value"
+	parserCSSRegexpValue = "css_regexp_value"
+	parserCSSSelector    = "css_selector"
+	parserCSSMedia       = "css_media"
+	parserCSSSpecialSel  = "css_special_selector"
 )
 
 // platformCategories maps a client's `platform` to one of the three

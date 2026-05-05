@@ -3,10 +3,10 @@
 // Two entry points:
 //
 //   - Probe        — verify reachability + auth (used by the dialog's
-//                    "Send test" button); doesn't actually send mail.
+//     "Send test" button); doesn't actually send mail.
 //   - Forward      — relay a stored RFC822 source through the upstream
-//                    to one or more recipients, applying optional
-//                    From / Return-Path overrides.
+//     to one or more recipients, applying optional
+//     From / Return-Path overrides.
 package relay
 
 import (

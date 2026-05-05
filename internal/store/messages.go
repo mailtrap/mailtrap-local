@@ -23,7 +23,7 @@ type Address struct {
 // Part is the persisted shape for an inline image or attachment.
 // Mirrors the columns of the `attachments` table.
 type Part struct {
-	ID             int64  // attachments.id
+	ID             int64 // attachments.id
 	MessageID      string
 	PartID         string
 	Filename       string
@@ -421,12 +421,12 @@ type scanner interface {
 
 func scanMessage(s scanner) (*Message, error) {
 	var (
-		m                                     Message
-		smtpToJSON                            string
-		toJSON, ccJSON, bccJSON, replyToJSON  string
-		dateStr, categoryStr                  sql.NullString
-		listUnsubJSON, readAtStr              sql.NullString
-		createdAtStr, updatedAtStr            string
+		m                                    Message
+		smtpToJSON                           string
+		toJSON, ccJSON, bccJSON, replyToJSON string
+		dateStr, categoryStr                 sql.NullString
+		listUnsubJSON, readAtStr             sql.NullString
+		createdAtStr, updatedAtStr           string
 	)
 	err := s.Scan(
 		&m.ID, &m.SMTPFrom, &smtpToJSON, &m.MessageID,

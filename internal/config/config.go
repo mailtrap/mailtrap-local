@@ -6,26 +6,26 @@
 //
 // Sections:
 //
-//   storage:
-//     max_messages: 500     # 0 = unlimited; default 500
-//   cloud:
-//     api_token: ${MAILTRAP_API_TOKEN}
-//     sandbox_id: 12345
-//     mirror_enabled: true
-//   relay:
-//     host: smtp.example.com
-//     port: 587
-//     username: user
-//     password: ${SMTP_PASSWORD}
-//     auth: plain
-//     tls: auto
-//     auto_relay_enabled: false
-//     override_from: noreply@example.com
-//     return_path: bounces@example.com
-//   webhook:
-//     url: https://hooks.example.com/inbox
-//     secret: ${WEBHOOK_SECRET}
-//     enabled: true
+//	storage:
+//	  max_messages: 500     # 0 = unlimited; default 500
+//	cloud:
+//	  api_token: ${MAILTRAP_API_TOKEN}
+//	  sandbox_id: 12345
+//	  mirror_enabled: true
+//	relay:
+//	  host: smtp.example.com
+//	  port: 587
+//	  username: user
+//	  password: ${SMTP_PASSWORD}
+//	  auth: plain
+//	  tls: auto
+//	  auto_relay_enabled: false
+//	  override_from: noreply@example.com
+//	  return_path: bounces@example.com
+//	webhook:
+//	  url: https://hooks.example.com/inbox
+//	  secret: ${WEBHOOK_SECRET}
+//	  enabled: true
 //
 // `${VAR}` references resolve to the named environment variable. Unset
 // vars resolve to nil (treated the same as omitting the key).

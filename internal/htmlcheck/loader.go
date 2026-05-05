@@ -20,17 +20,17 @@ type loaded struct {
 
 	// CSS rules grouped by parser_type, since each type has its own
 	// matching strategy.
-	cssProperty       map[string]*Rule       // exact CSS prop name → rule
-	cssPropToValue    []*Rule                // "prop:value;" exact match
-	cssRegexValue     []*compiledRegexRule   // regex on declaration value
-	cssSelector       []*compiledRegexRule   // regex on selector
-	cssSpecialSel     []*compiledRegexRule   // first-match-wins selector regex
-	cssMediaRule      *Rule                  // the "@media" rule itself
-	cssMediaFeatures  []*Rule                // feature-name rules for @media
+	cssProperty      map[string]*Rule     // exact CSS prop name → rule
+	cssPropToValue   []*Rule              // "prop:value;" exact match
+	cssRegexValue    []*compiledRegexRule // regex on declaration value
+	cssSelector      []*compiledRegexRule // regex on selector
+	cssSpecialSel    []*compiledRegexRule // first-match-wins selector regex
+	cssMediaRule     *Rule                // the "@media" rule itself
+	cssMediaFeatures []*Rule              // feature-name rules for @media
 
-	familyDisplay map[string]string  // gmail → "Gmail"
-	platformDisp  map[string]string  // ios → "iOS"
-	marketShare   map[string]int     // family → 0..100
+	familyDisplay map[string]string         // gmail → "Gmail"
+	platformDisp  map[string]string         // ios → "iOS"
+	marketShare   map[string]int            // family → 0..100
 	versionCounts map[string]map[string]int // family → platform → count
 }
 

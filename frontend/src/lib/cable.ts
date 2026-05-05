@@ -18,7 +18,7 @@ export type CableMessage =
 type Listener = (msg: CableMessage) => void
 
 let socket: WebSocket | undefined
-let listeners = new Set<Listener>()
+const listeners = new Set<Listener>()
 let reconnectDelay = 500 // ms; doubles up to 8s
 let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 

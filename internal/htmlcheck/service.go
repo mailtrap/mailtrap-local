@@ -9,13 +9,13 @@ import (
 // Empty body returns {status: "no_html"}; everything else attempts a
 // success report. Five-stage pipeline:
 //
-//   1. Validate — run HTML XPath rules + inline-CSS rules; collect
-//      (line, rule) tuples.
-//   2. Group — merge multiple matches of the same rule into one Issue
-//      with a sorted ErrorLines list.
-//   3. Decorate — fill in client display names + family groups.
-//   4. Aggregate — compute per-family per-category support %.
-//   5. Roll up — market-share-weighted overall %.
+//  1. Validate — run HTML XPath rules + inline-CSS rules; collect
+//     (line, rule) tuples.
+//  2. Group — merge multiple matches of the same rule into one Issue
+//     with a sorted ErrorLines list.
+//  3. Decorate — fill in client display names + family groups.
+//  4. Aggregate — compute per-family per-category support %.
+//  5. Roll up — market-share-weighted overall %.
 func Run(htmlBody string) Report {
 	if htmlBody == "" {
 		return Report{Status: "no_html"}

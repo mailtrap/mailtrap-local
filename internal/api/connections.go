@@ -15,11 +15,11 @@ import (
 // ---------------------------------------------------------------------
 
 type cloudWire struct {
-	Connected     bool          `json:"connected"`
-	SandboxID     int64         `json:"sandbox_id"`
-	MirrorEnabled bool          `json:"mirror_enabled"`
+	Connected     bool            `json:"connected"`
+	SandboxID     int64           `json:"sandbox_id"`
+	MirrorEnabled bool            `json:"mirror_enabled"`
 	Locked        map[string]bool `json:"locked,omitempty"`
-	ConfigPath    *string       `json:"config_path,omitempty"`
+	ConfigPath    *string         `json:"config_path,omitempty"`
 }
 
 func (s *Server) cloudShow(w http.ResponseWriter, r *http.Request) {

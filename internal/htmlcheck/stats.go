@@ -101,12 +101,12 @@ func aggregateVersionCounts(cfg *loaded, family string, mainKeys []string) Categ
 //
 // Algorithm:
 //
-//   for each issue:
-//     for each affected client (where support != "yes"):
-//       for each {status, versions} in client.versions:
-//         family_key = client.family if main else "other"
-//         drop = 100 * len(versions) / total_versions[family_key][category]
-//         aggregated[family_key][rule_name][status][category] += drop
+//	for each issue:
+//	  for each affected client (where support != "yes"):
+//	    for each {status, versions} in client.versions:
+//	      family_key = client.family if main else "other"
+//	      drop = 100 * len(versions) / total_versions[family_key][category]
+//	      aggregated[family_key][rule_name][status][category] += drop
 //
 // Then for each family, support_per_category[c] = 100 - sum(drops in c).
 func supportPercents(
