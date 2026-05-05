@@ -1,0 +1,26 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #131e2b;
+  color: #fbfcfc;
+  font-size: 14px;
+  line-height: 1.38;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; /* full-height app; internal panes scroll */
+}
+
+#root {
+  height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.21;
+}

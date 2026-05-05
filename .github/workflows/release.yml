@@ -1,0 +1,71 @@
+name: release
+
+# Triggered by tag push. Goreleaser:
+#   1. Re-stages embed inputs (frontend build + openapi.yaml) via the
+#      `before:` hooks in .goreleaser.yaml.
+#   2. Cross-compiles the binary for darwin/linux × amd64/arm64.
+#   3. Publishes a DRAFT GitHub release with .tar.gz archives + checksums.
+#   4. Pushes images to ghcr.io/mailtrap/mailtrap-local + docker.io/mailtrap/mailtrap-local
+#      (private during the closed-tester phase — see release ops doc).
+#   5. Commits an updated Formula/mailtrap-local.rb to mailtrap/homebrew-local.
+#
+# The release stays draft until manually promoted from the GitHub UI —
+# that's the gate the co-founder uses to bless a build for testers.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # GitHub Releases + repo content
+  packages: write   # GHCR push
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # goreleaser needs the full git history to compute the
+          # since-last-tag changelog.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Run goreleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          # Default token covers GitHub Releases + content writes on
+          # *this* repo. The Homebrew tap lives in a sibling repo, which
+          # the default token cannot push to — hence HOMEBREW_TAP_TOKEN.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

@@ -1,0 +1,107 @@
+name: ci
+
+# Runs on every push and PR. Three jobs that run in parallel:
+#   - go    — gofmt, go vet, go test (every package, race detector on)
+#   - frontend — TypeScript build + ESLint
+#   - build — `scripts/build.sh` smoke (proves the embed pipeline still works)
+#
+# OpenAPI drift is covered by the `go` job — internal/api/openapi_drift_test.go
+# walks the live router and fails if anything's out of sync with the spec.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+
+      # gofmt is non-destructive but the diff format is the cheapest CI
+      # signal we have. Anything that needs `go fmt ./...` to land cleanly
+      # fails here before tests waste the runner's time.
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l $(find . -type f -name '*.go' -not -path './frontend/*'))
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt found unformatted files:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./cmd/... ./internal/...
+
+      # `-count=1` disables the test cache so flaky tests can't pass via
+      # cached green from a previous run. `-race` catches concurrency
+      # bugs in jobs/ and api/ (both have goroutines).
+      - name: go test
+        run: go test -race -count=1 ./cmd/... ./internal/...
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+
+      # `npm run build` runs `tsc -b && vite build`. The TypeScript
+      # build catches type regressions; vite catches missing imports.
+      - run: npm run build
+
+      - run: npm run lint
+
+  build:
+    # The build job is the integration test for the release pipeline —
+    # it runs the same `scripts/build.sh` goreleaser invokes via its
+    # `before:` hooks. Catches embed-staging regressions before tag.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: scripts/build.sh
+        run: bash scripts/build.sh
+
+      - name: smoke (--version)
+        run: ./bin/mailtrap-local --version
+
+      - name: smoke (boot + curl)
+        run: |
+          ./bin/mailtrap-local --http-listen 127.0.0.1:13550 --smtp-listen 127.0.0.1:13535 --db :memory: &
+          PID=$!
+          # give it a beat to bind sockets
+          for _ in 1 2 3 4 5; do sleep 0.4; curl -sf http://127.0.0.1:13550/api/v1/messages && break; done
+          curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          curl -sf http://127.0.0.1:13550/ | grep -q '<div id="root"'
+          kill "$PID"

@@ -1,0 +1,68 @@
+---
+apple-mail:
+  macos: 33
+  ios: 39
+gmail:
+  desktop-webmail: 37
+  ios: 40
+  android: 40
+  mobile-webmail: 28
+orange:
+  desktop-webmail: 35
+  ios: 35
+  android: 33
+outlook:
+  windows: 9
+  windows-mail: 31
+  macos: 36
+  outlook-com: 34
+  ios: 40
+  android: 39
+yahoo:
+  desktop-webmail: 35
+  ios: 36
+  android: 38
+aol:
+  desktop-webmail: 31
+  ios: 33
+  android: 32
+samsung-email:
+  android: 26
+sfr:
+  desktop-webmail: 34
+  ios: 35
+  android: 34
+thunderbird:
+  macos: 42
+  windows: 3
+protonmail:
+  desktop-webmail: 26
+  ios: 26
+  android: 24
+hey:
+  desktop-webmail: 24
+mail-ru:
+  desktop-webmail: 24
+fastmail:
+  desktop-webmail: 17
+laposte:
+  desktop-webmail: 17
+  ios: 1
+  android: 1
+free-fr:
+  desktop-webmail: 9
+t-online-de:
+  desktop-webmail: 8
+gmx:
+  desktop-webmail: 12
+  ios: 7
+  android: 7
+web-de:
+  desktop-webmail: 9
+  ios: 8
+  android: 8
+ionos-1and1:
+  desktop-webmail: 8
+  android: 8
+rainloop:
+  desktop-webmail: 1

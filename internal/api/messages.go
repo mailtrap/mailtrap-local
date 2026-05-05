@@ -1,0 +1,273 @@
+package api
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/mail"
+	"sort"
+	"strings"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/mailtrap/mailtrap-local/internal/store"
+)
+
+// listMessages handles GET /api/v1/messages.
+func (s *Server) listMessages(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	start := clamp(parseInt(q.Get("start"), 0), 0, 1_000_000)
+	limit := clamp(parseInt(q.Get("limit"), defaultLimit), 1, maxLimit)
+	category := strings.TrimSpace(q.Get("category"))
+
+	res, err := s.Store.List(r.Context(), store.ListOpts{
+		Start: start, Limit: limit, Category: category,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	summaries := make([]MessageSummary, 0, len(res.Messages))
+	for _, m := range res.Messages {
+		summaries = append(summaries, toWireSummary(m, res.AttachmentsCnt[m.ID]))
+	}
+
+	writeJSON(w, http.StatusOK, MessagesResponse{
+		Total:          res.Total,
+		Unread:         res.Unread,
+		Count:          len(summaries),
+		MessagesCount:  res.Total,
+		MessagesUnread: res.Unread,
+		Start:          start,
+		Tags:           nonNilStrings(res.AllCategories),
+		Messages:       summaries,
+	})
+}
+
+// search handles GET /api/v1/search.
+func (s *Server) search(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	query := q.Get("query")
+	start := clamp(parseInt(q.Get("start"), 0), 0, 1_000_000)
+	limit := clamp(parseInt(q.Get("limit"), defaultLimit), 1, maxLimit)
+	category := strings.TrimSpace(q.Get("category"))
+
+	cats, _ := s.Store.AllCategories(r.Context())
+
+	if len(store.SplitTokens(query)) == 0 {
+		writeJSON(w, http.StatusOK, MessagesResponse{
+			Tags:     nonNilStrings(cats),
+			Messages: []MessageSummary{},
+			Start:    start,
+		})
+		return
+	}
+
+	res, err := s.Store.Search(r.Context(), store.SearchOpts{
+		Query: query, Start: start, Limit: limit, Category: category,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	summaries := make([]MessageSummary, 0, len(res.Messages))
+	for _, m := range res.Messages {
+		summaries = append(summaries, toWireSummary(m, res.AttachmentsCnt[m.ID]))
+	}
+
+	writeJSON(w, http.StatusOK, MessagesResponse{
+		Total:          res.Total,
+		Unread:         res.Unread,
+		Count:          len(summaries),
+		MessagesCount:  res.Total,
+		MessagesUnread: res.Unread,
+		Start:          start,
+		Tags:           nonNilStrings(res.AllCategories),
+		Messages:       summaries,
+	})
+}
+
+// getMessage handles GET /api/v1/message/:id. Side effect: marks the
+// message as read.
+func (s *Server) getMessage(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	m, err := s.Store.Get(r.Context(), id)
+	if errors.Is(err, store.ErrNotFound) {
+		writeError(w, http.StatusNotFound, "Message not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Best-effort mark-as-read; failure to mark shouldn't fail the GET.
+	if !m.Read() {
+		_ = s.Store.MarkAsRead(r.Context(), m.ID)
+		// Reflect locally so the response carries the read flag.
+		now := timeNow()
+		m.ReadAt = &now
+	}
+
+	inline, _ := s.Store.LoadInline(r.Context(), m.ID)
+	atts, _ := s.Store.LoadAttachments(r.Context(), m.ID)
+	writeJSON(w, http.StatusOK, toWireDetail(m, inline, atts))
+}
+
+// rawMessage handles GET /api/v1/message/:id/raw — returns RFC822 source
+// as text/plain. ?dl=1 forces download via Content-Disposition.
+func (s *Server) rawMessage(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	m, err := s.Store.Get(r.Context(), id)
+	if errors.Is(err, store.ErrNotFound) {
+		writeError(w, http.StatusNotFound, "Message not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	disp := "inline"
+	if r.URL.Query().Get("dl") != "" {
+		disp = "attachment"
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Content-Disposition", disp+`; filename="`+m.ID+`.eml"`)
+	_, _ = w.Write(m.Raw)
+}
+
+// headers handles GET /api/v1/message/:id/headers — returns parsed
+// headers as { Name: [values] }, alphabetized.
+func (s *Server) headers(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	m, err := s.Store.Get(r.Context(), id)
+	if errors.Is(err, store.ErrNotFound) {
+		writeError(w, http.StatusNotFound, "Message not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	headersMap := map[string][]string{}
+	if len(m.Raw) > 0 {
+		// net/mail.ReadMessage parses headers without copying the body.
+		if msg, err := mail.ReadMessage(strings.NewReader(string(m.Raw))); err == nil {
+			for k, vs := range msg.Header {
+				headersMap[k] = append(headersMap[k], vs...)
+			}
+		}
+	}
+
+	// Stable, alphabetized output (matches the documented behavior).
+	type kv struct {
+		K string
+		V []string
+	}
+	keys := make([]string, 0, len(headersMap))
+	for k := range headersMap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	ordered := make(map[string][]string, len(keys))
+	for _, k := range keys {
+		ordered[k] = headersMap[k]
+	}
+
+	// JSON map ordering isn't guaranteed by encoding/json, but Go maps
+	// printed via json.Marshal are sorted by key in Go 1.12+ — so this
+	// produces alphabetical output anyway.
+	writeJSON(w, http.StatusOK, ordered)
+}
+
+// part handles GET /api/v1/message/:id/part/:part_id — attachment bytes
+// with the original Content-Type.
+func (s *Server) part(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	partID := chi.URLParam(r, "part_id")
+	p, err := s.Store.LoadPartByID(r.Context(), id, partID)
+	if errors.Is(err, store.ErrNotFound) {
+		writeError(w, http.StatusNotFound, "Part not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	ct := p.ContentType
+	if ct == "" {
+		ct = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", ct)
+	disp := "inline"
+	filename := p.Filename
+	if filename == "" && p.ContentID != "" {
+		filename = p.ContentID
+	}
+	if filename == "" {
+		filename = "attachment"
+	}
+	w.Header().Set("Content-Disposition", disp+`; filename="`+filename+`"`)
+	_, _ = w.Write(p.Content)
+}
+
+// updateRead handles PUT /api/v1/messages — bulk read/unread toggle.
+// Body: { read: bool, ids?: [strings] }. With ids, marks just those;
+// without, marks ALL.
+func (s *Server) updateRead(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Read bool     `json:"read"`
+		IDs  []string `json:"ids"`
+	}
+	if r.ContentLength != 0 {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeError(w, http.StatusBadRequest, "decode body: "+err.Error())
+			return
+		}
+	}
+	ids := nonBlank(body.IDs)
+	if err := s.Store.MarkRead(r.Context(), body.Read, ids...); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	_, _ = w.Write([]byte("ok"))
+}
+
+// destroyMessages handles DELETE /api/v1/messages — single/bulk/all.
+// With non-empty ids body: deletes those. Without body or empty ids:
+// deletes all.
+func (s *Server) destroyMessages(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		IDs []string `json:"ids"`
+	}
+	if r.ContentLength != 0 {
+		_ = json.NewDecoder(r.Body).Decode(&body)
+	}
+	ids := nonBlank(body.IDs)
+	deleted, err := s.Store.Delete(r.Context(), ids...)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	// Live broadcast — best-effort.
+	if s.Hub != nil {
+		for _, id := range deleted {
+			s.Hub.BroadcastDestroyed(id)
+		}
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	_, _ = w.Write([]byte("ok"))
+}
+
+func nonBlank(s []string) []string {
+	out := make([]string, 0, len(s))
+	for _, v := range s {
+		if strings.TrimSpace(v) != "" {
+			out = append(out, v)
+		}
+	}
+	return out
+}

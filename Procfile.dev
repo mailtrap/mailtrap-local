@@ -1,0 +1,2 @@
+backend: go run ./cmd/mailtrap-local --http-listen 127.0.0.1:3550 --smtp-listen 127.0.0.1:3535 --db data/mailtrap-local.sqlite3
+frontend: cd frontend && npm run dev

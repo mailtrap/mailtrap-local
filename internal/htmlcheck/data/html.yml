@@ -1,0 +1,9090 @@
+---
+- title: "<abbr> element"
+  parser_key: ".//abbr"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-abbr/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2023-10
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2023-10
+  - family: orange
+    platform: android
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - '2013'
+      - '2016'
+      - '2019'
+      - '2021'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2023-09
+  - family: sfr
+    platform: android
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2023-09
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2023-09
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2023-09
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2023-09
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2023-09
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2023-09
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2023-10
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2023-09
+  numbered_notes:
+    '1': Buggy. Element's content are still kept. Affected versions Outlook Windows
+      2013, 2016, 2019, 2021, and Outlook Windows Mail 2023-09.
+- title: align attribute
+  parser_key: ".//*[@align]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-align/
+  clients:
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2021-11
+  numbered_notes:
+    '1': Partial. `<img>` elements are wrapped in a `<span>` so `left` and `right`
+      values have no effect. Affected version ProtonMail Desktop Webmail 2021-11.
+    '2': Partial. Not supported on `<img>` elements. Affected version HEY Desktop
+      Webmail 2021-11.
+- title: aria-describedby attribute
+  parser_key: ".//*[@aria-describedby]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-aria-describedby/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '60.8'
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-07
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  numbered_notes:
+    '1': Buggy. `id` prefix mismatched. The `id` value is prefixed but not the `aria-describedby`
+      value. Affected versions Gmail Desktop Webmail 2019-02, Gmail Mobile Webmail
+      2020-02, Mail.ru Desktop Webmail 2020-10, and Fastmail Desktop Webmail 2021-07.
+    '2': Supported in version 2019-08. Not supported in version 2021-03.
+- title: aria-hidden attribute
+  parser_key: ".//*[@aria-hidden]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-aria-hidden/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '60.8'
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  numbered_notes:
+    '1': Supported in version 2019-08. Not supported in version 2021-03.
+- title: aria-label attribute
+  parser_key: ".//*[@aria-label]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-aria-label/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-03
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '60.8'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  numbered_notes:
+    '1': Supported in version 2019-08. Not supported in version 2021-03.
+- title: aria-labelledby attribute
+  parser_key: ".//*[@aria-labelledby]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-aria-labelledby/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-02
+      - 2022-04
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    - 3
+    versions:
+      'no':
+      - 2022-04
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    - 4
+    versions:
+      'no':
+      - 2022-04
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 5
+    versions:
+      'no':
+      - 2022-04
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 6
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-02
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '60.8'
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-07
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  numbered_notes:
+    '1': Buggy. `id` is removed. Affected versions Gmail Mobile Webmail 2022-04, Outlook
+      Windows 2007, 2010, 2013, 2016, and 2019.
+    '2': Buggy. `id` prefix mismatched. The `id` value is prefixed but not the `aria-labelledby`
+      value. Affected versions Gmail Desktop Webmail 2022-04, Gmail iOS 2022-04, Gmail
+      Android 2022-04, Outlook Outlook.com 2019-02, and Fastmail Desktop Webmail 2021-07.
+    '3': Supported in version 2020-01. Not supported in version 2022-04.
+    '4': Supported in version 2020-01. Not supported in version 2022-04.
+    '5': Supported in version 2020-02. Not supported in version 2022-04.
+    '6': Supported in version 2019-08. Not supported in version 2021-03.
+- title: aria-live attribute
+  parser_key: ".//*[@aria-live]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-aria-live/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '60.8'
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  numbered_notes:
+    '1': Unable to trigger live change to test.
+    '2': Code isn't stripped but can't trigger a live change. Affected versions Outlook
+      Windows 2007, 2010, 2013, 2016, and 2019.
+    '3': Supported in version 2019-08. Not supported in version 2021-03.
+- title: "<audio> element"
+  parser_key: ".//audio"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-audio/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 7
+    versions:
+      'no':
+      - 2021-03
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2020-04
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    - 8
+    versions:
+      'no':
+      - '2019'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-04
+      - 2021-05
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-04
+      - 2021-05
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-04
+      - 2021-05
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2020-04
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 5
+    versions:
+      'no':
+      - 2021-07
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 6
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 5
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Does not play. Affected version Outlook macOS 2016.
+    '2': The `src` attribute is transformed into `proton-src`. Affected version ProtonMail
+      Desktop Webmail 2020-04.
+    '3': The `<audio>` element is supported but can not be played. Affected versions
+      Orange iOS 2020-04, GMX iOS 2022-11, and web-de iOS 2022-11.
+    '4': The `<audio>` element is supported, but the video can not play due to a strict
+      Content Security Policy. Affected versions Outlook Outlook.com 2021-05, Outlook
+      iOS 2021-05, and Outlook Android 2021-05.
+    '5': Not supported. The `<audio>` element and all its content is removed. Affected
+      versions Fastmail Desktop Webmail 2021-07 and ionos-1and1 Desktop Webmail 2022-11.
+    '6': Not supported. The `src` attribute is replaced by `data-src`. Affected version
+      LaPoste.net Desktop Webmail 2021-08.
+    '7': Supported in version 2020-04. Not supported in version 2021-03.
+    '8': Supported in version 2016. Not supported in version 2019.
+- title: background attribute
+  parser_key: ".//*[@background]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-background/
+  clients:
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  numbered_notes:
+    '1': Partial. Not supported with non Gmail accounts. Affected versions Gmail iOS
+      2019-02 and Gmail Android 2019-02.
+    '2': Partial. Only supported on the `<body>` element. Affected versions Outlook
+      Windows 2007, 2010, 2013, 2016, and 2019.
+- title: "<bdi> element"
+  parser_key: ".//bdi"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-bdi/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Supported in version 2019-08. Not supported in version 2021-03.
+- title: "<blockquote> element"
+  parser_key: ".//blockquote"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-blockquote/
+  clients:
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-06
+  numbered_notes:
+    '1': Buggy. Blockquote elements are nested in a `<details>` element. Affected
+      version HEY Desktop Webmail 2020-06.
+- title: "<body> element"
+  parser_key: ".//body"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-body/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: orange
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: orange
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-11
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  numbered_notes:
+    '1': Partial. Replaced by a `<div>` with supported attributes. Affected versions
+      Gmail Desktop Webmail 2021-11, Gmail iOS 2021-11, Gmail Android 2021-11, Gmail
+      Mobile Webmail 2021-11, Orange Desktop Webmail 2021-11, Orange iOS 2021-11,
+      Orange Android 2021-11, Outlook Outlook.com 2021-11, AOL Desktop Webmail 2021-11,
+      Yahoo! Mail Desktop Webmail 2021-11, and HEY Desktop Webmail 2021-11.
+- title: "<code> element"
+  parser_key: ".//code"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-code/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2023-05
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2023-05
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2023-05
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-04
+  numbered_notes:
+    '1': Not supported. The tags are removed but the content is kept. Affected versions
+      Orange Desktop Webmail 2023-05, Orange iOS 2023-05, and Orange Android 2023-05.
+- title: "<del> element"
+  parser_key: ".//del"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-del/
+  clients:
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  numbered_notes:
+    '1': Partial. Not supported with non Gmail accounts. Affected versions Gmail iOS
+      2019-02 and Gmail Android 2019-02.
+- title: "<def> element"
+  parser_key: ".//def"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-dfn/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: orange
+    platform: ios
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: orange
+    platform: android
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - '2013'
+      - '2016'
+      - '2019'
+      - '2021'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2023-09
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: sfr
+    platform: android
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2023-09
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: free-fr
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-09
+  - family: t-online-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2023-09
+  numbered_notes:
+    '1': Partial. The `title` attribute is removed. Affected versions Outlook Windows
+      2013, 2016, 2019, 2021, and Outlook Windows Mail 2023-09.
+- title: "<dialog> element"
+  parser_key: ".//dialog"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-dialog/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Supported in version 2019-08. Not supported in version 2021-03.
+- title: dir attribute
+  parser_key: ".//*[@dir]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-dir/
+  clients:
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-10
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2021-10
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 3
+    - 4
+    versions:
+      partial:
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2021-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  numbered_notes:
+    '1': Buggy. The client applies an `rtl` direction to the entire email if it contains
+      text in a `rtl` language. Affected version Gmail Mobile Webmail 2021-10.
+    '2': Partial. Removed from `<table>` and `<td>` elements. Affected version Orange
+      Desktop Webmail 2021-10.
+    '3': Buggy on anchor `<a>` tags. Affected versions Outlook Windows 2007, 2010,
+      2013, 2016, 2019, and Outlook Windows Mail 2021-10.
+    '4': Buggy. LTR text in `[dir=rtl]` (and vice versa) is rendered with reversed
+      word order. Affected version Outlook Windows 2007.
+- title: "<form> element"
+  parser_key: ".//form"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-form/
+  clients:
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-09
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+      - 2021-03
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2003'
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2011'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    - 3
+    versions:
+      partial:
+      - 2019-10
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 5
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 6
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Does not submit in iOS with non Gmail accounts. Affected version Gmail iOS
+      2019-09.
+    '2': On submit name values are prefixed with `x_`. Affected versions Outlook Outlook.com
+      2019-02 and 2019-10.
+    '3': Does not submit in preview pane, but does when the email is opened in a new
+      window. Affected version Outlook Outlook.com 2019-10.
+    '4': Not supported. `<form>` is transformed into `<noform>`. Affected versions
+      Orange Desktop Webmail 2020-01, Orange iOS 2020-01, Orange Android 2020-01,
+      SFR Desktop Webmail 2020-01, and LaPoste.net Desktop Webmail 2021-08.
+    '5': Not supported. The `<form>` and its entire content is removed. Affected version
+      ProtonMail Android 2020-03.
+    '6': Not supported. The `<form>` is there but values are not submitted. Affected
+      version Mail.ru Desktop Webmail 2020-10.
+- title: "<h1> to <h6> elements"
+  parser_key: ".//h1 | .//h2 | .//h3 | .//h4 | .//h5 | .//h6"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-h1-h6/
+  clients:
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 1
+  numbered_notes:
+    '1': The webmail sets `<h1>` to `color:#fff` and `<h2>` to `background:#354963`.
+      Affected version LaPoste.net Desktop Webmail 2021-08.
+- title: height attribute
+  parser_key: ".//*[@height]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-height/
+  clients:
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    - 2
+    versions:
+      partial:
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  numbered_notes:
+    '1': Buggy. Percentage width on `<img>` elements are based on the physical file's
+      width, not on the parent element's width. Affected versions Outlook Windows
+      2007, 2010, 2013, 2016, and 2019.
+    '2': Buggy. Sizes set in attributes don't scale in 120 dpi mode. Affected versions
+      Outlook Windows 2007, 2010, 2013, 2016, and 2019.
+- title: lang attribute
+  parser_key: ".//*[@lang]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-lang/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    versions:
+      partial:
+      - '2003'
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+  - family: sfr
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2020-10
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-10
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-10
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-10
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-10
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  numbered_notes:
+    '1': Not supported on `<td>` elements. Affected versions AOL Desktop Webmail 2020-10,
+      Yahoo! Mail Desktop Webmail 2020-10, Yahoo! Mail iOS 2020-10, and Yahoo! Mail
+      Android 2020-10.
+    '2': Supported in version 2020-10. Not supported in version 2021-03.
+    '3': Supported in version 2021-10. Not supported in version 2020-10.
+- title: "<link> element"
+  parser_key: ".//link"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-link/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - '78.5'
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 5.0.10.2
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-09
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Supported in version 2019-08. Not supported in version 2021-03.
+    '2': Supported in version 60.8. Not supported in version 78.5.
+- title: loading attribute
+  parser_key: ".//*[@loading]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-loading-attribute/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-10
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2021-10
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': The `loading` attribute is supported, but not confirmed whether it works
+      according to spec. Affected versions Apple Mail macOS 2021-10, Apple Mail iOS
+      11, 12, 13, 14, Outlook macOS 2021-10, Samsung Email Android 2021-10, Mozilla
+      Thunderbird macOS 2021-10, and Mail.ru Desktop Webmail 2021-10.
+    '2': The `loading` attribute is supported by the email client, but not by the
+      browser engine.
+    '3': Not supported. The webmail adds `loading="lazy"` to all images. Affected
+      version HEY Desktop Webmail 2021-10.
+- title: "<marquee> element"
+  parser_key: ".//marquee"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-marquee/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-04
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-04
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-04
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2020-04
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': The `<marquee>` element is supported but the animation doesn't play in Internet
+      Explorer or Firefox. Affected versions AOL Desktop Webmail 2020-04, Yahoo! Mail
+      Desktop Webmail 2020-04, and LaPoste.net Desktop Webmail 2021-08.
+    '2': The `behavior` attribute is not supported. Affected version ProtonMail Desktop
+      Webmail 2020-04.
+    '3': Supported in version 2020-04. Not supported in version 2021-03.
+- title: "<meter> element"
+  parser_key: ".//meter"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-meter/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Partial. Supported with Non Gmail Accounts only. Affected version Gmail Android
+      2019-02.
+    '2': Supported in version 2019-08. Not supported in version 2021-03.
+- title: "<object> element"
+  parser_key: ".//object"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-object/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - '14.0'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2020-10
+      - 2021-03
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - '2011'
+      - '2016'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - '6.1'
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2020-10
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - '78.7'
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2021-07
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 2
+    versions:
+      partial:
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 2
+    versions:
+      partial:
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Partial support. Does not support Videos resources. Affected versions Apple
+      Mail macOS 14.0, Outlook macOS 2011, 2016, GMX iOS 2022-11, and web-de iOS 2022-11.
+    '2': Partial support. Does not support PDF resources. Affected versions Samsung
+      Email Android 6.1, Mozilla Thunderbird macOS 78.7, GMX iOS 2022-11, and web-de
+      iOS 2022-11.
+    '3': Not supported. `<object>` is turned into `<noobject>`. Affected versions
+      Orange Desktop Webmail 2020-10, SFR Desktop Webmail 2020-10, and LaPoste.net
+      Desktop Webmail 2021-08.
+    '4': Not supported. The `<object>` element and all its content is removed. Affected
+      version Fastmail Desktop Webmail 2021-07.
+- title: "<picture> element"
+  parser_key: ".//picture"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-picture/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2019-05
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2019-05
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2019-05
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2003'
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - '16.62'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': "`<picture>` and `<source>` tags are replaced by `<u></u>` tags. Affected
+      versions Gmail Desktop Webmail 2019-05, Gmail iOS 2019-05, Gmail Android 2019-05,
+      and Gmail Mobile Webmail 2020-02."
+    '2': Supported in version 2019-05. Not supported in version 2021-03.
+    '3': Supported in versions 2011, 2016. Not supported in version 16.62.
+- title: "<pre> element"
+  parser_key: ".//pre"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-pre/
+  clients:
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-04
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-04
+  - family: web-de
+    platform: android
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-04
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: partial
+    versions:
+      partial:
+      - 2023-04
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: partial
+    versions:
+      partial:
+      - 2023-04
+- title: "<progress> element"
+  parser_key: ".//progress"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-progress/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Partial. Supported with Non Gmail Accounts only. Affected version Gmail Android
+      2019-02.
+    '2': Supported in version 2019-08. Not supported in version 2021-03.
+- title: required attribute
+  parser_key: ".//*[@required]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-required/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-09
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2020-01
+      'no':
+      - 2021-03
+  - family: orange
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2020-01
+  - family: orange
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2020-01
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2003'
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2020-01
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Partial. Only supported with non Gmail accounts. Affected version Gmail Android
+      2019-09.
+    '2': Partial. The `required` attribute is supported, but form elements are not.
+      Affected versions Orange Desktop Webmail 2020-01, Orange iOS 2020-01, Orange
+      Android 2020-01, SFR Desktop Webmail 2020-01, ProtonMail Desktop Webmail 2020-03,
+      and LaPoste.net Desktop Webmail 2021-08.
+- title: role attribute
+  parser_key: ".//*[@role]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-role/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-06
+      partial:
+      - 2020-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-02
+      partial:
+      - 2020-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-02
+      partial:
+      - 2020-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-02
+      partial:
+      - 2020-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-02
+      partial:
+      - 2020-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-02
+      partial:
+      - 2020-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-06
+  numbered_notes:
+    '1': Not live tested, only looked at processed code on Litmus. Affected versions
+      Outlook Windows 2003, 2007, 2010, 2013, 2016, and 2019.
+    '2': Partial. Only works on the `<table>` tag. Affected versions Yahoo! Mail Desktop
+      Webmail 2020-02, Yahoo! Mail iOS 2020-02, Yahoo! Mail Android 2020-02, AOL Desktop
+      Webmail 2020-02, AOL iOS 2020-02, and AOL Android 2020-02.
+    '3': Supported in version 2019-06. Not supported in version 2021-03.
+- title: "<rp> element"
+  parser_key: ".//rp"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-rp/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Partial. Supported with Non Gmail Accounts only. Affected version Gmail Android
+      2020-02.
+    '2': Supported in version 2019-08. Not supported in version 2021-03.
+- title: "<rt> element"
+  parser_key: ".//rt"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-rt/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Partial. Supported with Non Gmail Accounts only. Affected version Gmail Android
+      2019-02.
+    '2': Supported in version 2019-08. Not supported in version 2021-03.
+- title: "<ruby> element"
+  parser_key: ".//ruby"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-ruby/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Partial. Supported with Non Gmail Accounts only. Affected version Gmail Android
+      2019-02.
+    '2': Supported in version 2019-08. Not supported in version 2021-03.
+- title: "<select> element"
+  parser_key: ".//select"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-select/
+  clients:
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - '10.3'
+      - '12.4'
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-09
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2020-01
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2003'
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2020-01
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    - 5
+    versions:
+      'no':
+      - 2021-06
+  - family: sfr
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    - 6
+    versions:
+      'no':
+      - 2021-06
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - '68.4'
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Buggy. Works if the email is shorter than the viewport. Otherwise the screen
+      goes blank when the `<select>` is in focus. Affected versions Apple Mail iOS
+      10.3, 12.4, and Gmail iOS 2019-09.
+    '2': Not supported. `<select>` is transformed into `<noselect>`. Affected versions
+      Orange Desktop Webmail 2020-01, Orange iOS 2020-01, Orange Android 2020-01,
+      SFR Desktop Webmail 2020-01, SFR iOS 2021-06, SFR Android 2021-06, and LaPoste.net
+      Desktop Webmail 2021-08.
+    '3': Buggy. Interacting with the element submits the form it belongs in. Affected
+      version Mozilla Thunderbird macOS 68.4.
+    '4': Supported in version 2021-03. Not supported in version 2020-01.
+    '5': Supported in version 2020-01. Not supported in version 2021-06.
+    '6': Supported in version 2020-01. Not supported in version 2021-06.
+- title: HTML5 semantics
+  parser_key: ".//article | .//aside | .//details | .//figcaption | .//figure | .//footer
+    | .//header | .//main | .//mark | .//nav | .//section | .//summary | .//time"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-semantics/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2019-07
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2019-07
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2019-07
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      partial:
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 6
+    versions:
+      'no':
+      - 2021-03
+  - family: orange
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2019-07
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2003'
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    - 4
+    versions:
+      partial:
+      - 2019-07
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 4
+    versions:
+      partial:
+      - 2019-07
+  - family: outlook
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 4
+    versions:
+      partial:
+      - 2019-07
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2019-07
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2019-07
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2019-07
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 5
+    versions:
+      partial:
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Partial. Only `<time>` is supported. Affected versions Outlook Outlook.com
+      2019-07, Outlook iOS 2019-07, Outlook Android 2019-07, and ionos-1and1 Desktop
+      Webmail 2022-11.
+    '2': Partial. `<details>`, `<main>`, `<nav>` and `<summary>` are not supported.
+      Opening and closing tags are replaced by `<u></u>`. Affected versions Gmail
+      Desktop Webmail 2019-07, Gmail iOS 2019-07, Gmail Android 2019-07, and Gmail
+      Mobile Webmail 2020-02.
+    '3': Partial. `<article>` is not supported. Affected version Orange Android 2019-07.
+    '4': Unsupported opening and closing tags are stripped. Affected versions Outlook
+      Outlook.com 2019-07, Outlook iOS 2019-07, Outlook Android 2019-07, AOL Desktop
+      Webmail 2020-01, AOL iOS 2020-01, AOL Android 2020-01, Yahoo! Mail Desktop Webmail
+      2019-07, Yahoo! Mail iOS 2019-07, and Yahoo! Mail Android 2019-07.
+    '5': Partial. `<article>`, `<aside>`, `<header>`, `<main>` `<nav>`, `<section>`,
+      `<summary>` are not supported. Affected version HEY Desktop Webmail 2020-06.
+    '6': Supported in version 2019-07. Not supported in version 2021-03.
+- title: "<small> element"
+  parser_key: ".//small"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-small/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+- title: srcset and sizes attributes
+  parser_key: ".//*[@srcset | @sizes]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-srcset/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2003'
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-05
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-07
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': "`<picture>` and `<source>` tags are replaced by `<u></u>` tags."
+    '2': The `sizes` attribute is supported but not `srcset`. Affected versions ProtonMail
+      Desktop Webmail 2020-03, Mail.ru Desktop Webmail 2020-10, and Fastmail Desktop
+      Webmail 2021-07.
+    '3': Supported in version 2019-05. Not supported in version 2021-03.
+- title: "<strike> element"
+  parser_key: ".//strike"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-strike/
+  clients:
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  numbered_notes:
+    '1': Partial. Not supported with non Gmail accounts. Affected versions Gmail iOS
+      2019-02 and Gmail Android 2019-02.
+- title: "<style> element"
+  parser_key: ".//style"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-style/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-06
+      - 2023-01
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 2
+    versions:
+      partial:
+      - 2019-06
+      - 2023-01
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 2
+    versions:
+      partial:
+      - 2019-06
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+      - 2023-01
+  - family: orange
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 6
+    versions:
+      'no':
+      - 2019-06
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 4
+    versions:
+      partial:
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: partial
+    note_numbers:
+    - 4
+    versions:
+      partial:
+      - 2020-01
+      - 2023-01
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-06
+      - 2023-02
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-06
+      - 2023-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 5
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2019-06
+      - 2023-01
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 7
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2020-03
+      partial:
+      - 2023-01
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-03
+  - family: laposte
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2023-02
+  - family: laposte
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2023-02
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 8
+    versions:
+      'no':
+      - 2023-07
+  - family: rainloop
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2023-02
+  numbered_notes:
+    '1': Partial. Not supported inside the `<body>`. Affected versions Gmail Desktop
+      Webmail 2019-06, 2023-01, Gmail iOS 2019-06, 2023-01, Gmail Android 2019-06,
+      ProtonMail iOS 2023-01, and ProtonMail Android 2020-03.
+    '2': Partial. Not supported with Non Gmail Accounts. Affected versions Gmail iOS
+      2019-06, 2023-01, and Gmail Android 2019-06.
+    '3': Buggy. The first `<head>` in the HTML is removed, so `<style>` elements need
+      to be in a second `<head>` element. Affected versions Yahoo! Mail Android 2019-06
+      and 2023-01.
+    '4': Buggy. `<style>` elements need to be declared before their rules are used.
+      Affected versions Outlook Windows 2007, 2010, 2013, 2016, 2019, Outlook Windows
+      Mail 2020-01, and 2023-01.
+    '5': A CSS rule following a CSS comment is ignored. (See [email-bugs#25](https://github.com/hteumeuleu/email-bugs/issues/25).)
+      Affected version Yahoo! Mail Desktop Webmail 2019-06.
+    '6': Supported in versions 2019-08, 2023-02. Not supported in version 2019-06.
+    '7': Supported in versions 2022-02, 2023-01. Not supported in version 2020-03.
+    '8': Supported in version 2022-11. Not supported in version 2023-07.
+- title: Embedded <svg> image
+  parser_key: ".//svg"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-svg/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - '13'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Buggy. Requires a background on the `<body>`. Can be any type of background,
+      image or a color, can be set as attribute, inline style or in `<style>` block
+      Affected version Apple Mail macOS 13.
+    '2': Not supported. Element is removed along with any fallback content. Affected
+      version ionos-1and1 Desktop Webmail 2022-11.
+    '3': Supported in version 2020-02. Not supported in version 2021-03.
+- title: target attribute
+  parser_key: ".//*[@target]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-target/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - '15'
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - '15'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2021-12
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - '16.57'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2021-12
+  - family: outlook
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2021-12
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - '6.0'
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 2
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - '78.14'
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2021-12
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 2
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Not supported. `target="_blank"` is forced on all links. Affected versions
+      Gmail Desktop Webmail 2021-12, Gmail iOS 2021-12, Gmail Android 2021-12, Gmail
+      Mobile Webmail 2021-12, Orange Desktop Webmail 2021-12, Orange iOS 2021-12,
+      Orange Android 2021-12, Outlook macOS 16.57, Outlook Outlook.com 2021-12, SFR
+      iOS 2021-12, SFR Android 2021-12, AOL Desktop Webmail 2021-12, AOL iOS 2021-12,
+      AOL Android 2021-12, Yahoo! Mail Desktop Webmail 2021-12, Yahoo! Mail iOS 2021-12,
+      Yahoo! Mail Android 2021-12, ProtonMail Desktop Webmail 2021-12, ProtonMail
+      iOS 2021-12, ProtonMail Android 2021-12, HEY Desktop Webmail 2021-12, Mail.ru
+      Desktop Webmail 2021-12, Fastmail Desktop Webmail 2021-12, GMX Desktop Webmail
+      2022-11, web-de Desktop Webmail 2022-11, and ionos-1and1 Desktop Webmail 2022-11.
+    '2': Supported. But `target="_blank"` is forced if the attribute is missing. Affected
+      versions SFR Desktop Webmail 2021-12 and LaPoste.net Desktop Webmail 2021-12.
+    '3': The attribute is supported but links always open in a new window anyway.
+      Affected versions Apple Mail macOS 15, Apple Mail iOS 15, Outlook Windows 2019,
+      Outlook Windows Mail 2021-12, Outlook iOS 2021-12, Outlook Android 2021-12,
+      Samsung Email Android 6.0, Mozilla Thunderbird macOS 78.14, GMX iOS 2022-11,
+      and web-de iOS 2022-11.
+- title: "<textarea> element"
+  parser_key: ".//textarea"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-textarea/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 2
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 4
+    - 6
+    versions:
+      'no':
+      - 2020-01
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2003'
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-01
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2019-06
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - '6.0'
+      - '9.0'
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2020-01
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 4
+    - 7
+    versions:
+      'no':
+      - 2021-06
+  - family: sfr
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 4
+    - 8
+    versions:
+      'no':
+      - 2021-06
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 5
+    versions:
+      partial:
+      - '68.4'
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2019-09
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Buggy. Email scrolls to the end when space bar is pressed.  This can be fixed
+      by wrapping the `<input>` in `<ul role="presentation">`. Affected versions Apple
+      Mail macOS 10.3 and 12.4.
+    '2': Buggy. Screen jumps when input is in focus. Affected versions Apple Mail
+      iOS 10.3 and 12.4.
+    '3': Buggy. A number of android clients will not show the keyboard when the input
+      is clicked.  Copy and pasting text works. Affected versions Outlook Android
+      2019-06, Samsung Email Android 6.0, 9.0, Yahoo! Mail Android 2019-09, and ProtonMail
+      Android 2020-03.
+    '4': Not supported. `<textarea>` is transformed into `<notextarea>`. Affected
+      versions Orange Desktop Webmail 2020-01, Orange iOS 2020-01, Orange Android
+      2020-01, SFR Desktop Webmail 2020-01, SFR iOS 2021-06, SFR Android 2021-06,
+      and LaPoste.net Desktop Webmail 2021-08.
+    '5': Buggy. Interacting with the element submits the form it belongs in. Affected
+      version Mozilla Thunderbird macOS 68.4.
+    '6': Supported in version 2021-03. Not supported in version 2020-01.
+    '7': Supported in version 2020-01. Not supported in version 2021-06.
+    '8': Supported in version 2020-01. Not supported in version 2021-06.
+- title: valign attribute
+  parser_key: ".//*[@valign]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-valign/
+  clients:
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-12
+  numbered_notes:
+    '1': Buggy. The attribute is supported, but the webmail has default styles setting
+      all `<td>` to `vertical-align:top` in CSS. Affected version Orange Desktop Webmail
+      2020-12.
+- title: "<video> element"
+  parser_key: ".//video"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-video/
+  clients:
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 5
+    - 6
+    versions:
+      partial:
+      - '12.4'
+      - '13.3'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-09
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-09
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-09
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 11
+    versions:
+      'no':
+      - 2021-03
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - 2019-09
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 3
+    - 12
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-09
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    - 8
+    versions:
+      'no':
+      - 2019-09
+      - 2021-05
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    - 8
+    versions:
+      'no':
+      - 2019-09
+      - 2021-05
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    - 8
+    versions:
+      'no':
+      - 2019-09
+      - 2021-05
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 5
+    versions:
+      partial:
+      - '6.0'
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2019-09
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2019-09
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2019-09
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2019-09
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2019-09
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - 2019-09
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 7
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 9
+    versions:
+      'no':
+      - 2021-07
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 10
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 5
+    - 6
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 5
+    - 6
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 9
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': The `<video>` element is supported, but not the inner `<source>` element
+      so no video can play. Affected version Orange iOS 2019-09.
+    '2': "`<video>`, `<source>` and `<track>` tags are replaced by `<u></u>` tags.
+      Affected versions Gmail Desktop Webmail 2019-09, Gmail iOS 2019-09, Gmail Android
+      2019-09, and Gmail Mobile Webmail 2020-02."
+    '3': Buggy. Support depends on the version of Internet Explorer installed. Affected
+      version Outlook Windows 2003.
+    '4': "`<video>`, `<source>` and `<track>` tags are stripped. The fallback content
+      is shown instead. Affected versions Outlook Outlook.com 2019-09, Outlook iOS
+      2019-09, Outlook Android 2019-09, AOL Desktop Webmail 2019-09, AOL iOS 2019-09,
+      AOL Android 2019-09, Yahoo! Mail Desktop Webmail 2019-09, Yahoo! Mail iOS 2019-09,
+      and Yahoo! Mail Android 2019-09."
+    '5': Partial support. Requires the `controls` attribute to play. Affected versions
+      Apple Mail iOS 12.4, 13.3, Samsung Email Android 6.0, GMX iOS 2022-11, and web-de
+      iOS 2022-11.
+    '6': Partial support. `autoplay` is not supported. Affected versions Apple Mail
+      iOS 13.3, GMX iOS 2022-11, and web-de iOS 2022-11.
+    '7': The `<video>` element is supported and the `poster` image is visible, but
+      the video can not play due to a strict Content Security Policy. Affected version
+      ProtonMail Desktop Webmail 2020-03.
+    '8': The `<video>` element is supported, but the video can not play due to a strict
+      Content Security Policy. Affected versions Outlook Outlook.com 2021-05, Outlook
+      iOS 2021-05, and Outlook Android 2021-05.
+    '9': Not supported. The `<video>` element and all its content is removed. Affected
+      versions Fastmail Desktop Webmail 2021-07 and ionos-1and1 Desktop Webmail 2022-11.
+    '10': Not supported. The `src` attribute is replaced by `data-src`. Affected version
+      LaPoste.net Desktop Webmail 2021-08.
+    '11': Supported in version 2019-09. Not supported in version 2021-03.
+    '12': Supported in version 2003. Not supported in versions 2007, 2010, 2013, 2016,
+      2019.
+- title: "<wbr> element"
+  parser_key: ".//wbr"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-wbr/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2019-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-03
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2019-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-11
+  numbered_notes:
+    '1': Partial. Supported with Non Gmail Accounts only. Affected version Gmail Android
+      2019-02.
+    '2': Supported in version 2020-02. Not supported in version 2019-02.
+    '3': Supported in version 2019-08. Not supported in version 2021-03.
+- title: width attribute
+  parser_key: ".//*[@width]"
+  parser_type: html
+  url: https://www.caniemail.com/features/html-width/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: 'yes'
+    note_numbers:
+    - 3
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    - 2
+    versions:
+      partial:
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  numbered_notes:
+    '1': Buggy. Percentage width on `<img>` elements are based on the physical file's
+      width, not on the parent element's width. Affected versions Outlook Windows
+      2007, 2010, 2013, 2016, and 2019.
+    '2': Buggy. Sizes set in attributes don't scale in 120 dpi mode. Affected versions
+      Outlook Windows 2007, 2010, 2013, 2016, and 2019.
+    '3': The `width` attribute is ignored on CID embedded images. See [#171](https://github.com/hteumeuleu/caniemail/issues/171).
+      Affected version Apple Mail macOS 12.4.
+- title: Animated PNG image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 4) = '.apng']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-apng/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  common_notes: In all cases where the Animated PNG fails, it will fallback to show
+    the first frame of the animation.
+- title: AVIF image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 4) = '.avif']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-avif/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 2
+    - 4
+    versions:
+      'no':
+      - '11'
+      - '12'
+      - '13'
+      partial:
+      - '13.1'
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    - 5
+    versions:
+      'no':
+      - '11'
+      - '12'
+      - '13'
+      - '14'
+      partial:
+      - '16.2'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-01
+      partial:
+      - 2023-01
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-01
+      partial:
+      - 2023-01
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-01
+      partial:
+      - 2023-01
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-01
+      partial:
+      - 2023-01
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-01
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2021-01
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 2
+    - 6
+    versions:
+      'no':
+      - 2021-01
+      partial:
+      - 2023-01
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    - 7
+    versions:
+      'no':
+      - 2021-01
+      partial:
+      - 2023-01
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    - 8
+    versions:
+      'no':
+      - 2021-01
+      partial:
+      - 2023-01
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: aol
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 2
+    - 9
+    versions:
+      'no':
+      - 2021-01
+      partial:
+      - 2023-01
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 10
+    versions:
+      'no':
+      - 6.1.31.2
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2021-01
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 2
+    - 11
+    versions:
+      'no':
+      - '78.10'
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 12
+    versions:
+      'no':
+      - 2021-05
+      - 2023-01
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'yes'
+    note_numbers:
+    - 1
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 13
+    versions:
+      'no':
+      - 2021-05
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-01
+      - 2023-01
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+      - 2023-01
+      - 2023-04
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  numbered_notes:
+    '1': Support depends on browser and operating system support. Affected versions
+      Orange Desktop Webmail 2021-01, Outlook Outlook.com 2021-01, Outlook Android
+      4.2116.0, Yahoo! Mail Desktop Webmail 2021-01, Yahoo! Mail Android 6.27, AOL
+      Desktop Webmail 2021-01, AOL Android 2021-05, SFR Desktop Webmail 2021-01, SFR
+      Android 2021-05, ProtonMail Desktop Webmail 2021-01, and ProtonMail Android
+      2021-01.
+    '2': Does not support animated AVIF. Affected versions Apple Mail macOS 13.1,
+      Apple Mail iOS 16.2, Outlook macOS 2023-01, Outlook iOS 2023-01, Yahoo! Mail
+      iOS 2023-01, AOL iOS 2023-01, and Mozilla Thunderbird macOS 102.6.
+    '3': Converts still AVIF into a jpg and animated AVIF into a gif. Affected versions
+      Gmail Desktop Webmail 2023-01, Gmail iOS 2023-01, Gmail Android 2023-01, and
+      Gmail Mobile Webmail 2023-01.
+    '4': Supported in version 13.3. Not supported in versions 11, 12, 13.
+    '5': Supported in version 16.4. Not supported in versions 11, 12, 13, 14.
+    '6': Supported in version 2023-04. Not supported in version 2021-01.
+    '7': Supported in version 2023-04. Not supported in version 2021-01.
+    '8': Supported in version 2023-04. Not supported in version 2021-01.
+    '9': Supported in version 2023-04. Not supported in version 2021-01.
+    '10': Supported in version 6.1.74.5. Not supported in version 6.1.31.2.
+    '11': Supported in version 102.6. Not supported in version 78.10.
+    '12': Supported in version 2023-04. Not supported in versions 2021-05, 2023-01.
+    '13': Supported in version 2023-01. Not supported in version 2021-05.
+- title: Base 64 image format
+  parser_key: .//img[starts-with(@src, "data:image/") and contains(@src, ";base64")]
+  parser_type: html
+  url: https://www.caniemail.com/features/image-base64/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      partial:
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 2
+    - 4
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2020-02
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2022-09
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      partial:
+      - 2022-09
+  numbered_notes:
+    '1': 'Partial: Does not render Base 64 gif format. Affected version Outlook Windows
+      2019.'
+    '2': Not supported. The `src` is turned into a `nosrc` attribute. Affected versions
+      Orange Desktop Webmail 2020-02, SFR Desktop Webmail 2020-02, and LaPoste.net
+      Desktop Webmail 2021-08.
+    '3': 'Partial: Only supports Base 64 png format. Affected versions GMX Desktop
+      Webmail 2022-09 and web-de Desktop Webmail 2022-09.'
+    '4': Supported in version 2021-03. Not supported in version 2020-02.
+- title: BMP image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 3) = '.bmp']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-bmp/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  numbered_notes:
+    '1': Buggy. An image renders but the colours are incorrect. Affected versions
+      Gmail Desktop Webmail 2020-02, Gmail Android 2020-02, and Gmail Mobile Webmail
+      2020-02.
+- title: GIF image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 3) = '.gif']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-gif/
+  clients:
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    - 2
+    versions:
+      partial:
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  numbered_notes:
+    '1': 'Partial: Does not support animated gif images. Affected versions Outlook
+      Windows 2007, 2010, 2013, 2016, and 2019.'
+    '2': 'Partial: With an Office 365 account, it plays the animation 3 times then
+      stops and shows a play button to reactivate the animation. Affected version
+      Outlook Windows 2019.'
+- title: HDR image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 3) = '.hdr']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-hdr/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '13'
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - '13'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - '2019'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - '9.0'
+  - family: thunderbird
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '68.4'
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  numbered_notes:
+    '1': Supported in version 2016. Not supported in version 2019.
+- title: HEIF image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 4) = '.heif' or substring(@src,
+    string-length(@src) - 4) = '.heic']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-heif/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '13'
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - '13'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - '9.0'
+  - family: thunderbird
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '68.4'
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+      - 2021-03
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  numbered_notes:
+    '1': 'Partial: Converts file to jpg. Affected versions Gmail Desktop Webmail 2020-02,
+      Gmail Android 2020-02, and Gmail Mobile Webmail 2020-02.'
+- title: ICO image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 3) = '.ico']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-ico/
+  clients:
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+- title: PPM image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 3) = '.ppm']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-ppm/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '13'
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - '13'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      'no':
+      - '2019'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - '9.0'
+  - family: thunderbird
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '68.4'
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+      - 2021-03
+  - family: orange
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: protonmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: hey
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-06
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: laposte
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-08
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: gmx
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: ios
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  numbered_notes:
+    '1': Supported in version 2016. Not supported in version 2019.
+- title: SVG image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 3) = '.svg']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-svg/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 2
+    versions:
+      'no':
+      - '13'
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - '13'
+      - '14'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+      - 2023-01
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+      - 2023-01
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+      - 2023-01
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+      - 2023-01
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - '2016'
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 5
+    versions:
+      'no':
+      - 2020-02
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+      - 2023-01
+  numbered_notes:
+    '1': Partially supported. Only works with non Gmail accounts. Affected versions
+      Gmail iOS 2020-02, 2023-01, Gmail Android 2020-02, and 2023-01.
+    '2': Supported in version 14. Not supported in version 13.
+    '3': Supported in version 15. Not supported in versions 13, 14.
+    '4': Supported in version 13.1. Not supported in version 2016.
+    '5': Supported in version 2023-01. Not supported in version 2020-02.
+- title: TIFF image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 4) = '.tiff']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-tiff/
+  clients:
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 2
+    versions:
+      partial:
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    versions:
+      partial:
+      - 2020-02
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: outlook
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: samsung-email
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - '9.0'
+  - family: thunderbird
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: thunderbird
+    platform: macos
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '68.4'
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 3
+    versions:
+      'no':
+      - 2021-03
+  - family: orange
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-02
+  - family: protonmail
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2020-03
+  - family: mail-ru
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2020-10
+  - family: fastmail
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2021-07
+  - family: gmx
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: gmx
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: web-de
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: desktop-webmail
+    category: web
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  - family: ionos-1and1
+    platform: android
+    category: mobile
+    support: 'no'
+    versions:
+      'no':
+      - 2022-09
+  numbered_notes:
+    '1': Buggy. An image renders but the colours are incorrect. Affected versions
+      Gmail Desktop Webmail 2020-02, Gmail Android 2020-02, and Gmail Mobile Webmail
+      2020-02.
+    '2': Partial. Does not render with non Gmail accounts. Affected version Gmail
+      Android 2020-02.
+    '3': Supported in version 2020-02. Not supported in version 2021-03.
+- title: webP image format
+  parser_key: ".//img[substring(@src, string-length(@src) - 4) = '.webp']"
+  parser_type: html
+  url: https://www.caniemail.com/features/image-webp/
+  clients:
+  - family: apple-mail
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 4
+    versions:
+      'no':
+      - '13'
+  - family: apple-mail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 5
+    versions:
+      'no':
+      - '13'
+  - family: gmail
+    platform: desktop-webmail
+    category: web
+    support: partial
+    note_numbers:
+    - 1
+    - 3
+    versions:
+      partial:
+      - 2020-02
+  - family: gmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 3
+    versions:
+      'no':
+      - 2020-02
+      partial:
+      - 2021-02
+  - family: gmail
+    platform: android
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 3
+    versions:
+      partial:
+      - 2020-02
+  - family: gmail
+    platform: mobile-webmail
+    category: mobile
+    support: partial
+    note_numbers:
+    - 1
+    - 3
+    versions:
+      partial:
+      - 2020-02
+  - family: outlook
+    platform: windows
+    category: desktop
+    support: 'no'
+    versions:
+      'no':
+      - '2007'
+      - '2010'
+      - '2013'
+      - '2016'
+      - '2019'
+  - family: outlook
+    platform: windows-mail
+    category: desktop
+    support: 'yes'
+    note_numbers:
+    - 3
+  - family: outlook
+    platform: macos
+    category: desktop
+    support: partial
+    note_numbers:
+    - 6
+    versions:
+      'no':
+      - '2016'
+  - family: outlook
+    platform: outlook-com
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 2
+  - family: outlook
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 7
+    versions:
+      'no':
+      - 2020-02
+  - family: aol
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 2
+  - family: aol
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 8
+    versions:
+      'no':
+      - 2020-02
+  - family: yahoo
+    platform: desktop-webmail
+    category: web
+    support: 'yes'
+    note_numbers:
+    - 2
+  - family: yahoo
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 9
+    versions:
+      'no':
+      - 2020-02
+  - family: orange
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 10
+    versions:
+      'no':
+      - 2020-02
+  - family: sfr
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 11
+    versions:
+      'no':
+      - 2020-02
+  - family: protonmail
+    platform: ios
+    category: mobile
+    support: partial
+    note_numbers:
+    - 12
+    versions:
+      'no':
+      - 2020-03
+  numbered_notes:
+    '1': 'Partial: Converts file to jpg. Affected versions Gmail Desktop Webmail 2020-02,
+      Gmail iOS 2021-02, Gmail Android 2020-02, and Gmail Mobile Webmail 2020-02.'
+    '2': Partial. Webmail rendering depends on browser support. Affected versions
+      Outlook Outlook.com 2020-02, AOL Desktop Webmail 2020-02, and Yahoo! Mail Desktop
+      Webmail 2020-02.
+    '3': Partial. Does not support animation. Affected versions Gmail Desktop Webmail
+      2020-02, Gmail iOS 2021-02, Gmail Android 2020-02, Gmail Mobile Webmail 2020-02,
+      and Outlook Windows Mail 2020-02.
+    '4': Supported in version 14. Not supported in version 13.
+    '5': Supported in version 14. Not supported in version 13.
+    '6': Supported in version 16.47. Not supported in version 2016.
+    '7': Supported in version 2021-02. Not supported in version 2020-02.
+    '8': Supported in version 2021-02. Not supported in version 2020-02.
+    '9': Supported in version 2021-02. Not supported in version 2020-02.
+    '10': Supported in version 2021-02. Not supported in version 2020-02.
+    '11': Supported in version 2021-02. Not supported in version 2020-02.
+    '12': Supported in version 2021-02. Not supported in version 2020-03.

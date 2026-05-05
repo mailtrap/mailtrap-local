@@ -1,0 +1,22 @@
+# Release-time Dockerfile.
+#
+# goreleaser cross-compiles the binary itself (see .goreleaser.yaml's
+# `builds:` section); this Dockerfile just wraps that binary in a
+# distroless layer. The full source-build is in `Dockerfile`.
+FROM gcr.io/distroless/static-debian12:nonroot
+
+# goreleaser puts the matching binary in the build context root.
+COPY mailtrap-local /usr/local/bin/mailtrap-local
+
+# Persistent storage volume. distroless has no `mkdir`, but the COPY
+# above + the VOLUME directive together create the mount point on first
+# `docker run` even though the directory is initially absent.
+VOLUME ["/var/lib/mailtrap-local"]
+
+EXPOSE 3550 3535
+USER nonroot:nonroot
+
+ENTRYPOINT ["/usr/local/bin/mailtrap-local"]
+CMD ["--http-listen", "0.0.0.0:3550", \
+     "--smtp-listen", "0.0.0.0:3535", \
+     "--db", "/var/lib/mailtrap-local/db.sqlite3"]

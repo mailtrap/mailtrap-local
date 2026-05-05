@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -e
+
+# Add the active Ruby's user-gem executables to PATH so foreman (installed
+# by bin/setup via `gem install --user-install`) is found even when the
+# user's shell config doesn't include ~/.gem/ruby/X.Y.0/bin. Without this,
+# `command -v foreman` resolves to a mise shim that may route to a Ruby
+# without the gem installed and silently fail to start.
+if command -v ruby >/dev/null 2>&1; then
+  user_gem_bin="$(ruby -r rubygems -e 'puts Gem.user_dir + "/bin"' 2>/dev/null || true)"
+  if [ -n "$user_gem_bin" ] && [ -d "$user_gem_bin" ]; then
+    case ":$PATH:" in
+      *":$user_gem_bin:"*) ;;
+      *) PATH="$user_gem_bin:$PATH" ;;
+    esac
+  fi
+fi
+
+if ! command -v foreman >/dev/null 2>&1; then
+  echo "foreman not found. Run bin/setup, or install manually:"
+  echo "  gem install --user-install foreman"
+  exit 1
+fi
+
+exec foreman start -f Procfile.dev "$@"

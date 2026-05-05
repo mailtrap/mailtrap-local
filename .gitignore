@@ -1,0 +1,52 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+log/
+tmp/
+
+# Local env
+.env
+.env.local
+.envrc
+.direnv/
+
+# Compiled binary + local SQLite (created by scripts/build.sh / first run).
+# Cover both the canonical bin/ output and any stray go-build artifacts at
+# the repo root (`go build ./cmd/...` without -o lands here).
+/bin/mailtrap-local
+/mailtrap-local
+/data/*.sqlite3
+/data/*.sqlite3-journal
+/data/*.sqlite3-wal
+/data/*.sqlite3-shm
+
+# goreleaser output (`goreleaser release --snapshot` writes to ./dist/).
+# Different from frontend/dist (the SPA build) — that one's gitignored
+# via the rule below.
+/dist/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# Build embed staging — `scripts/build.sh` overwrites cmd/mailtrap-local/dist/
+# from frontend/dist/ and refreshes cmd/mailtrap-local/openapi.yaml from
+# docs/api/openapi.yaml. The placeholder dist/index.html and a checked-in
+# openapi.yaml live here so `go build` works in a clean checkout (without
+# having to run npm first); the rest is build output.
+cmd/mailtrap-local/dist/*
+!cmd/mailtrap-local/dist/index.html
+
+# Per-machine AI tooling state — never committed.
+.claude/

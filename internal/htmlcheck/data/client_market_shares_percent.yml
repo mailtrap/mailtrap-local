@@ -1,0 +1,8 @@
+# This config is supposed to be manually updated with content from https://www.litmus.com/email-client-market-share/
+# with mapping to families in configs from config/content_check/clients.yml
+---
+apple-mail: 59
+gmail: 30
+outlook: 4
+yahoo: 3
+other: 4

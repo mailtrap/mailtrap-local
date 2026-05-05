@@ -1,0 +1,1180 @@
+openapi: 3.1.0
+info:
+  title: mailtrap-local API
+  version: 0.1.0
+  summary: Local email sandbox + catcher for individual developers — JSON `/api/v1/*`.
+  description: |
+    mailtrap-local is a local email sandbox: it runs on a developer's
+    machine, catches every message their app sends, and exposes the
+    sandbox over a JSON API at `/api/v1/*`. Field names use snake_case
+    on the wire (`from`, `to`, `message_id`, `tags`) — the same
+    convention used across the rest of the Mailtrap toolchain (sandbox
+    API, `mailtrap-cli`).
+
+    Notable features:
+
+    - **Single-string categories.** mailtrap-local stores one `category`
+      string per message (read at ingest from `X-MT-Category` — Mailtrap's
+      SMTP header convention — with `Category` as a fallback). The wire
+      format exposes this as `tags: string[]`, but the array is always
+      0 or 1 element (the category).
+    - **Mailtrap cloud + SMTP-relay extensions.** Endpoints under
+      `/cloud_connection` and `/relay_connection` configure forwarding to
+      a Mailtrap cloud sandbox (`POST /message/:id/send_to_cloud`) or a
+      generic SMTP relay (`POST /message/:id/release`).
+
+    Default bind is loopback only — `127.0.0.1:3550` for the API. There is no
+    auth: this is a single-user local tool.
+
+  contact:
+    name: Mailtrap
+    url: https://mailtrap.io
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://127.0.0.1:3550
+    description: Local mailtrap-local binary (default port)
+
+tags:
+  - name: messages
+    description: Browse, fetch, search, delete, mark-as-read messages in the local sandbox.
+  - name: cloud_connection
+    description: Configure forwarding to a Mailtrap cloud sandbox.
+  - name: relay_connection
+    description: Configure forwarding through a generic SMTP relay (release-to-production).
+  - name: webhook_connection
+    description: Configure outbound webhook delivery on every captured message.
+  - name: internal
+    description: Endpoints consumed only by the bundled Go smtpd sidecar — not part of the public surface.
+
+paths:
+
+  # ---- Messages list / bulk operations ---------------------------------
+
+  /api/v1/messages:
+    get:
+      tags: [messages]
+      summary: List messages
+      description: |
+        Returns messages from the sandbox ordered newest-first. The `tags` field in
+        the envelope  lists distinct **categories** across the
+        *unfiltered* sandbox — useful for rendering a category picker without a
+        second roundtrip.
+      operationId: listMessages
+      parameters:
+        - $ref: '#/components/parameters/Start'
+        - $ref: '#/components/parameters/Limit'
+        - name: category
+          in: query
+          description: |
+            **mailtrap-local extension.** Narrows the result set to messages whose
+            stored category equals this value (exact match). The envelope's `tags`
+            still reports the unfiltered distinct list so a picker stays populated.
+          required: false
+          schema:
+            type: string
+          example: welcome
+      responses:
+        '200':
+          description: Paginated list of message summaries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagesResponse'
+
+    put:
+      tags: [messages]
+      summary: Mark messages as read or unread
+      description: |
+        Toggles read state in bulk. With `ids` set, marks just those messages;
+        without `ids`, marks **all** messages.
+      operationId: updateMessagesRead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [read]
+              properties:
+                read:
+                  type: boolean
+                  description: True = mark as read, false = mark as unread.
+                ids:
+                  type: array
+                  description: Optional. When omitted, applies to all messages.
+                  items:
+                    type: string
+              example:
+                read: true
+                ids: ["abc123", "def456"]
+      responses:
+        '200':
+          description: '"ok" plain-text body.'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+
+    delete:
+      tags: [messages]
+      summary: Delete messages
+      description: |
+        With a non-empty `ids` array in the body, deletes those specific messages.
+        Without a body (or with empty `ids`), deletes **all** messages in the sandbox.
+      operationId: deleteMessages
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+              example:
+                ids: ["abc123"]
+      responses:
+        '200':
+          description: '"ok" plain-text body.'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+
+  # ---- Search ----------------------------------------------------------
+
+  /api/v1/search:
+    get:
+      tags: [messages]
+      summary: Search messages
+      description: |
+        Free-words search across `subject`, `from_name`, `from_address`,
+        recipient addresses (denormalized), `snippet`, and `text_body`.
+        Whitespace splits the query into tokens; results AND across
+        tokens (each token must appear in at least one searchable field).
+        Case-insensitive.
+
+        A query DSL with operators (`from:`, `subject:`, `is:read`, `has:attachment`,
+        etc.) is **intentionally not parsed in v1** — ship the 80% use
+        case (just type a word) first and add the DSL when users ask.
+
+        Response shape mirrors `/api/v1/messages`. `total` /
+        `messages_count` reflect the *matched* set (not the entire
+        sandbox). The envelope's `tags` field still lists distinct
+        categories across the unfiltered sandbox so a caller can render
+        a category picker without a second roundtrip.
+
+        Empty / whitespace-only queries return an empty `messages`
+        array with zero counts — use `/api/v1/messages` for unfiltered
+        listing.
+      operationId: searchMessages
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Whitespace-separated search tokens (ANDed).
+          schema:
+            type: string
+          example: welcome reset
+        - $ref: '#/components/parameters/Start'
+        - $ref: '#/components/parameters/Limit'
+        - name: category
+          in: query
+          required: false
+          description: Optionally narrow to a single category.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of matching message summaries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagesResponse'
+
+  # ---- Per-message reads -----------------------------------------------
+
+  /api/v1/message/{id}:
+    parameters:
+      - $ref: '#/components/parameters/MessageID'
+    get:
+      tags: [messages]
+      summary: Get message detail
+      description: |
+        Returns the full parsed message including bodies and attachment metadata.
+        **Side effect:** marks the message as read (matches the documented behavior).
+
+        Pass the literal `latest` as `id` to fetch the most recent message
+        (convention).
+      operationId: getMessage
+      responses:
+        '200':
+          description: Full message detail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/message/{id}/raw:
+    parameters:
+      - $ref: '#/components/parameters/MessageID'
+    get:
+      tags: [messages]
+      summary: Get raw RFC822 source
+      description: |
+        Returns the full RFC822 source as `text/plain`. Pass `?dl=1` to receive a
+        `Content-Disposition: attachment` header for download in a browser.
+      operationId: getMessageRaw
+      parameters:
+        - name: dl
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Any non-empty value forces a download response.
+      responses:
+        '200':
+          description: RFC822 source.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/message/{id}/headers:
+    parameters:
+      - $ref: '#/components/parameters/MessageID'
+    get:
+      tags: [messages]
+      summary: Get message headers
+      description: |
+        Returns parsed headers as a `{ "Header-Name": ["value", ...] }` map,
+        alphabetized by name.
+      operationId: getMessageHeaders
+      responses:
+        '200':
+          description: Headers map.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                example:
+                  from: ["Sender <s@example.com>"]
+                  to: ["r@example.com"]
+                  subject: ["Welcome"]
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/message/{id}/part/{part_id}:
+    parameters:
+      - $ref: '#/components/parameters/MessageID'
+      - name: part_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: MIME part identifier (matches `part_id` in Attachment).
+    get:
+      tags: [messages]
+      summary: Download a message part
+      description: |
+        Returns attachment bytes with the original `Content-Type`. Used both for
+        downloadable attachments and for inline parts (e.g. `cid:` images).
+      operationId: getMessagePart
+      responses:
+        '200':
+          description: Raw attachment bytes.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ---- Per-message actions ---------------------------------------------
+
+  /api/v1/message/{id}/release:
+    parameters:
+      - $ref: '#/components/parameters/MessageID'
+    post:
+      tags: [messages]
+      summary: Release a message through the configured SMTP relay
+      description: |
+        Forwards the stored RFC822 source to the recipients in the `to` body field
+        through the configured generic SMTP relay (`/relay_connection`).
+
+        Returns 503 when no relay is configured. Distinct from `send_to_cloud`,
+        which targets Mailtrap's Send API.
+      operationId: releaseMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to]
+              properties:
+                to:
+                  type: array
+                  items:
+                    type: string
+                  description: One or more recipient addresses.
+              example:
+                to: ["external@example.com"]
+      responses:
+        '200':
+          description: '"ok" plain-text body.'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Empty `to` list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: SMTP relay rejected the message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: No SMTP relay configured.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/message/{id}/send_to_cloud:
+    parameters:
+      - $ref: '#/components/parameters/MessageID'
+    post:
+      tags: [messages]
+      summary: Forward a message to the connected Mailtrap cloud sandbox
+      description: |
+        **mailtrap-local extension.** Posts the stored message to the Mailtrap Sandbox
+        Send API at the sandbox configured via `/cloud_connection`. The message's
+        `category` (if any) is promoted to the top-level `category` field in the
+        Send API payload — same analytics dimension locally and in cloud.
+
+        Returns 503 when no cloud sandbox is connected.
+      operationId: sendMessageToCloud
+      responses:
+        '200':
+          description: '"ok" plain-text body.'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: Mailtrap Sandbox API returned an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: No cloud sandbox connected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ---- Cloud connection ------------------------------------------------
+
+  /api/v1/cloud_connection:
+    get:
+      tags: [cloud_connection]
+      summary: Read the cloud sandbox connection state
+      description: |
+        Returns the singleton cloud connection record (or a `connected: false`
+        stub when nothing is configured). The API token is **never** returned —
+        only its presence is reflected via `connected: true`.
+      operationId: getCloudConnection
+      responses:
+        '200':
+          description: Connection state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudConnectionState'
+    put:
+      tags: [cloud_connection]
+      summary: Configure the cloud sandbox connection
+      description: |
+        Creates or updates the singleton cloud connection. Pass the API token and
+        sandbox ID; toggle `mirror_enabled: true` to auto-forward every newly
+        ingested message to the sandbox.
+      operationId: updateCloudConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudConnectionInput'
+      responses:
+        '200':
+          description: Updated connection state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudConnectionState'
+        '422':
+          description: Validation failure (missing/invalid token, sandbox id, etc.).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [cloud_connection]
+      summary: Remove the cloud sandbox connection
+      operationId: deleteCloudConnection
+      responses:
+        '200':
+          description: Disconnected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudConnectionState'
+
+  # ---- Relay connection ------------------------------------------------
+
+  /api/v1/relay_connection:
+    get:
+      tags: [relay_connection]
+      summary: Read the SMTP relay connection state
+      description: |
+        Returns the singleton SMTP relay record (or a stub when nothing is
+        configured). The password is **never** returned — only its presence
+        is reflected via `connected: true`.
+      operationId: getRelayConnection
+      responses:
+        '200':
+          description: Relay state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelayConnectionState'
+    put:
+      tags: [relay_connection]
+      summary: Configure the SMTP relay
+      operationId: updateRelayConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RelayConnectionInput'
+      responses:
+        '200':
+          description: Updated relay state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelayConnectionState'
+        '422':
+          description: Validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [relay_connection]
+      summary: Remove the SMTP relay configuration
+      operationId: deleteRelayConnection
+      responses:
+        '200':
+          description: Disconnected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelayConnectionState'
+
+  # ---- Relay test ------------------------------------------------------
+
+  /api/v1/relay_connection/test:
+    post:
+      tags: [relay_connection]
+      summary: Probe SMTP relay reachability + auth
+      description: |
+        Opens a connection, runs STARTTLS / AUTH per the supplied
+        config, and closes cleanly. Sends no real mail. Used by the
+        relay-config dialog's "Send test" button. Empty `password`
+        falls back to the saved value (so the dialog can probe without
+        forcing the user to retype).
+      operationId: testRelayConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RelayConnectionInput'
+      responses:
+        '200':
+          description: Probe result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:      { type: boolean }
+                  message: { type: string }
+                  error:   { type: string }
+
+  # ---- Webhook connection ----------------------------------------------
+
+  /api/v1/webhook_connection:
+    get:
+      tags: [webhook_connection]
+      summary: Read the outbound webhook configuration
+      operationId: getWebhookConnection
+      responses:
+        '200':
+          description: Webhook configuration state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookConnectionState'
+    put:
+      tags: [webhook_connection]
+      summary: Configure the outbound webhook
+      operationId: updateWebhookConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookConnectionInput'
+      responses:
+        '200':
+          description: Updated webhook state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookConnectionState'
+        '422':
+          description: Validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [webhook_connection]
+      summary: Remove the webhook configuration
+      operationId: deleteWebhookConnection
+      responses:
+        '200':
+          description: Disconnected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookConnectionState'
+
+  /api/v1/webhook_connection/test:
+    post:
+      tags: [webhook_connection]
+      summary: Send a synthetic ping to the webhook URL
+      description: |
+        POSTs a fixed test payload (`Event: "test"`) to the supplied
+        URL with the same headers and HMAC signing scheme the real
+        delivery job uses. Empty `secret` falls back to the saved
+        value.
+      operationId: testWebhookConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookConnectionInput'
+      responses:
+        '200':
+          description: Probe result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:      { type: boolean }
+                  message: { type: string }
+                  error:   { type: string }
+
+  # ---- HTML Check ------------------------------------------------------
+
+  /api/v1/message/{id}/html_check:
+    parameters:
+      - $ref: '#/components/parameters/MessageID'
+    get:
+      tags: [messages]
+      summary: HTML email-client compatibility check
+      description: |
+        Runs a rule engine over the message HTML and returns issues
+        with caniemail.com client/version data plus market-share
+        weighted support stats. Cached per-message (HTML is immutable).
+
+        Status values:
+          - `success`            — report ready (see schema)
+          - `no_html`            — message has no HTML body
+          - `size_limit_exceeded` — HTML exceeds the size cap
+          - `error`              — validator hit an unexpected error
+      operationId: htmlCheck
+      responses:
+        '200':
+          description: Report (or status placeholder).
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  # ---- Internal ingest -------------------------------------------------
+
+  /api/v1/ingest:
+    post:
+      tags: [internal]
+      summary: '[internal] Receive a parsed message from the in-process SMTP server'
+      description: |
+        **Internal endpoint.** Consumed by the in-process SMTP server after
+        it parses an SMTP delivery with `enmime`. Also useful in tests as a
+        way to drive ingest without speaking SMTP. **Not intended for
+        third-party use** — wire format and validation may change between
+        releases.
+      operationId: ingestMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestPayload'
+      responses:
+        '201':
+          description: Message and any attachments persisted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        '422':
+          description: Validation failure — the entire transaction is rolled back.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+# =====================================================================
+# Reusable components
+# =====================================================================
+
+components:
+  parameters:
+    Start:
+      name: start
+      in: query
+      description: Pagination offset. Clamped to `[0, 1_000_000]`.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        default: 0
+    Limit:
+      name: limit
+      in: query
+      description: Page size. Clamped to `[1, 200]`. Default 50.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 200
+        default: 50
+    MessageID:
+      name: id
+      in: path
+      required: true
+      description: |
+        Message database ID, or the literal string `latest` for the newest message.
+      schema:
+        type: string
+
+  responses:
+    NotFound:
+      description: Message not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+
+    Address:
+      type: object
+      description: Email address with optional display name.
+      properties:
+        name:
+          type: string
+          description: Display name (may be empty).
+        address:
+          type: string
+          format: email
+      example:
+        name: Sender
+        address: sender@example.com
+
+    AttachmentSummary:
+      type: object
+      description: Attachment metadata. Bytes are fetched via `/message/{id}/part/{part_id}`. Matches `Attachment` (response shape).
+      properties:
+        part_id:
+          type: string
+        file_name:
+          type: string
+        content_type:
+          type: string
+        content_id:
+          type: string
+        size:
+          type: integer
+          format: uint64
+        checksums:
+          type: object
+          properties:
+            md5: { type: string }
+            sha1: { type: string }
+            sha256: { type: string }
+
+    ListUnsubscribe:
+      type: object
+      description: |
+        Parsed `List-Unsubscribe` / `List-Unsubscribe-Post` headers, when present.
+        Empty stub when the message has none.
+      properties:
+        header:
+          type: string
+        links:
+          type: array
+          items:
+            type: string
+        errors:
+          type: string
+        header_post:
+          type: string
+
+    MessageSummary:
+      type: object
+      description: |
+        List-row shape returned by `GET /messages`.
+
+        **Note on `tags`:** the array is always 0 or 1 element (the message's
+        category). mailtrap-local stores a single category per message — see
+        the API description for rationale.
+      properties:
+        id:
+          type: string
+          description: Database ID.
+        message_id:
+          type: string
+          description: RFC 5322 Message-ID header.
+        read:
+          type: boolean
+        from:
+          $ref: '#/components/schemas/Address'
+        to:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        cc:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        bcc:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        reply_to:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        subject:
+          type: string
+        created:
+          type: string
+          format: date-time
+          description: Received RFC3339Nano date & time.
+        username:
+          type: string
+          description: Always empty in mailtrap-local — there is no SMTP AUTH (single-user local tool).
+        tags:
+          type: array
+          maxItems: 1
+          items:
+            type: string
+          description: 0- or 1-element array containing the message's category .
+        size:
+          type: integer
+          format: uint64
+        attachments:
+          type: integer
+          format: uint64
+          description: Count of non-inline attachments.
+        snippet:
+          type: string
+          description: Up to 250 characters of the text body.
+
+    Message:
+      type: object
+      description: |
+        Full message detail returned by `GET /message/{id}`. Includes two
+        mailtrap-local extensions documented at the bottom (`envelope_from`
+        and `envelope_to`); clients should ignore unknown keys.
+      properties:
+        id:
+          type: string
+        message_id:
+          type: string
+        from:
+          $ref: '#/components/schemas/Address'
+        to:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        cc:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        bcc:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        reply_to:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        return_path:
+          type: string
+        subject:
+          type: string
+        list_unsubscribe:
+          $ref: '#/components/schemas/ListUnsubscribe'
+        date:
+          type: string
+          format: date-time
+          description: Header `Date` if parseable, otherwise ingest time.
+        tags:
+          type: array
+          maxItems: 1
+          items:
+            type: string
+          description: 0- or 1-element array containing the message's category .
+        username:
+          type: string
+        text:
+          type: string
+        html:
+          type: string
+        size:
+          type: integer
+          format: uint64
+        inline:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachmentSummary'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachmentSummary'
+        envelope_from:
+          type: string
+          description: '**mailtrap-local extension.** SMTP `MAIL FROM` envelope sender. Surfaced in the Tech Info tab.'
+        envelope_to:
+          type: array
+          items:
+            type: string
+          description: '**mailtrap-local extension.** SMTP `RCPT TO` envelope recipients.'
+
+    MessagesResponse:
+      type: object
+      description: Envelope returned by `GET /messages`.
+      properties:
+        total:
+          type: integer
+          format: int64
+          description: Total messages matching the current filter (e.g. `?category=`).
+        unread:
+          type: integer
+          format: int64
+        count:
+          type: integer
+          format: int64
+          description: Number of summaries in this page.
+        messages_count:
+          type: integer
+          format: int64
+          description: Mirror of `total` .
+        messages_unread:
+          type: integer
+          format: int64
+          description: Mirror of `unread` .
+        start:
+          type: integer
+          format: int64
+        tags:
+          type: array
+          items:
+            type: string
+          description: |
+            Distinct **categories** across the *unfiltered* sandbox (named
+            `tags` in the response for  wire-format compatibility).
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageSummary'
+
+    CloudConnectionInput:
+      type: object
+      required: [api_token, sandbox_id]
+      properties:
+        api_token:
+          type: string
+          description: Mailtrap API token. Stored locally; never returned in responses.
+        sandbox_id:
+          type: integer
+          description: Numeric Sandbox ID from the Mailtrap dashboard.
+        mirror_enabled:
+          type: boolean
+          default: false
+          description: |
+            When true, every newly ingested message is auto-forwarded to the
+            cloud sandbox via a background job (best-effort, retries on transient
+            failure).
+
+    CloudConnectionState:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        sandbox_id:
+          type: integer
+          nullable: true
+        mirror_enabled:
+          type: boolean
+
+    RelayConnectionInput:
+      type: object
+      required: [host]
+      description: |
+        Generic outbound SMTP relay configuration. `auth=plain` and `tls=auto` are
+        sensible defaults for most modern providers (`auto` upgrades to STARTTLS
+        when the server advertises it).
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+          default: 587
+        username:
+          type: string
+          nullable: true
+        password:
+          type: string
+          nullable: true
+          description: Stored locally; never returned in responses.
+        auth:
+          type: string
+          enum: [plain, login, none]
+          default: plain
+        tls:
+          type: string
+          enum: [auto, always, never]
+          default: auto
+        auto_relay_enabled:
+          type: boolean
+          default: false
+          description: When true, every newly ingested message is auto-relayed.
+
+    RelayConnectionState:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        host:
+          type: string
+          nullable: true
+        port:
+          type: integer
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        auth:
+          type: string
+          enum: [plain, login, none]
+          nullable: true
+        tls:
+          type: string
+          enum: [auto, always, never]
+          nullable: true
+        auto_relay_enabled:
+          type: boolean
+
+    WebhookConnectionInput:
+      type: object
+      required: [url]
+      description: |
+        Outbound webhook configuration. POSTs a JSON body shaped like
+        `GET /message/:id` to `url` for every newly captured message.
+        When `secret` is set, requests carry an HMAC-SHA256 signature
+        in `X-Mailtrap-Local-Signature: sha256=<hex>` (verify by
+        recomputing over the raw body).
+      properties:
+        url:
+          type: string
+          format: uri
+        secret:
+          type: string
+          nullable: true
+          description: Stored locally; never returned in responses.
+        enabled:
+          type: boolean
+          default: false
+          description: Master switch. When false, no POSTs fire even if `url` is set.
+
+    WebhookConnectionState:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        url:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        secret_hint:
+          type: string
+          nullable: true
+          description: Last 2 characters of the saved secret, prefixed with bullets — `••••XX`.
+
+    IngestPayload:
+      type: object
+      description: |
+        **Internal contract** between the in-process SMTP server and the
+        ingest endpoint. Wire format may change between releases —
+        third-party SMTP clients should connect to port 3535 and let the
+        server handle the parse.
+      properties:
+        smtp_from:
+          type: string
+        smtp_to:
+          type: array
+          items:
+            type: string
+        message_id:
+          type: string
+        from:
+          $ref: '#/components/schemas/IngestAddress'
+        to:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngestAddress'
+        cc:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngestAddress'
+        bcc:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngestAddress'
+        reply_to:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngestAddress'
+        return_path:
+          type: string
+        subject:
+          type: string
+        date:
+          type: string
+          format: date-time
+        category:
+          type: string
+          description: Extracted from `X-MT-Category` (preferred) or `Category` headers at SMTP ingest.
+        text:
+          type: string
+        html:
+          type: string
+        raw:
+          type: string
+          format: byte
+          description: Base64-encoded full RFC822 source.
+        size:
+          type: integer
+        snippet:
+          type: string
+        inlines:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngestPart'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngestPart'
+
+    IngestAddress:
+      type: object
+      description: Internal lowercase-key address shape used by the SMTP → ingest handoff.
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+
+    IngestPart:
+      type: object
+      description: Internal MIME part shape used by the SMTP → ingest handoff.
+      properties:
+        part_id:
+          type: string
+        filename:
+          type: string
+        content_type:
+          type: string
+        content_id:
+          type: string
+        size:
+          type: integer
+        content:
+          type: string
+          format: byte
+          description: Base64-encoded part bytes.
+
+    Error:
+      type: object
+      description: Plain JSON error envelope used across the API.
+      properties:
+        error:
+          type: string
+      example:
+        error: Message not found

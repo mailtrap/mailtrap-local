@@ -1,0 +1,34 @@
+---
+family:
+  gmail: Gmail
+  outlook: Outlook
+  yahoo: Yahoo! Mail
+  apple-mail: Apple Mail
+  aol: AOL
+  thunderbird: Mozilla Thunderbird
+  microsoft: Microsoft
+  samsung-email: Samsung Email
+  sfr: SFR
+  orange: Orange
+  protonmail: ProtonMail
+  hey: HEY
+  mail-ru: Mail.ru
+  fastmail: Fastmail
+  laposte: LaPoste.net
+  t-online-de: T-online.de
+  free-fr: Free.fr
+  gmx: GMX
+  web-de: WEB.DE
+  ionos-1and1: 1&1
+  rainloop: RainLoop
+platform:
+  desktop-app: Desktop
+  desktop-webmail: Desktop Webmail
+  mobile-webmail: Mobile Webmail
+  webmail: Webmail
+  ios: iOS
+  android: Android
+  windows: Windows
+  macos: macOS
+  windows-mail: Windows Mail
+  outlook-com: Outlook.com

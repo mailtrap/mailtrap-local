@@ -1,0 +1,217 @@
+# goreleaser config — produces release artifacts for mailtrap-local.
+#
+# Channels published:
+#   1. GitHub Releases    — .tar.gz binary archives (darwin/linux × amd64/arm64)
+#   2. Homebrew tap       — Formula/mailtrap-local.rb in mailtrap/homebrew-local
+#   3. GHCR               — ghcr.io/mailtrap/mailtrap-local:{version,latest}
+#   4. Docker Hub         — mailtrap/mailtrap-local:{version,latest}
+#
+# Repos are PRIVATE during the closed-tester phase. The releaser needs:
+#   - GITHUB_TOKEN with write to mailtrap/mailtrap-local + mailtrap/homebrew-local
+#   - DOCKERHUB_USERNAME + DOCKERHUB_TOKEN for the docker push
+#   - ghcr.io auth via GITHUB_TOKEN (free, no extra secret)
+#
+# Usage:
+#   goreleaser release --snapshot --clean        # local dry-run, no publish
+#   GITHUB_TOKEN=... DOCKERHUB_TOKEN=... \       # real release on a tag
+#     goreleaser release --clean
+#
+# Tag scheme: v0.1.0, v0.1.1, v1.0.0, … (SemVer; the leading `v` is required).
+
+version: 2
+
+# `before` runs once per release and stages embed inputs next to main.go,
+# because //go:embed cannot traverse `..`. Without this, every cross-build
+# in `builds:` would embed a stale frontend.
+before:
+  hooks:
+    - go mod download
+    # Frontend build → cmd/mailtrap-local/dist
+    - sh -c "cd frontend && npm ci --no-audit --no-fund && npm run build"
+    - sh -c "rm -rf cmd/mailtrap-local/dist && cp -R frontend/dist cmd/mailtrap-local/dist"
+    # OpenAPI spec → cmd/mailtrap-local/openapi.yaml
+    - sh -c "cp docs/api/openapi.yaml cmd/mailtrap-local/openapi.yaml"
+
+builds:
+  - id: mailtrap-local
+    main: ./cmd/mailtrap-local
+    binary: mailtrap-local
+    env:
+      # modernc.org/sqlite is pure-Go; no CGo means trivial cross-compile
+      # and a static binary (works inside distroless).
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .Commit }}
+      - -X main.buildDate={{ .Date }}
+
+archives:
+  - id: mailtrap-local
+    ids: [mailtrap-local]
+    # Standard Go-tool layout: mailtrap-local_{version}_{os}_{arch}.tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - LICENSE
+      - README.md
+    # `format` defaults to tar.gz on Unix — kept implicit so future
+    # Windows builds (when added) get .zip without a override.
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  # Snapshot builds (dry-run) get a synthetic version like
+  # 0.1.0-next-SHA so they don't collide with a real tag.
+  version_template: "{{ incpatch .Version }}-next-{{ .ShortCommit }}"
+
+changelog:
+  # Curated changelog lives in mailtrap-local-docs/CHANGELOG.md (private);
+  # the release notes here are just the commit log of what changed since
+  # the last tag — useful for testers triaging regressions.
+  sort: asc
+  use: git
+  groups:
+    - title: Features
+      regexp: '^(feat|add)(\(.+\))?:'
+      order: 0
+    - title: Fixes
+      regexp: '^fix(\(.+\))?:'
+      order: 1
+    - title: Other
+      order: 99
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+
+release:
+  github:
+    owner: mailtrap
+    name: mailtrap-local
+  # Closed-tester phase: every release is a draft until manually promoted
+  # so testers see it but the public-facing "Latest release" badge stays
+  # blank until the co-founder green-lights publication.
+  draft: true
+  prerelease: auto
+  header: |
+    ## mailtrap-local {{ .Tag }}
+
+    Single-binary local email sandbox + catcher — SMTP + Web UI + JSON
+    API in one process. See `README.md` for install instructions.
+  footer: |
+    ---
+    **Channels:**
+    - Homebrew: `brew install mailtrap/local/mailtrap-local`
+    - Docker:   `docker run -p 3535:3535 -p 3550:3550 ghcr.io/mailtrap/mailtrap-local:{{ .Tag }}`
+    - Binary:   download the platform tarball above and `tar xzf`.
+
+    On macOS, an unsigned binary needs a one-time Gatekeeper bypass:
+    `xattr -d com.apple.quarantine ./mailtrap-local`
+
+# ---------------------------------------------------------------------
+# Homebrew tap — single formula, written into a separate repo on every
+# tagged release. Keeps the formula's `url` + `sha256` in sync with the
+# tarballs goreleaser just produced.
+# ---------------------------------------------------------------------
+brews:
+  - name: mailtrap-local
+    repository:
+      owner: mailtrap
+      name: homebrew-local
+      branch: main
+      # GH PAT with `contents: write` on mailtrap/homebrew-local. Must be
+      # different from GITHUB_TOKEN (which is scoped to the calling repo
+      # only and can't push cross-repo).
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/mailtrap/mailtrap-local"
+    description: "Local email sandbox + catcher: SMTP + Web UI + JSON API in one binary"
+    license: "MIT"
+    install: |
+      bin.install "mailtrap-local"
+      # Sendmail-replacement symlink — same binary, dispatched on argv[0]
+      # basename (see cmd/mailtrap-local/sendmail.go).
+      bin.install_symlink "mailtrap-local" => "mailtrap-sendmail"
+    service: |
+      run [opt_bin/"mailtrap-local",
+           "--http-listen", "127.0.0.1:3550",
+           "--smtp-listen", "127.0.0.1:3535",
+           "--db", "#{var}/mailtrap-local/db.sqlite3"]
+      keep_alive true
+      log_path "#{var}/log/mailtrap-local.log"
+      error_log_path "#{var}/log/mailtrap-local.log"
+    test: |
+      assert_match version.to_s, shell_output("#{bin}/mailtrap-local --version")
+
+# ---------------------------------------------------------------------
+# Docker images — built once per arch, then combined into a manifest
+# list so `docker pull` picks the right binary automatically.
+# ---------------------------------------------------------------------
+dockers:
+  - id: ghcr-amd64
+    image_templates:
+      - "ghcr.io/mailtrap/mailtrap-local:{{ .Version }}-amd64"
+      - "docker.io/mailtrap/mailtrap-local:{{ .Version }}-amd64"
+    use: buildx
+    goos: linux
+    goarch: amd64
+    dockerfile: Dockerfile.goreleaser
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title=mailtrap-local"
+      - "--label=org.opencontainers.image.description=Local email sandbox + catcher: SMTP + Web UI + JSON API in one binary"
+      - "--label=org.opencontainers.image.url=https://github.com/mailtrap/mailtrap-local"
+      - "--label=org.opencontainers.image.source=https://github.com/mailtrap/mailtrap-local"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.revision={{ .Commit }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+  - id: ghcr-arm64
+    image_templates:
+      - "ghcr.io/mailtrap/mailtrap-local:{{ .Version }}-arm64"
+      - "docker.io/mailtrap/mailtrap-local:{{ .Version }}-arm64"
+    use: buildx
+    goos: linux
+    goarch: arm64
+    dockerfile: Dockerfile.goreleaser
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.title=mailtrap-local"
+      - "--label=org.opencontainers.image.description=Local email sandbox + catcher: SMTP + Web UI + JSON API in one binary"
+      - "--label=org.opencontainers.image.url=https://github.com/mailtrap/mailtrap-local"
+      - "--label=org.opencontainers.image.source=https://github.com/mailtrap/mailtrap-local"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.revision={{ .Commit }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+
+docker_manifests:
+  - name_template: "ghcr.io/mailtrap/mailtrap-local:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/mailtrap/mailtrap-local:{{ .Version }}-amd64"
+      - "ghcr.io/mailtrap/mailtrap-local:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/mailtrap/mailtrap-local:latest"
+    image_templates:
+      - "ghcr.io/mailtrap/mailtrap-local:{{ .Version }}-amd64"
+      - "ghcr.io/mailtrap/mailtrap-local:{{ .Version }}-arm64"
+  - name_template: "docker.io/mailtrap/mailtrap-local:{{ .Version }}"
+    image_templates:
+      - "docker.io/mailtrap/mailtrap-local:{{ .Version }}-amd64"
+      - "docker.io/mailtrap/mailtrap-local:{{ .Version }}-arm64"
+  - name_template: "docker.io/mailtrap/mailtrap-local:latest"
+    image_templates:
+      - "docker.io/mailtrap/mailtrap-local:{{ .Version }}-amd64"
+      - "docker.io/mailtrap/mailtrap-local:{{ .Version }}-arm64"
