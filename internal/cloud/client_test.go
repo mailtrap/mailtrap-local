@@ -19,15 +19,15 @@ import (
 // headers, and body Mailtrap's Send API would have received.
 type stubServer struct {
 	*httptest.Server
-	mu          func() // unused placeholder; we sync via channels not locks
-	lastMethod  string
-	lastPath    string
-	lastAuth    string
-	lastCT      string
-	lastAccept  string
-	lastBody    []byte
-	statusCode  int    // response code; default 200
-	respBody    string // response body; default `{}`
+	mu         func() // unused placeholder; we sync via channels not locks
+	lastMethod string
+	lastPath   string
+	lastAuth   string
+	lastCT     string
+	lastAccept string
+	lastBody   []byte
+	statusCode int    // response code; default 200
+	respBody   string // response body; default `{}`
 }
 
 func newStub(t *testing.T) *stubServer {
