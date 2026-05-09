@@ -21,13 +21,18 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/store"
 )
 
-const endpoint = "https://sandbox.api.mailtrap.io"
+const defaultEndpoint = "https://sandbox.api.mailtrap.io"
 
 // Client targets a specific sandbox via API token. One Client per
 // connected sandbox; built fresh each call site since auth is cheap.
+//
+// BaseURL defaults to the production sandbox endpoint when zero. Tests
+// override it by pointing at an httptest.Server; future staging-env
+// support could use it the same way.
 type Client struct {
 	APIToken  string
 	SandboxID int64
+	BaseURL   string
 	HTTP      *http.Client
 }
 
@@ -40,6 +45,13 @@ func NewClient(apiToken string, sandboxID int64) *Client {
 	}
 }
 
+func (c *Client) base() string {
+	if c.BaseURL != "" {
+		return c.BaseURL
+	}
+	return defaultEndpoint
+}
+
 // Send forwards a Message + its attachments to the connected sandbox.
 // Returns nil on 2xx, ErrPermanent for 4xx (don't retry), or a generic
 // error for 5xx / network blips (do retry).
@@ -50,7 +62,7 @@ func (c *Client) Send(ctx context.Context, m *store.Message, inline, attachments
 		return fmt.Errorf("marshal: %w", err)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		fmt.Sprintf("%s/api/send/%d", endpoint, c.SandboxID),
+		fmt.Sprintf("%s/api/send/%d", c.base(), c.SandboxID),
 		bytes.NewReader(raw))
 	if err != nil {
 		return err
