@@ -146,12 +146,17 @@ const list = [
   '[&_.category]:rounded-full [&_.category]:bg-accent-medium [&_.category]:px-2 [&_.category]:py-0.5',
   '[&_.category]:text-[11px] [&_.category]:font-semibold [&_.category]:leading-[1.4] [&_.category]:text-accent',
   '[&_a[data-active=true]_.category]:bg-white/20 [&_a[data-active=true]_.category]:text-fg',
-  // Active row — wins over read-state colours.
+  // Active row — must win over read-state colours. The read-state and
+  // active-state arbitrary variants have identical specificity, and
+  // Tailwind v4 emits them in attribute-name alphabetical order, so
+  // [data-active] gets emitted BEFORE [data-read] and would otherwise
+  // lose the source-order tiebreak. The `!` modifier promotes these
+  // utilities to !important to settle the conflict.
   '[&_a[data-active=true]]:!bg-accent',
   '[&_a[data-active=true]:hover]:!bg-accent',
-  '[&_a[data-active=true]_.subject]:font-semibold [&_a[data-active=true]_.subject]:text-fg',
-  '[&_a[data-active=true]_.recipient]:font-semibold [&_a[data-active=true]_.recipient]:text-fg',
-  '[&_a[data-active=true]_.time]:font-semibold [&_a[data-active=true]_.time]:text-fg',
+  '[&_a[data-active=true]_.subject]:!font-semibold [&_a[data-active=true]_.subject]:!text-fg',
+  '[&_a[data-active=true]_.recipient]:!font-semibold [&_a[data-active=true]_.recipient]:!text-fg',
+  '[&_a[data-active=true]_.time]:!font-semibold [&_a[data-active=true]_.time]:!text-fg',
 ].join(' ')
 
 const emptyState = [
