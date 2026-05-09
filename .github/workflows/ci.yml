@@ -71,6 +71,11 @@ jobs:
 
       - run: npm run lint
 
+      # Vitest unit tests (jsdom + @testing-library). Covers the cable
+      # module, the messages-channel hook (incl. the defensive-fix
+      # regression test), Toggle, and the API error-extraction helper.
+      - run: npm test
+
   build:
     # The build job is the integration test for the release pipeline —
     # it runs the same `scripts/build.sh` goreleaser invokes via its

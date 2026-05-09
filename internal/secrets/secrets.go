@@ -115,9 +115,9 @@ func IsEncrypted(stored string) bool {
 // DefaultKeyPath returns the file the binary auto-generates a key at on
 // first use, unless overridden by $MAILTRAP_LOCAL_SECRET_KEY_FILE.
 //
-//   $MAILTRAP_LOCAL_SECRET_KEY_FILE                 — explicit override
-//   $XDG_CONFIG_HOME/mailtrap-local/secret.key      — XDG-respecting default
-//   ~/.config/mailtrap-local/secret.key             — fallback
+//	$MAILTRAP_LOCAL_SECRET_KEY_FILE                 — explicit override
+//	$XDG_CONFIG_HOME/mailtrap-local/secret.key      — XDG-respecting default
+//	~/.config/mailtrap-local/secret.key             — fallback
 func DefaultKeyPath() (string, error) {
 	if p := os.Getenv("MAILTRAP_LOCAL_SECRET_KEY_FILE"); p != "" {
 		return p, nil
