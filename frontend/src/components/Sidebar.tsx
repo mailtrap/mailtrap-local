@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useMatch, useNavigate } from 'react-router-dom'
-import { css } from '@linaria/core'
 import {
   SearchIcon,
   MarkReadIcon,
@@ -26,373 +25,139 @@ import { useRelayConnection } from '../hooks/useRelayConnection'
 import { useWebhookConnection } from '../hooks/useWebhookConnection'
 import { useMessagesChannel } from '../hooks/useMessagesChannel'
 import { IconButton } from './IconButton'
-import {
-  accent,
-  accentBgSoft,
-  bg,
-  danger,
-  dangerBgSoft,
-  dangerBorderSoft,
-  hover,
-  raised,
-  success,
-  text,
-  textMuted,
-} from '../styles/tokens'
 import { extractApiError } from '../api/client'
 
-const sidebar = css`
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid #212d3c;
-  min-height: 0; /* so the list can scroll */
-`
+const sidebar = 'flex min-h-0 flex-col border-r border-border-base'
 
-const toolbar = css`
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto auto auto auto auto;
-  gap: 6px;
-  padding: 12px;
-  border-bottom: 1px solid #212d3c;
-  align-items: center;
-  /* Pin row height so the list below doesn't jump when the search input
-     leaves the grid (position: absolute) on focus and the row shrinks to
-     the IconButton height. 34px = input height (font 14 + padding 6+6 + borders). */
-  min-height: 58px;
-`
+// Pin the toolbar row at 58px so the list below doesn't jump when the
+// search input bumps into position: absolute on focus.
+const toolbar = [
+  'relative grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-1.5',
+  'min-h-[58px] border-b border-border-base p-3',
+].join(' ')
 
-const footer = css`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-top: 1px solid #212d3c;
-  background: #131e2b;
+const footer = [
+  'flex items-center justify-between border-t border-border-base bg-surface-base px-3 py-2.5',
+  '[&_.brand]:inline-flex [&_.brand]:items-center [&_.brand]:gap-2 [&_.brand]:text-fg [&_.brand]:no-underline [&_.brand]:text-[13px] [&_.brand]:font-semibold [&_.brand]:tracking-[0.01em] [&_.brand]:opacity-95',
+  '[&_.brand:hover]:opacity-100',
+  '[&_.brand_img]:block [&_.brand_img]:h-7 [&_.brand_img]:w-auto',
+].join(' ')
 
-  .brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: #fbfcfc;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    opacity: 0.95;
-    &:hover {
-      opacity: 1;
-    }
-  }
-  .brand img {
-    height: 28px;
-    width: auto;
-    display: block;
-  }
-`
+// Search input + its expanded "cover the toolbar" mode + the inline
+// clear button. data-expanded=true positions the wrapper absolutely
+// over the rest of the toolbar.
+const searchWrap = [
+  'relative',
+  // Idle layout
+  '[&_input]:w-full [&_input]:rounded-[7px] [&_input]:border [&_input]:border-border-base',
+  '[&_input]:bg-surface-base [&_input]:py-1.5 [&_input]:pl-2.5 [&_input]:pr-8',
+  '[&_input]:text-sm [&_input]:text-fg [&_input]:outline-none',
+  '[&_input::placeholder]:text-fg-muted',
+  '[&_input:focus]:border-accent',
+  // Magnifier (left/center icon decoration)
+  '[&_.icon]:pointer-events-none [&_.icon]:absolute [&_.icon]:right-2.5 [&_.icon]:top-1/2 [&_.icon]:-translate-y-1/2 [&_.icon]:text-fg',
+  // Expanded — cover the icon row to the right.
+  'data-[expanded=true]:absolute data-[expanded=true]:left-3 data-[expanded=true]:right-3 data-[expanded=true]:top-3 data-[expanded=true]:bottom-3 data-[expanded=true]:z-[2]',
+  '[&[data-expanded=true]_.icon]:hidden',
+  '[&[data-expanded=true]_input]:pr-9 [&[data-expanded=true]_input]:bg-surface-base',
+  // Clear (×) button
+  '[&_.clear]:absolute [&_.clear]:right-1.5 [&_.clear]:top-1/2 [&_.clear]:-translate-y-1/2',
+  '[&_.clear]:inline-flex [&_.clear]:items-center [&_.clear]:justify-center',
+  '[&_.clear]:h-6 [&_.clear]:w-6 [&_.clear]:rounded',
+  '[&_.clear]:cursor-pointer [&_.clear]:text-fg-icon',
+  '[&_.clear:hover]:bg-accent-soft [&_.clear:hover]:text-fg',
+].join(' ')
 
-const searchWrap = css`
-  position: relative;
+// Status badge rendered inside the cloud / relay IconButtons. data-on
+// drives the colour (green if connected, muted if not).
+const statusBadge = [
+  'pointer-events-none absolute right-px bottom-px',
+  'inline-flex h-2.5 w-2.5 items-center justify-center rounded-full',
+  'border-2 border-surface-base text-[9px] font-bold leading-none text-fg',
+  'data-[on=true]:bg-success data-[on=false]:bg-fg-muted',
+].join(' ')
 
-  .icon {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #fbfcfc;
-    pointer-events: none;
-  }
-  input {
-    width: 100%;
-    background: #131e2b;
-    border: 1px solid #212d3c;
-    border-radius: 7px;
-    color: #fbfcfc;
-    font: inherit;
-    font-size: 14px;
-    padding: 6px 30px 6px 10px;
-    outline: none;
-    &:focus {
-      border-color: #4c83ee;
-    }
-    &::placeholder {
-      color: #687a91;
-    }
-  }
+const scroll = 'min-h-0 flex-1 overflow-y-auto'
 
-  /* When expanded, cover the toolbar icons to the right. The clear × takes
-     the icon's slot, so hide the magnifier to avoid overlap. */
-  &[data-expanded='true'] {
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    top: 12px;
-    bottom: 12px;
-    z-index: 2;
-  }
-  &[data-expanded='true'] .icon {
-    display: none;
-  }
-  &[data-expanded='true'] input {
-    padding-right: 36px;
-    background: #131e2b;
-  }
+// Inline confirmation strip — replaces the native confirm() for
+// destructive sidebar actions (currently "delete all").
+const promptBar = [
+  'flex items-center gap-2 border-b border-surface-hover bg-surface-raised',
+  'px-3 py-2.5 text-[13px] text-fg',
+  '[&_span]:flex-1 [&_span]:min-w-0 [&_span]:overflow-hidden [&_span]:text-ellipsis [&_span]:whitespace-nowrap',
+].join(' ')
 
-  .clear {
-    all: unset;
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    color: #8b9aae;
-    cursor: pointer;
-  }
-  .clear:hover {
-    color: #fbfcfc;
-    background: rgba(76, 131, 238, 0.08);
-  }
-`
+const promptBtnBase = [
+  'cursor-pointer rounded-md border border-transparent px-3 py-1 text-xs font-semibold',
+  'disabled:cursor-not-allowed disabled:opacity-50',
+].join(' ')
 
+const promptBtnDanger = [
+  promptBtnBase,
+  'border-danger text-danger',
+  'hover:bg-danger-soft',
+].join(' ')
 
-/* Status badge rendered inside the cloud IconButton. */
-const statusBadge = css`
-  position: absolute;
-  right: 1px;
-  bottom: 1px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid ${bg};
-  pointer-events: none;
-  font-size: 9px;
-  line-height: 1;
-  color: ${text};
-  font-weight: 700;
+const promptBtnOutline = [
+  promptBtnBase,
+  'border-accent text-accent',
+  'hover:bg-accent-soft',
+].join(' ')
 
-  &[data-on='true'] {
-    background: ${success};
-  }
-  &[data-on='false'] {
-    background: ${textMuted};
-  }
-`
+// Dismissable error strip for failed sidebar actions.
+const errorBar = [
+  'flex items-center gap-2 border-b border-danger-border bg-danger-soft',
+  'px-3 py-2 text-xs leading-[1.4] text-danger',
+  '[&_span]:flex-1 [&_span]:min-w-0',
+].join(' ')
 
-const scroll = css`
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-`
+const errorDismissBtn = [
+  'inline-flex h-[18px] w-[18px] cursor-pointer items-center justify-center',
+  'rounded text-danger',
+  'hover:bg-danger-border',
+].join(' ')
 
-/* Inline confirmation strip — replaces the native confirm() for destructive
-   sidebar actions (currently "delete all"). Sits between the toolbar and
-   the message list. */
-const promptBar = css`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid ${hover};
-  background: ${raised};
-  font-size: 13px;
-  color: ${text};
+// Message-row list. Each row is a 2-col / 2-row grid:
+//   col1 row1: subject  · col2 row1: time
+//   col1 row2: recipient · col2 row2: category badge
+const list = [
+  'list-none p-0 m-0',
+  '[&_li]:border-b [&_li]:border-border-base',
+  '[&_a]:grid [&_a]:grid-cols-[1fr_auto] [&_a]:grid-rows-[auto_auto] [&_a]:gap-x-3 [&_a]:gap-y-0.5',
+  '[&_a]:px-4 [&_a]:py-3 [&_a]:text-inherit [&_a]:no-underline',
+  '[&_a]:bg-surface-raised [&_a]:transition-[background-color] [&_a]:duration-150',
+  '[&_a:hover]:bg-surface-hover',
+  // Read state — blends with page background until hovered.
+  '[&_a[data-read=true]]:bg-surface-base',
+  '[&_a[data-read=true]:hover]:bg-surface-hover',
+  // Subject
+  '[&_.subject]:col-start-1 [&_.subject]:overflow-hidden [&_.subject]:text-ellipsis [&_.subject]:whitespace-nowrap',
+  '[&_.subject]:font-semibold [&_.subject]:text-fg',
+  '[&_a[data-read=true]_.subject]:font-normal [&_a[data-read=true]_.subject]:text-fg-muted',
+  // Time
+  '[&_.time]:col-start-2 [&_.time]:row-start-1 [&_.time]:justify-self-end',
+  '[&_.time]:whitespace-nowrap [&_.time]:text-right [&_.time]:text-[13px] [&_.time]:text-fg-muted',
+  // Recipient
+  '[&_.recipient]:col-start-1 [&_.recipient]:overflow-hidden [&_.recipient]:text-ellipsis [&_.recipient]:whitespace-nowrap',
+  '[&_.recipient]:text-[13px] [&_.recipient]:text-fg-muted',
+  // Category pill
+  '[&_.category]:col-start-2 [&_.category]:row-start-2 [&_.category]:self-center [&_.category]:justify-self-end',
+  '[&_.category]:inline-block [&_.category]:max-w-[140px] [&_.category]:overflow-hidden [&_.category]:text-ellipsis [&_.category]:whitespace-nowrap',
+  '[&_.category]:rounded-full [&_.category]:bg-accent-medium [&_.category]:px-2 [&_.category]:py-0.5',
+  '[&_.category]:text-[11px] [&_.category]:font-semibold [&_.category]:leading-[1.4] [&_.category]:text-accent',
+  '[&_a[data-active=true]_.category]:bg-white/20 [&_a[data-active=true]_.category]:text-fg',
+  // Active row — wins over read-state colours.
+  '[&_a[data-active=true]]:!bg-accent',
+  '[&_a[data-active=true]:hover]:!bg-accent',
+  '[&_a[data-active=true]_.subject]:font-semibold [&_a[data-active=true]_.subject]:text-fg',
+  '[&_a[data-active=true]_.recipient]:font-semibold [&_a[data-active=true]_.recipient]:text-fg',
+  '[&_a[data-active=true]_.time]:font-semibold [&_a[data-active=true]_.time]:text-fg',
+].join(' ')
 
-  span {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-`
-
-const promptBtnBase = `
-  all: unset;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid transparent;
-  &[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`
-
-const promptBtnDanger = css`
-  ${promptBtnBase}
-  color: ${danger};
-  border-color: ${danger};
-  &:hover {
-    background: ${dangerBgSoft};
-  }
-`
-
-const promptBtnOutline = css`
-  ${promptBtnBase}
-  color: ${accent};
-  border-color: ${accent};
-  &:hover {
-    background: ${accentBgSoft};
-  }
-`
-
-/* Dismissable error strip for failed sidebar actions. */
-const errorBar = css`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid ${dangerBorderSoft};
-  background: ${dangerBgSoft};
-  font-size: 12px;
-  color: ${danger};
-  line-height: 1.4;
-
-  span {
-    flex: 1;
-    min-width: 0;
-  }
-`
-
-const errorDismissBtn = css`
-  all: unset;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  color: ${danger};
-  cursor: pointer;
-  &:hover {
-    background: ${dangerBorderSoft};
-  }
-`
-
-const list = css`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
-  li {
-    border-bottom: 1px solid #212d3c;
-  }
-
-  a {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto;
-    gap: 2px 12px;
-    padding: 12px 16px;
-    color: inherit;
-    text-decoration: none;
-    background: #172230; /* unread: raised */
-    transition: background-color 0.15s linear;
-    &:hover {
-      background: #212d3c;
-    }
-  }
-
-  a[data-read='true'] {
-    background: #131e2b; /* read: blends with page */
-  }
-  a[data-read='true']:hover {
-    background: #212d3c;
-  }
-
-  .subject {
-    font-weight: 600;
-    color: #fbfcfc;
-    grid-column: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  a[data-read='true'] .subject {
-    font-weight: 400;
-    color: #687a91;
-  }
-
-  .time {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
-    text-align: right;
-    color: #687a91;
-    font-size: 13px;
-    white-space: nowrap;
-  }
-
-  .recipient {
-    grid-column: 1;
-    color: #687a91;
-    font-size: 13px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .category {
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: end;
-    align-self: center;
-    display: inline-block;
-    max-width: 140px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: rgba(76, 131, 238, 0.12);
-    color: #4c83ee;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.4;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  a[data-active='true'] .category {
-    background: rgba(255, 255, 255, 0.18);
-    color: #fbfcfc;
-  }
-
-  /* Active state last so it wins over read-state colors. */
-  a[data-active='true'],
-  a[data-active='true']:hover {
-    background: #4c83ee;
-  }
-  a[data-active='true'] .subject,
-  a[data-active='true'] .recipient,
-  a[data-active='true'] .time {
-    color: #fbfcfc;
-    font-weight: 600;
-  }
-`
-
-const emptyState = css`
-  padding: 24px 16px;
-  color: #687a91;
-  font-size: 13px;
-  text-align: center;
-  line-height: 1.6;
-  code {
-    background: rgba(76, 131, 238, 0.1);
-    color: #4c83ee;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 12px;
-  }
-`
+const emptyState = [
+  'px-4 py-6 text-center text-[13px] leading-[1.6] text-fg-muted',
+  '[&_code]:rounded [&_code]:bg-accent/10 [&_code]:text-accent [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-xs',
+].join(' ')
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()
@@ -427,7 +192,9 @@ export default function Sidebar() {
   // Category filtering is done by typing the category name into the search
   // input — the search service indexes the `category` column alongside
   // subject/from/recipients/snippet/text_body.
-  const [searchResults, setSearchResults] = useState<MessageSummary[] | null>(null)
+  const [searchResults, setSearchResults] = useState<MessageSummary[] | null>(
+    null,
+  )
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
@@ -485,7 +252,9 @@ export default function Sidebar() {
     if (!activeId) return
     setMessages((prev) =>
       prev
-        ? prev.map((m) => (m.id === activeId && !m.read ? { ...m, read: true } : m))
+        ? prev.map((m) =>
+            m.id === activeId && !m.read ? { ...m, read: true } : m,
+          )
         : prev,
     )
   }, [activeId])
@@ -707,7 +476,10 @@ export default function Sidebar() {
                     to: &lt;{primaryRecipient(m)}&gt;
                   </span>
                   {m.tags[0] && (
-                    <span className="category" title={`Category: ${m.tags[0]}`}>
+                    <span
+                      className="category"
+                      title={`Category: ${m.tags[0]}`}
+                    >
                       {m.tags[0]}
                     </span>
                   )}

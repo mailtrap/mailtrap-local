@@ -1,38 +1,13 @@
-import { css } from '@linaria/core'
 import mailtrapLogo from '../assets/mailtrap-logo.svg'
 import CodeSamples from '../components/CodeSamples'
 
-const empty = css`
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 60vh;
-  color: #687a91;
-  padding: 32px 0;
-
-  .brand {
-    margin: 0 auto 24px;
-  }
-  .brand img {
-    height: 36px;
-    width: auto;
-    display: block;
-  }
-  code {
-    background: rgba(76, 131, 238, 0.1);
-    color: #4c83ee;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 13px;
-    font-family: 'SF Mono', Menlo, Consolas, monospace;
-  }
-  .hint {
-    max-width: 520px;
-    line-height: 1.7;
-    text-align: center;
-    margin: 0 auto 28px;
-  }
-`
+const empty = [
+  'flex min-h-[60vh] flex-col items-stretch py-8 text-fg-muted',
+  '[&_.brand]:mx-auto [&_.brand]:mb-6',
+  '[&_.brand_img]:block [&_.brand_img]:h-9 [&_.brand_img]:w-auto',
+  "[&_code]:rounded [&_code]:bg-accent/10 [&_code]:text-accent [&_code]:px-2 [&_code]:py-1 [&_code]:text-[13px] [&_code]:font-['SF_Mono',Menlo,Consolas,monospace]",
+  '[&_.hint]:mx-auto [&_.hint]:mb-7 [&_.hint]:max-w-[520px] [&_.hint]:text-center [&_.hint]:leading-[1.7]',
+].join(' ')
 
 export default function Sandbox() {
   return (

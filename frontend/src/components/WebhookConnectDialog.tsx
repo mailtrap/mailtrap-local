@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { css } from '@linaria/core'
 import { useWebhookConnection } from '../hooks/useWebhookConnection'
 import { Toggle } from './Toggle'
 import { extractApiError } from '../api/client'
 import { testWebhookConnection } from '../api/webhook'
 import type { WebhookConfigKey } from '../api/webhook'
 import { LockedFieldHint } from './LockedFieldHint'
-import { danger, success, textMuted } from '../styles/tokens'
 import {
   actions,
   btn,
@@ -26,43 +24,15 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
-const statusRow = css`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  margin: 4px 0 8px;
-  min-height: 18px;
-  color: ${textMuted};
-
-  .dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  &[data-status='ok'] .dot {
-    background: ${success};
-  }
-  &[data-status='error'] .dot {
-    background: ${danger};
-  }
-  &[data-status='testing'] .dot {
-    background: ${textMuted};
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-  &[data-status='ok'] {
-    color: ${success};
-  }
-  &[data-status='error'] {
-    color: ${danger};
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
-  }
-`
+// Same status-row pattern as RelayConnectDialog. Pulse animation comes
+// from `.pulse-dot` in index.css.
+const statusRow = [
+  'flex min-h-[18px] items-center gap-2 mt-1 mb-2 text-xs text-fg-muted',
+  '[&_.dot]:inline-block [&_.dot]:h-2 [&_.dot]:w-2 [&_.dot]:shrink-0 [&_.dot]:rounded-full',
+  'data-[status=ok]:text-success [&[data-status=ok]_.dot]:bg-success',
+  'data-[status=error]:text-danger [&[data-status=error]_.dot]:bg-danger',
+  '[&[data-status=testing]_.dot]:bg-fg-muted [&[data-status=testing]_.dot]:pulse-dot',
+].join(' ')
 
 export default function WebhookConnectDialog({ open, onOpenChange }: Props) {
   const { state, update, disconnect } = useWebhookConnection()

@@ -1,236 +1,92 @@
-import { css } from '@linaria/core'
-import {
-  accent,
-  accentBgSoft,
-  accentHover,
-  border,
-  bg,
-  danger,
-  dangerBgSoft,
-  dangerBorderSoft,
-  raised,
-  text,
-  textMuted,
-} from '../styles/tokens'
-
 /**
- * Shared Linaria styles for Radix Dialog-based settings dialogs (currently
- * CloudConnectDialog + RelayConnectDialog). Keeps both dialogs visually
- * locked to the same shell — palette / spacing / control styles all flow
- * from one place.
+ * Shared Tailwind class strings for Radix Dialog-based settings dialogs
+ * (CloudConnectDialog + RelayConnectDialog + WebhookConnectDialog).
+ * Keeps all three dialogs visually locked to the same shell — palette,
+ * spacing, and control styles flow from one place.
+ *
+ * Pattern: each export is a space-separated list of utility classes
+ * applied via `className={overlay}` etc. Descendant selectors (e.g.
+ * "style every nested `<h2>`") use arbitrary variants like
+ * `[&_h2]:font-semibold` so we don't have to touch every child element
+ * inside the dialogs.
  */
 
-export const overlay = css`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 50;
-`
+export const overlay = 'fixed inset-0 z-50 bg-black/60'
 
-export const content = css`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 460px;
-  max-width: calc(100vw - 32px);
-  background: ${raised};
-  border: 1px solid ${border};
-  border-radius: 10px;
-  padding: 22px 24px 20px;
-  color: ${text};
-  z-index: 51;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+export const content = [
+  'fixed top-1/2 left-1/2 z-[51] -translate-x-1/2 -translate-y-1/2',
+  'w-[460px] max-w-[calc(100vw-32px)]',
+  'rounded-[10px] border border-border-base bg-surface-raised text-fg',
+  'px-6 pt-[22px] pb-5',
+  'shadow-[0_20px_60px_rgba(0,0,0,0.5)]',
+  // Headers + lead paragraphs — these styles target nested elements so
+  // consumers don't have to repeat them on every <h2> / <p className="lead">.
+  '[&_h2]:m-0 [&_h2]:mb-1.5 [&_h2]:text-[17px] [&_h2]:font-semibold',
+  '[&_p.lead]:m-0 [&_p.lead]:mb-4 [&_p.lead]:text-[13px] [&_p.lead]:leading-[1.5] [&_p.lead]:text-fg-muted',
+].join(' ')
 
-  h2 {
-    margin: 0 0 6px;
-    font-size: 17px;
-    font-weight: 600;
-  }
-  p.lead {
-    margin: 0 0 16px;
-    color: ${textMuted};
-    font-size: 13px;
-    line-height: 1.5;
-  }
-`
+// Form-field row: stacked label + input + hint, with shared control
+// styles for nested `<input>` / `<select>`.
+export const field = [
+  'mb-3.5 flex flex-col gap-1.5',
+  '[&_label]:text-[13px] [&_label]:font-medium [&_label]:text-fg',
+  '[&_.hint]:text-xs [&_.hint]:leading-[1.5] [&_.hint]:text-fg-muted',
+  '[&_.hint_a]:text-accent [&_.hint_a]:no-underline',
+  '[&_.hint_a:hover]:underline',
+  // Inputs + selects: reset native chrome, paint our own.
+  '[&_input]:rounded-[7px] [&_input]:border [&_input]:border-border-base [&_input]:bg-surface-base [&_input]:px-3 [&_input]:py-2 [&_input]:text-[13px] [&_input]:text-fg [&_input]:outline-none',
+  '[&_input::placeholder]:text-fg-muted',
+  '[&_input:focus]:border-accent',
+  // Selects: same shell as inputs + the dialog-select-chevron rule
+  // from index.css for the inline drop-down arrow.
+  '[&_select]:rounded-[7px] [&_select]:border [&_select]:border-border-base [&_select]:bg-surface-base [&_select]:px-3 [&_select]:py-2 [&_select]:pr-8 [&_select]:text-[13px] [&_select]:text-fg [&_select]:outline-none [&_select]:appearance-none [&_select]:cursor-pointer',
+  '[&_select]:dialog-select-chevron',
+  '[&_select:focus]:border-accent',
+].join(' ')
 
-export const field = css`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 14px;
+export const fieldRow = 'grid grid-cols-[2fr_1fr] gap-2.5'
 
-  label {
-    font-size: 13px;
-    font-weight: 500;
-    color: ${text};
-  }
-  .hint {
-    font-size: 12px;
-    color: ${textMuted};
-    line-height: 1.5;
-  }
-  .hint a {
-    color: ${accent};
-    text-decoration: none;
-  }
-  .hint a:hover {
-    text-decoration: underline;
-  }
-  input,
-  select {
-    all: unset;
-    background: ${bg};
-    border: 1px solid ${border};
-    border-radius: 7px;
-    padding: 8px 12px;
-    color: ${text};
-    font-size: 13px;
-    &::placeholder {
-      color: ${textMuted};
-    }
-    &:focus {
-      border-color: ${accent};
-    }
-  }
-  select {
-    cursor: pointer;
-    /* The "all: unset" above strips the native chevron — paint our own
-       as a background SVG so selects look consistent with the sidebar
-       category trigger. Inline data URI uses textMuted (#8b9aae); the
-       icon mirrors components/icons.tsx ChevronDownIcon at 14px. */
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='%238b9aae'><path fill-rule='evenodd' d='M3.22 5.97a.75.75 0 0 1 1.06 0L8 9.69l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L3.22 7.03a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 32px;
-  }
-  select:hover,
-  select:focus {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='%234c83ee'><path fill-rule='evenodd' d='M3.22 5.97a.75.75 0 0 1 1.06 0L8 9.69l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L3.22 7.03a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/></svg>");
-  }
-`
+export const toggleRow = 'flex items-center gap-2.5 pt-2.5 pb-1 text-[13px]'
 
-export const fieldRow = css`
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 10px;
-`
+export const toggleDesc = 'ml-[26px] text-xs leading-[1.5] text-fg-muted'
 
-export const toggleRow = css`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0 4px;
-  font-size: 13px;
-`
+// Applied to inputs/selects whose value is pinned by the YAML config —
+// visually mutes the control to signal "you can't edit this here".
+export const lockedInput = 'cursor-not-allowed opacity-70 !bg-surface-base'
 
-export const toggleDesc = css`
-  color: ${textMuted};
-  font-size: 12px;
-  margin-left: 26px;
-  line-height: 1.5;
-`
+export const lockedHint = [
+  'mt-1 inline-flex items-center gap-1 text-[11px] italic text-fg-muted',
+  '[&_code]:font-mono [&_code]:not-italic [&_code]:text-[11px] [&_code]:text-fg',
+].join(' ')
 
-/**
- * Applied to inputs/selects whose value is pinned by the YAML config file.
- * Visually mutes the control to signal "you can't edit this here."
- */
-export const lockedInput = css`
-  opacity: 0.7;
-  cursor: not-allowed;
-  background: ${bg} !important;
-`
+export const configBanner = [
+  'mb-3.5 rounded-md border border-border-base bg-surface-base',
+  'px-3 py-[9px] text-xs leading-[1.5] text-fg-muted',
+  '[&_code]:font-mono [&_code]:text-[11px] [&_code]:text-fg',
+].join(' ')
 
-export const lockedHint = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: ${textMuted};
-  margin-top: 4px;
-  font-style: italic;
+export const errorBox = [
+  'mb-3 rounded-md border px-3 py-2 text-xs leading-[1.5]',
+  'bg-danger-soft border-danger-border text-danger',
+].join(' ')
 
-  code {
-    font-family: ui-monospace, SFMono-Regular, monospace;
-    font-style: normal;
-    color: ${text};
-    font-size: 11px;
-  }
-`
+export const actions = 'mt-[18px] flex justify-end gap-2'
 
-export const configBanner = css`
-  background: ${bg};
-  border: 1px solid ${border};
-  border-radius: 6px;
-  padding: 9px 12px;
-  font-size: 12px;
-  color: ${textMuted};
-  line-height: 1.5;
-  margin-bottom: 14px;
-
-  code {
-    font-family: ui-monospace, SFMono-Regular, monospace;
-    color: ${text};
-    font-size: 11px;
-  }
-`
-
-export const errorBox = css`
-  background: ${dangerBgSoft};
-  border: 1px solid ${dangerBorderSoft};
-  color: ${danger};
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  margin-bottom: 12px;
-  line-height: 1.5;
-`
-
-export const actions = css`
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 18px;
-`
-
-export const btn = css`
-  all: unset;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 7px 16px;
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid transparent;
-
-  &[data-variant='primary'] {
-    background: ${accent};
-    color: ${text};
-    &:hover {
-      background: ${accentHover};
-    }
-  }
-  &[data-variant='danger-text'] {
-    color: ${danger};
-    border-color: ${danger};
-    &:hover {
-      background: ${dangerBgSoft};
-    }
-  }
-  &[data-variant='outline'] {
-    color: ${accent};
-    border-color: ${accent};
-    &:hover {
-      background: ${accentBgSoft};
-    }
-  }
-  &[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`
+// Variant-driven button. Use as `className={btn}` and set
+// `data-variant="primary" | "outline" | "danger-text"` on the element
+// to pick the colourway.
+export const btn = [
+  'inline-flex cursor-pointer items-center justify-center rounded-[7px] border border-transparent',
+  'px-4 py-[7px] text-[13px] font-semibold outline-none',
+  // primary
+  'data-[variant=primary]:bg-accent data-[variant=primary]:text-fg',
+  'data-[variant=primary]:hover:bg-accent-hover',
+  // danger-text
+  'data-[variant=danger-text]:border-danger data-[variant=danger-text]:text-danger',
+  'data-[variant=danger-text]:hover:bg-danger-soft',
+  // outline
+  'data-[variant=outline]:border-accent data-[variant=outline]:text-accent',
+  'data-[variant=outline]:hover:bg-accent-soft',
+  // disabled
+  'disabled:cursor-not-allowed disabled:opacity-50',
+].join(' ')

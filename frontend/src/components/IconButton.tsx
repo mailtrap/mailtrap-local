@@ -1,13 +1,4 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
-import { css } from '@linaria/core'
-import {
-  accent,
-  accentBgMedium,
-  accentBgSoft,
-  accentRing,
-  iconIdle,
-  text,
-} from '../styles/tokens'
 
 export type IconButtonVariant = 'toolbar' | 'header' | 'device'
 
@@ -19,7 +10,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /**
- * Unified icon-button primitive. Replaces the ~5 near-duplicate Linaria
+ * Unified icon-button primitive. Replaces the ~5 near-duplicate styled
  * blocks (toolbarBtn, iconBtn, deviceBtn, popoutBtn, closeBtn) that had
  * drifted across the codebase.
  *
@@ -32,51 +23,23 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * so keyboard users always see focus, and new icon buttons inherit
  * accessibility for free.
  */
-const base = css`
-  all: unset;
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  color: ${text};
-  cursor: pointer;
 
-  &:hover {
-    color: ${iconIdle};
-    background: ${accentBgSoft};
-  }
-  &:focus-visible {
-    outline: 2px solid ${accentRing};
-    outline-offset: 1px;
-  }
-  &[disabled] {
-    opacity: 0.5;
-    cursor: default;
-  }
-  &[disabled]:hover {
-    background: transparent;
-    color: ${text};
-  }
-`
+// `data-active="true"` styling on the device variant only — exposed via
+// arbitrary variant since we don't have a Tailwind plugin to register
+// data-active as a first-class one.
+const base = [
+  'relative inline-flex cursor-pointer items-center justify-center rounded-md text-fg outline-none',
+  'hover:bg-accent-soft hover:text-fg-icon',
+  'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ring',
+  'disabled:cursor-default disabled:opacity-50',
+  'disabled:hover:bg-transparent disabled:hover:text-fg',
+].join(' ')
 
 const sizes: Record<IconButtonVariant, string> = {
-  toolbar: css`
-    width: 28px;
-    height: 28px;
-  `,
-  header: css`
-    width: 32px;
-    height: 32px;
-  `,
-  device: css`
-    width: 32px;
-    height: 32px;
-    &[data-active='true'] {
-      color: ${accent};
-      background: ${accentBgMedium};
-    }
-  `,
+  toolbar: 'w-7 h-7',
+  header: 'w-8 h-8',
+  device:
+    'w-8 h-8 data-[active=true]:bg-accent-medium data-[active=true]:text-accent',
 }
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(

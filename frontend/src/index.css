@@ -1,3 +1,42 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------
+   Design tokens — single source of truth for the dark sandbox palette.
+   Available as Tailwind utilities (e.g. `bg-surface-base`,
+   `text-fg-muted`, `border-border-subtle`).
+   --------------------------------------------------------------------- */
+@theme {
+  /* Surfaces */
+  --color-surface-base: #131e2b; /* page background */
+  --color-surface-raised: #172230; /* sidebar rows, cards, modals */
+  --color-surface-hover: #212d3c; /* hover surface (also doubles as base border) */
+
+  /* Borders */
+  --color-border-base: #212d3c;
+  --color-border-subtle: #2a394b;
+
+  /* Text + icons */
+  --color-fg: #fbfcfc;
+  --color-fg-muted: #687a91;
+  --color-fg-icon: #8b9aae;
+
+  /* Accent */
+  --color-accent: #4c83ee;
+  --color-accent-hover: #3b6fd9;
+  --color-accent-soft: rgba(76, 131, 238, 0.08);
+  --color-accent-medium: rgba(76, 131, 238, 0.12);
+  --color-accent-ring: rgba(76, 131, 238, 0.5);
+
+  /* Status */
+  --color-success: #22bc66;
+  --color-danger: #ff5757;
+  --color-danger-soft: rgba(255, 87, 87, 0.08);
+  --color-danger-border: rgba(255, 87, 87, 0.3);
+
+  /* Type scale + family — Inter is the system-fonts-with-Inter-fallback default */
+  --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -6,11 +45,11 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: #131e2b;
-  color: #fbfcfc;
+  background: var(--color-surface-base);
+  color: var(--color-fg);
   font-size: 14px;
   line-height: 1.38;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow: hidden; /* full-height app; internal panes scroll */
 }
@@ -23,4 +62,62 @@ h1,
 h2,
 h3 {
   line-height: 1.21;
+}
+
+/* Inline chevron for `<select>` inside dialog `field` blocks. The SVG
+   pulls its colour from the embedded `fill=` value because <select> is
+   too restrictive a host element for `currentColor`; default state uses
+   --color-fg-icon, hover/focus swap to --color-accent. Mirrors
+   components/icons.tsx ChevronDownIcon at 14×14. */
+.dialog-select-chevron {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='%238b9aae'><path fill-rule='evenodd' d='M3.22 5.97a.75.75 0 0 1 1.06 0L8 9.69l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L3.22 7.03a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+.dialog-select-chevron:hover,
+.dialog-select-chevron:focus {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='%234c83ee'><path fill-rule='evenodd' d='M3.22 5.97a.75.75 0 0 1 1.06 0L8 9.69l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L3.22 7.03a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/></svg>");
+}
+
+/* `<details>` disclosure with a custom chevron marker on the right.
+   Set `<details className="disclosure-section">` and the marker rotates
+   from -90° (closed) to 0° (open). Pairs with the rest of the dark UI. */
+.disclosure-section > summary::-webkit-details-marker {
+  display: none;
+}
+.disclosure-section > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-fg-muted);
+}
+.disclosure-section > summary::after {
+  content: '';
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='%238b9aae'><path fill-rule='evenodd' d='M3.22 5.97a.75.75 0 0 1 1.06 0L8 9.69l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L3.22 7.03a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: rotate(-90deg);
+  transition: transform 120ms ease;
+}
+.disclosure-section[open] > summary::after {
+  transform: rotate(0deg);
+}
+
+/* Pulsing dot used by the relay-connection live test status. */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+.pulse-dot {
+  animation: pulse-dot 1.2s ease-in-out infinite;
 }

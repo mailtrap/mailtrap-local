@@ -1,80 +1,45 @@
 import { useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { css } from '@linaria/core'
-import { SettingsIcon, WebhookIcon, HelpIcon, InfoIcon, ExternalLinkIcon } from './icons'
+import {
+  SettingsIcon,
+  WebhookIcon,
+  HelpIcon,
+  InfoIcon,
+  ExternalLinkIcon,
+} from './icons'
 import { IconButton } from './IconButton'
 import WebhookConnectDialog from './WebhookConnectDialog'
 import AboutDialog from './AboutDialog'
-import {
-  accent,
-  border,
-  hover,
-  raised,
-  success,
-  text,
-  textMuted,
-} from '../styles/tokens'
 
-const menu = css`
-  background: ${raised};
-  border: 1px solid ${border};
-  border-radius: 8px;
-  padding: 4px;
-  min-width: 200px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-  /* Sit above Radix Dialog overlays only when nothing else is open. The
-     dialogs themselves portal to the same layer (z-index 50/51), so the
-     menu closes on item click before the dialog mounts — no stacking
-     conflict in practice. */
-  z-index: 60;
-`
+const menu = [
+  // Sit above Radix Dialog overlays only when nothing else is open. The
+  // dialogs themselves portal to the same layer (z-50/51), so the menu
+  // closes on item click before the dialog mounts — no stacking
+  // conflict in practice.
+  'z-[60] min-w-[200px] rounded-lg border border-border-base bg-surface-raised p-1',
+  'shadow-[0_12px_32px_rgba(0,0,0,0.45)]',
+].join(' ')
 
-const item = css`
-  all: unset;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  color: ${text};
-  cursor: pointer;
-  user-select: none;
-
-  .icon {
-    color: ${textMuted};
-    flex-shrink: 0;
-  }
-  .grow {
-    flex: 1;
-  }
-  .badge {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-  }
-  .badge[data-on='true'] {
-    background: ${success};
-  }
-  .ext {
-    color: ${textMuted};
-    flex-shrink: 0;
-  }
-
-  &[data-highlighted] {
-    background: ${hover};
-    .icon {
-      color: ${accent};
-    }
-  }
-`
+// Each menu item: descendant selectors style the inline icon, the label
+// span (.grow), the activity badge (.badge), and the external-link
+// glyph (.ext) without forcing every consumer to repeat utilities.
+const item = [
+  'flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-fg select-none outline-none',
+  '[&_.icon]:shrink-0 [&_.icon]:text-fg-muted',
+  '[&_.grow]:flex-1',
+  '[&_.badge]:inline-block [&_.badge]:h-1.5 [&_.badge]:w-1.5 [&_.badge]:rounded-full',
+  '[&_.badge[data-on=true]]:bg-success',
+  '[&_.ext]:shrink-0 [&_.ext]:text-fg-muted',
+  // Radix highlights the focused item via [data-highlighted].
+  'data-[highlighted]:bg-surface-hover',
+  '[&[data-highlighted]_.icon]:text-accent',
+].join(' ')
 
 interface Props {
   /**
-   * True when a webhook is configured + enabled. Drives the green dot next
-   * to the "Webhooks" menu item — same visual language as the cloud/relay
-   * status badges in the toolbar.
+   * True when a webhook is configured + enabled. Drives the green dot
+   * next to the "Webhooks" menu item — same visual language as the
+   * cloud/relay status badges in the toolbar.
    */
   webhookActive: boolean
 }

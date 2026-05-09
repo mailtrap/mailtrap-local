@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { css } from '@linaria/core'
 import * as Tabs from '@radix-ui/react-tabs'
 import { Highlight, themes } from 'prism-react-renderer'
 import {
@@ -41,512 +40,175 @@ import { releaseMessage } from '../api/relay'
 import { useCloudConnection } from '../hooks/useCloudConnection'
 import { useRelayConnection } from '../hooks/useRelayConnection'
 import { IconButton } from '../components/IconButton'
-import {
-  accent,
-  accentBgSoft,
-  danger,
-  dangerBgSoft,
-  dangerBorderSoft,
-  success,
-} from '../styles/tokens'
 import { extractApiError } from '../api/client'
 
-const wrap = css`
-  margin: 0;
-`
+const wrap = 'm-0'
 
-const header = css`
-  display: grid;
-  grid-template-columns: 1fr auto;
-  row-gap: 6px;
-  column-gap: 24px;
-  align-items: start;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #212d3c;
+// Header is a 2-col / 3-row grid: subject + actions, meta + time/category,
+// "Show Headers" link spanning row 3. Descendant utilities decorate the
+// nested children so the JSX below stays clean.
+const header = [
+  'grid grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 items-start pb-4',
+  'border-b border-border-base',
+  '[&_h2]:col-start-1 [&_h2]:row-start-1 [&_h2]:m-0 [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:leading-[1.21]',
+  '[&_.actions]:col-start-2 [&_.actions]:row-start-1 [&_.actions]:justify-self-end',
+  '[&_.actions]:flex [&_.actions]:items-center [&_.actions]:justify-end [&_.actions]:gap-1',
+  '[&_.meta]:col-start-1 [&_.meta]:row-start-2 [&_.meta]:text-[13px] [&_.meta]:leading-[1.7] [&_.meta]:text-fg-muted',
+  '[&_.meta_.label]:mr-1.5 [&_.meta_.label]:text-fg-muted',
+  '[&_.meta_.val]:text-fg',
+  '[&_.timesize]:col-start-2 [&_.timesize]:row-start-2 [&_.timesize]:self-start',
+  '[&_.timesize]:flex [&_.timesize]:flex-col [&_.timesize]:items-end [&_.timesize]:gap-1.5',
+  '[&_.timesize]:whitespace-nowrap [&_.timesize]:text-right [&_.timesize]:text-[13px] [&_.timesize]:text-fg-muted',
+  '[&_.timesize_.category]:inline-block [&_.timesize_.category]:max-w-[200px] [&_.timesize_.category]:overflow-hidden [&_.timesize_.category]:text-ellipsis',
+  '[&_.timesize_.category]:rounded-full [&_.timesize_.category]:bg-accent-medium [&_.timesize_.category]:px-2.5 [&_.timesize_.category]:py-0.5',
+  '[&_.timesize_.category]:text-[11px] [&_.timesize_.category]:font-semibold [&_.timesize_.category]:leading-[1.6] [&_.timesize_.category]:text-accent',
+  '[&_.headersLink]:col-start-1 [&_.headersLink]:row-start-3 [&_.headersLink]:justify-self-start',
+  '[&_.headersLink]:cursor-pointer [&_.headersLink]:pt-0.5 [&_.headersLink]:text-[13px] [&_.headersLink]:text-accent',
+  '[&_.headersLink:hover]:underline',
+].join(' ')
 
-  h2 {
-    grid-column: 1;
-    grid-row: 1;
-    margin: 0;
-    font-size: 22px;
-    font-weight: 600;
-    line-height: 1.21;
-  }
-  .actions {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
-    display: flex;
-    justify-content: flex-end;
-    gap: 4px;
-    align-items: center;
-  }
-  .meta {
-    grid-column: 1;
-    grid-row: 2;
-    color: #687a91;
-    font-size: 13px;
-    line-height: 1.7;
-  }
-  .meta .label {
-    color: #687a91;
-    margin-right: 6px;
-  }
-  .meta .val {
-    color: #fbfcfc;
-  }
-  .timesize {
-    grid-column: 2;
-    grid-row: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
-    color: #687a91;
-    font-size: 13px;
-    white-space: nowrap;
-    text-align: right;
-    align-self: start;
-  }
-  .timesize .category {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 999px;
-    background: rgba(76, 131, 238, 0.12);
-    color: #4c83ee;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.6;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .headersLink {
-    grid-column: 1;
-    grid-row: 3;
-    justify-self: start;
-    all: unset;
-    color: #4c83ee;
-    font-size: 13px;
-    cursor: pointer;
-    padding-top: 2px;
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-`
+// Positioning override for the pop-out icon overlaying each tab content.
+const popoutPosition = 'absolute top-0 right-0'
 
-/* Positioning override for the pop-out button overlaying each tab's content. */
-const popoutPosition = css`
-  position: absolute;
-  top: 0;
-  right: 0;
-`
+// Inline success / error strips (action feedback below the header).
+const successStrip = [
+  'mt-2.5 flex items-center gap-2 rounded-md border border-success/30 bg-success/[0.08]',
+  'px-3 py-2 text-xs leading-[1.4] text-success',
+  '[&_span]:flex-1 [&_span]:min-w-0',
+  '[&_button]:inline-flex [&_button]:h-[18px] [&_button]:w-[18px] [&_button]:cursor-pointer',
+  '[&_button]:items-center [&_button]:justify-center [&_button]:rounded [&_button]:text-success',
+  '[&_button:hover]:bg-success/20',
+].join(' ')
 
-/* Inline error strip — replaces alert() for action failures (delete, cloud
-   forward). Appears just below the header, dismissable with ×. */
-const successStrip = css`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 8px 12px;
-  border: 1px solid rgba(34, 188, 102, 0.3);
-  background: rgba(34, 188, 102, 0.08);
-  color: ${success};
-  font-size: 12px;
-  border-radius: 6px;
-  line-height: 1.4;
+const errorStrip = [
+  'mt-2.5 flex items-center gap-2 rounded-md border border-danger-border bg-danger-soft',
+  'px-3 py-2 text-xs leading-[1.4] text-danger',
+  '[&_span]:flex-1 [&_span]:min-w-0',
+  '[&_button]:inline-flex [&_button]:h-[18px] [&_button]:w-[18px] [&_button]:cursor-pointer',
+  '[&_button]:items-center [&_button]:justify-center [&_button]:rounded [&_button]:text-danger',
+  '[&_button:hover]:bg-danger-border',
+].join(' ')
 
-  span {
-    flex: 1;
-    min-width: 0;
-  }
-  button {
-    all: unset;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    color: ${success};
-    cursor: pointer;
-    &:hover {
-      background: rgba(34, 188, 102, 0.2);
-    }
-  }
-`
+// Inline action bars (delete-confirm + forward-form) live inside the
+// header's `.actions` slot.
+const inlineBar = [
+  'flex items-center gap-2.5 text-[13px] text-fg',
+  '[&_input]:rounded-[7px] [&_input]:border [&_input]:border-border-base [&_input]:bg-surface-base',
+  '[&_input]:px-3 [&_input]:py-[7px] [&_input]:text-[13px] [&_input]:text-fg [&_input]:outline-none',
+  '[&_input]:min-w-[220px]',
+  '[&_input::placeholder]:text-fg-muted',
+  '[&_input:focus]:border-accent',
+].join(' ')
 
-const errorStrip = css`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 8px 12px;
-  border: 1px solid ${dangerBorderSoft};
-  background: ${dangerBgSoft};
-  color: ${danger};
-  font-size: 12px;
-  border-radius: 6px;
-  line-height: 1.4;
+// Variant-driven pill button — same shape as dialogStyles.btn but slightly
+// chunkier (used inline beside the message header).
+const pillBtn = [
+  'inline-flex cursor-pointer items-center justify-center rounded-[7px] border border-transparent',
+  'px-4 py-1.5 text-[13px] font-semibold',
+  'data-[variant=primary]:bg-accent data-[variant=primary]:text-fg',
+  'data-[variant=primary]:hover:bg-accent-hover',
+  'data-[variant=danger-text]:border-danger data-[variant=danger-text]:text-danger',
+  'data-[variant=danger-text]:hover:bg-danger-soft',
+  'data-[variant=outline]:border-accent data-[variant=outline]:text-accent',
+  'data-[variant=outline]:hover:bg-accent-soft',
+  'disabled:cursor-not-allowed disabled:opacity-50',
+].join(' ')
 
-  span {
-    flex: 1;
-    min-width: 0;
-  }
+const deviceBar = 'relative flex justify-center gap-1 pt-2 pb-3'
 
-  button {
-    all: unset;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    color: ${danger};
-    cursor: pointer;
-    &:hover {
-      background: ${dangerBorderSoft};
-    }
-  }
-`
+const previewWrap = 'relative'
 
-const inlineBar = css`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: #fbfcfc;
+// Device-frame chrome around the HTML preview iframe. Frame stays
+// inline-block in every mode so switching devices animates in place.
+const iframeFrame = [
+  'flex justify-center',
+  '[&_.frame]:inline-block [&_.frame]:[box-sizing:content-box]',
+  '[&_.frame]:rounded-none [&_.frame]:border-2 [&_.frame]:border-transparent [&_.frame]:bg-transparent [&_.frame]:p-0',
+  '[&_.frame]:transition-[width,height,padding,border-radius,border-color,background-color] [&_.frame]:duration-[250ms] [&_.frame]:ease-out',
+  // Mobile + tablet share the accent border + base background.
+  '[&[data-device=mobile]_.frame]:border-accent [&[data-device=mobile]_.frame]:bg-surface-base',
+  '[&[data-device=mobile]_.frame]:rounded-[32px] [&[data-device=mobile]_.frame]:px-2.5 [&[data-device=mobile]_.frame]:py-3.5',
+  '[&[data-device=tablet]_.frame]:border-accent [&[data-device=tablet]_.frame]:bg-surface-base',
+  '[&[data-device=tablet]_.frame]:rounded-[18px] [&[data-device=tablet]_.frame]:p-3.5',
+].join(' ')
 
-  input {
-    all: unset;
-    background: #131e2b;
-    border: 1px solid #212d3c;
-    border-radius: 7px;
-    padding: 7px 12px;
-    color: #fbfcfc;
-    font-size: 13px;
-    min-width: 220px;
-    &::placeholder {
-      color: #687a91;
-    }
-    &:focus {
-      border-color: #4c83ee;
-    }
-  }
-`
+const tabList = 'mt-4 flex gap-[18px] border-b border-border-base p-0'
 
-const pillBtn = css`
-  all: unset;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 16px;
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid transparent;
+const tabBadge = [
+  'ml-2 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full',
+  'bg-danger px-1.5 align-middle text-[11px] font-bold leading-none text-fg',
+].join(' ')
 
-  &[data-variant='primary'] {
-    background: #4c83ee;
-    color: #fbfcfc;
-    &:hover {
-      background: #3b6fd9;
-    }
-  }
-  &[data-variant='danger-text'] {
-    color: #ff5757;
-    border-color: #ff5757;
-    &:hover {
-      background: rgba(255, 87, 87, 0.08);
-    }
-  }
-  &[data-variant='outline'] {
-    color: #4c83ee;
-    border-color: #4c83ee;
-    &:hover {
-      background: rgba(76, 131, 238, 0.08);
-    }
-  }
-  &[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`
+// Each tab trigger gets its own underline indicator via ::after when
+// data-state="active" (Radix sets it).
+const tabTrigger = [
+  'relative cursor-pointer py-2.5 leading-none text-sm font-medium font-sans text-fg-icon',
+  'hover:text-fg',
+  'data-[state=active]:text-fg',
+  "data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:left-0 data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px data-[state=active]:after:h-0.5 data-[state=active]:after:bg-accent",
+].join(' ')
 
-const deviceBar = css`
-  position: relative;
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  padding: 8px 0 12px;
-`
+const tabContent = 'pt-4'
 
-const previewWrap = css`
-  position: relative;
-`
+const iframeCss =
+  'block h-full w-full rounded-[7px] border border-border-base bg-white'
 
-const iframeFrame = css`
-  display: flex;
-  justify-content: center;
+// Plain-text + raw bodies. Match the desktop iframe min-height so short
+// payloads still fill the viewport.
+const preCss = [
+  'rounded-[7px] border border-border-base bg-black/20 p-3 text-fg',
+  "font-['SF_Mono',Menlo,Consolas,monospace] text-xs leading-[1.5]",
+  'whitespace-pre-wrap break-words',
+  'min-h-[max(500px,calc(100vh-260px))] [box-sizing:border-box]',
+].join(' ')
 
-  /* Frame stays inline-block in every mode so switching devices animates
-     in place instead of jumping between block/inline-block layouts. Chrome
-     (border, padding, radius) is always present and just collapses to
-     transparent/zero on desktop, so all properties transition smoothly. */
-  .frame {
-    display: inline-block;
-    box-sizing: content-box;
-    border: 2px solid transparent;
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-    transition:
-      width 250ms ease,
-      height 250ms ease,
-      padding 250ms ease,
-      border-radius 250ms ease,
-      border-color 250ms ease,
-      background-color 250ms ease;
-  }
+const codeViewer = [
+  'm-0 rounded-[7px] border border-border-base bg-black/25 p-0',
+  "font-['SF_Mono',Menlo,Consolas,monospace] text-xs leading-[1.55]",
+  'min-h-[max(500px,calc(100vh-260px))] [box-sizing:border-box]',
+  '[&_.row]:grid [&_.row]:grid-cols-[48px_1fr]',
+  '[&_.ln]:select-none [&_.ln]:px-2.5 [&_.ln]:pr-3 [&_.ln]:text-right [&_.ln]:text-[#4d5a6a]',
+  '[&_.ln]:border-r [&_.ln]:border-border-base',
+  '[&_.code]:px-3.5 [&_.code]:whitespace-pre-wrap [&_.code]:break-words',
+].join(' ')
 
-  &[data-device='mobile'] .frame,
-  &[data-device='tablet'] .frame {
-    border-color: #4c83ee;
-    background: #131e2b;
-  }
-  &[data-device='mobile'] .frame {
-    border-radius: 32px;
-    padding: 14px 10px;
-  }
-  &[data-device='tablet'] .frame {
-    border-radius: 18px;
-    padding: 14px;
-  }
-`
+const techSection =
+  'mb-4 rounded-lg border border-border-base bg-surface-raised px-6 py-5'
 
-const tabList = css`
-  display: flex;
-  gap: 18px;
-  border-bottom: 1px solid #212d3c;
-  margin-top: 16px;
-  padding: 0;
-`
+// Two-column key/value table with zebra striping. Same shell wherever
+// it's used.
+const techTable = [
+  'w-full text-[13px] [border-collapse:separate] [border-spacing:0]',
+  'overflow-hidden rounded-lg border border-border-base',
+  '[&_th]:p-3 [&_th]:px-4 [&_th]:text-left [&_th]:align-middle [&_th]:border-b [&_th]:border-border-base',
+  '[&_td]:p-3 [&_td]:px-4 [&_td]:text-left [&_td]:align-middle [&_td]:border-b [&_td]:border-border-base',
+  '[&_tbody_tr:last-child_td]:border-b-0',
+  '[&_thead_th]:bg-surface-base [&_thead_th]:text-[13px] [&_thead_th]:font-bold [&_thead_th]:text-fg',
+  '[&_td.name]:w-[180px] [&_td.name]:whitespace-nowrap [&_td.name]:text-fg',
+  '[&_td.val]:text-fg [&_td.val]:break-all',
+  '[&_tbody_tr]:bg-surface-raised',
+  '[&_tbody_tr:nth-child(even)]:bg-surface-base',
+  '[&_td.copy]:w-[72px] [&_td.copy]:text-right',
+].join(' ')
 
-const tabBadge = css`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 6px;
-  margin-left: 8px;
-  border-radius: 9px;
-  background: ${danger};
-  color: #fbfcfc;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  vertical-align: middle;
-`
+const techHeading = [
+  'mb-1.5 m-0 inline-flex items-center gap-1.5 text-[15px] font-semibold text-fg',
+  '[&_.q]:cursor-help [&_.q]:text-fg-muted',
+].join(' ')
 
-const tabTrigger = css`
-  all: unset;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  color: #8b9aae;
-  padding: 10px 0;
-  cursor: pointer;
-  position: relative;
-  line-height: 1;
+const techBlurb = 'mb-3.5 m-0 text-[13px] leading-[1.6] text-fg'
 
-  &:hover {
-    color: #fbfcfc;
-  }
-  &[data-state='active'] {
-    color: #fbfcfc;
-  }
-  &[data-state='active']::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 2px;
-    background: #4c83ee;
-  }
-`
+const copyBtn = [
+  'inline-flex cursor-pointer items-center justify-center rounded-md border border-accent',
+  'px-3 py-[3px] text-xs font-medium text-accent',
+  'hover:bg-accent/10',
+].join(' ')
 
-const tabContent = css`
-  padding-top: 16px;
-`
-
-const iframeCss = css`
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 1px solid #212d3c;
-  border-radius: 7px;
-  background: #fff;
-`
-
-const preCss = css`
-  background: rgba(0, 0, 0, 0.2);
-  color: #fbfcfc;
-  padding: 12px;
-  border-radius: 7px;
-  border: 1px solid #212d3c;
-  font-family: 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-  /* Match the desktop HTML iframe so short payloads still fill the viewport. */
-  min-height: max(500px, calc(100vh - 260px));
-  box-sizing: border-box;
-`
-
-const codeViewer = css`
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid #212d3c;
-  border-radius: 7px;
-  font-family: 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 12px;
-  line-height: 1.55;
-  margin: 0;
-  padding: 0;
-  min-height: max(500px, calc(100vh - 260px));
-  box-sizing: border-box;
-
-  .row {
-    display: grid;
-    grid-template-columns: 48px 1fr;
-  }
-  .ln {
-    user-select: none;
-    text-align: right;
-    padding: 0 12px 0 10px;
-    color: #4d5a6a;
-    border-right: 1px solid #212d3c;
-  }
-  .code {
-    padding: 0 14px;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-`
-
-const techSection = css`
-  background: #172230;
-  border: 1px solid #212d3c;
-  border-radius: 8px;
-  padding: 20px 24px;
-  margin-bottom: 16px;
-`
-
-const techTable = css`
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border: 1px solid #212d3c;
-  border-radius: 8px;
-  overflow: hidden;
-  font-size: 13px;
-
-  th,
-  td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #212d3c;
-    text-align: left;
-    vertical-align: middle;
-  }
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
-  thead th {
-    color: #fbfcfc;
-    font-weight: 700;
-    font-size: 13px;
-    background: #131e2b;
-  }
-  td.name {
-    color: #fbfcfc;
-    width: 180px;
-    white-space: nowrap;
-  }
-  td.val {
-    color: #fbfcfc;
-    word-break: break-all;
-  }
-  /* Zebra striping: row bg alternates secondary/primary inside a dimmed panel. */
-  tbody tr {
-    background: #172230;
-  }
-  tbody tr:nth-child(even) {
-    background: #131e2b;
-  }
-  td.copy {
-    width: 72px;
-    text-align: right;
-  }
-`
-
-const techHeading = css`
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 6px;
-  color: #fbfcfc;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  .q {
-    color: #687a91;
-    cursor: help;
-  }
-`
-
-const techBlurb = css`
-  color: #fbfcfc;
-  font-size: 13px;
-  line-height: 1.6;
-  margin: 0 0 14px;
-`
-
-const copyBtn = css`
-  all: unset;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 12px;
-  border: 1px solid #4c83ee;
-  border-radius: 6px;
-  color: #4c83ee;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  &:hover {
-    background: rgba(76, 131, 238, 0.1);
-  }
-`
-
-const infoRow = css`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 12px;
-  color: #fbfcfc;
-  font-size: 13px;
-  border-bottom: 1px solid #212d3c;
-
-  .check {
-    color: #22bc66;
-  }
-`
+const infoRow = [
+  'flex items-center justify-center gap-1.5 border-b border-border-base',
+  'px-3 py-2.5 text-[13px] text-fg',
+  '[&_.check]:text-success',
+].join(' ')
 
 function formatAddr(a: Address | undefined): string {
   if (!a) return ''
@@ -575,7 +237,11 @@ function HtmlSource({ code }: { code: string }) {
           style={{ ...style, background: 'transparent' }}
         >
           {tokens.map((line, i) => {
-            const { key: _lk, className: _lc, ...lineProps } = getLineProps({
+            const {
+              key: _lk,
+              className: _lc,
+              ...lineProps
+            } = getLineProps({
               line,
             })
             return (
@@ -618,272 +284,84 @@ function CopyButton({ text }: { text: string }) {
 
 /* ─── HTML Check (rule-engine results) ───────────────────────────────── */
 
-const htmlCheckTop = css`
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 28px;
-  padding: 20px 24px 24px;
-  margin-bottom: 16px;
-  background: #131e2b;
-  align-items: center;
-`
+const htmlCheckTop = [
+  'mb-4 grid grid-cols-[auto_1fr] items-center gap-7',
+  'rounded-none bg-surface-base px-6 pt-5 pb-6',
+].join(' ')
 
-const donutCss = css`
-  width: 180px;
-  height: 180px;
-  position: relative;
+const donutCss = [
+  'relative h-[180px] w-[180px]',
+  '[&_.center]:pointer-events-none [&_.center]:absolute [&_.center]:inset-0',
+  '[&_.center]:flex [&_.center]:flex-col [&_.center]:items-center [&_.center]:justify-center',
+  '[&_.pct]:text-[30px] [&_.pct]:font-bold [&_.pct]:leading-none [&_.pct]:text-success',
+  '[&_.label]:mt-1.5 [&_.label]:text-[10px] [&_.label]:font-bold [&_.label]:tracking-[0.18em] [&_.label]:text-fg [&_.label]:uppercase',
+].join(' ')
 
-  .center {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-  }
-  .pct {
-    font-size: 30px;
-    font-weight: 700;
-    color: ${success};
-    line-height: 1;
-  }
-  .label {
-    margin-top: 6px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    color: #fbfcfc;
-    text-transform: uppercase;
-  }
-`
+// Per-family support breakdown table. Hover reveals the partial/no
+// percentages and the Only/All toggle.
+const familyTable = [
+  'flex max-w-[520px] flex-col text-[13px]',
+  '[&_.row]:grid [&_.row]:grid-cols-[160px_56px_56px_56px_64px] [&_.row]:items-center',
+  '[&_.row]:gap-x-3.5 [&_.row]:rounded-md [&_.row]:px-1 [&_.row]:py-2',
+  '[&_.row:hover]:bg-surface-base',
+  '[&_.name]:inline-flex [&_.name]:items-center [&_.name]:gap-2.5 [&_.name]:text-fg',
+  '[&_.pct]:text-right [&_.pct]:font-bold',
+  '[&_.pct[data-kind=supported]]:text-success',
+  '[&_.pct[data-kind=partial]]:text-[#f5a524]',
+  '[&_.pct[data-kind=no]]:text-danger',
+  '[&_.row_.pct[data-kind=partial]]:invisible',
+  '[&_.row_.pct[data-kind=no]]:invisible',
+  '[&_.row_.only]:invisible',
+  '[&_.row:hover_.pct[data-kind=partial]]:visible',
+  '[&_.row:hover_.pct[data-kind=no]]:visible',
+  '[&_.row:hover_.only]:visible',
+  '[&_.checkbox]:h-3.5 [&_.checkbox]:w-3.5 [&_.checkbox]:[accent-color:var(--color-accent)]',
+  '[&_.only]:cursor-pointer [&_.only]:rounded-full [&_.only]:border [&_.only]:border-accent',
+  '[&_.only]:px-3.5 [&_.only]:py-1 [&_.only]:text-center [&_.only]:text-xs [&_.only]:font-semibold [&_.only]:text-accent',
+  '[&_.only:hover]:bg-accent-soft',
+].join(' ')
 
-const familyTable = css`
-  display: flex;
-  flex-direction: column;
-  font-size: 13px;
-  max-width: 520px;
+const filterStrip = [
+  'mb-3.5 flex items-center gap-[22px] text-[13px] text-fg',
+  '[&_label]:inline-flex [&_label]:cursor-pointer [&_label]:items-center [&_label]:gap-1.5',
+  '[&_input]:[accent-color:var(--color-accent)]',
+  '[&_.count]:text-fg-icon',
+].join(' ')
 
-  .row {
-    display: grid;
-    grid-template-columns: 160px 56px 56px 56px 64px;
-    align-items: center;
-    column-gap: 14px;
-    padding: 8px 4px;
-    border-radius: 6px;
-  }
-  .row:hover {
-    background: #131e2b;
-  }
-  .name {
-    color: #fbfcfc;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .pct {
-    font-weight: 700;
-    text-align: right;
-  }
-  .pct[data-kind='supported'] {
-    color: ${success};
-  }
-  .pct[data-kind='partial'] {
-    color: #f5a524;
-  }
-  .pct[data-kind='no'] {
-    color: ${danger};
-  }
-  /* Breakdown columns + Only/All button only show on row hover. */
-  .row .pct[data-kind='partial'],
-  .row .pct[data-kind='no'],
-  .row .only {
-    visibility: hidden;
-  }
-  .row:hover .pct[data-kind='partial'],
-  .row:hover .pct[data-kind='no'],
-  .row:hover .only {
-    visibility: visible;
-  }
-  .checkbox {
-    width: 14px;
-    height: 14px;
-    accent-color: ${accent};
-  }
-  .only {
-    all: unset;
-    cursor: pointer;
-    padding: 4px 14px;
-    border: 1px solid ${accent};
-    border-radius: 999px;
-    color: ${accent};
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-  }
-  .only:hover {
-    background: ${accentBgSoft};
-  }
-`
+// Per-rule issue card. The chip rows visualize per-client support, with
+// support dots colored by `data-support`.
+const htmlCheckIssueCss = [
+  'mb-3 rounded-lg border border-border-base bg-surface-raised p-5 px-5 py-4',
+  "[&_h3]:mt-0 [&_h3]:mb-2.5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-fg [&_h3]:font-['SF_Mono',Menlo,Consolas,monospace]",
+  '[&_.clients-row]:mb-3 [&_.clients-row]:grid [&_.clients-row]:grid-cols-[64px_1fr] [&_.clients-row]:gap-3',
+  '[&_.clients-row_.label]:pt-1 [&_.clients-row_.label]:text-[13px] [&_.clients-row_.label]:font-semibold [&_.clients-row_.label]:text-fg',
+  '[&_.chips]:flex [&_.chips]:flex-wrap [&_.chips]:items-center [&_.chips]:gap-x-3.5 [&_.chips]:gap-y-1.5',
+  '[&_.chip]:inline-flex [&_.chip]:items-center [&_.chip]:gap-1.5 [&_.chip]:text-[13px] [&_.chip]:text-fg',
+  '[&_.chip_.dot]:inline-block [&_.chip_.dot]:h-[9px] [&_.chip_.dot]:w-[9px] [&_.chip_.dot]:rounded-full',
+  '[&_.chip_.dot[data-support=no]]:bg-danger',
+  '[&_.chip_.dot[data-support=partial]]:bg-[#f5a524]',
+  '[&_.chip_.dot[data-support=yes]]:bg-success',
+  '[&_.chip_.ver]:inline-flex [&_.chip_.ver]:h-[18px] [&_.chip_.ver]:min-w-[18px] [&_.chip_.ver]:items-center [&_.chip_.ver]:justify-center',
+  '[&_.chip_.ver]:rounded [&_.chip_.ver]:bg-surface-hover [&_.chip_.ver]:px-[5px]',
+  "[&_.chip_.ver]:font-['SF_Mono',Menlo,Consolas,monospace] [&_.chip_.ver]:text-[11px] [&_.chip_.ver]:font-semibold [&_.chip_.ver]:text-fg",
+  '[&_.chip_.ver[data-noted=true]]:bg-accent [&_.chip_.ver[data-noted=true]]:text-fg',
+  '[&_.lines]:mb-2 [&_.lines]:text-[13px] [&_.lines]:text-fg-icon',
+  "[&_.lines_code]:font-['SF_Mono',Menlo,Consolas,monospace] [&_.lines_code]:text-accent",
+  '[&_.toggle]:mb-2 [&_.toggle]:inline-block [&_.toggle]:cursor-pointer [&_.toggle]:text-xs [&_.toggle]:text-accent',
+  '[&_.toggle:hover]:underline',
+  '[&_.notes]:mt-1 [&_.notes]:text-[13px] [&_.notes]:leading-[1.55] [&_.notes]:text-fg',
+  '[&_.notes_h4]:m-0 [&_.notes_h4]:mb-1.5 [&_.notes_h4]:text-[13px] [&_.notes_h4]:font-semibold',
+  '[&_.notes_ol]:m-0 [&_.notes_ol]:pl-[22px]',
+  '[&_.notes_li]:mb-1.5',
+  '[&_.reflink]:mt-3 [&_.reflink]:text-xs',
+  '[&_.reflink_a]:text-accent [&_.reflink_a]:no-underline',
+  '[&_.reflink_a:hover]:underline',
+].join(' ')
 
-const filterStrip = css`
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  margin-bottom: 14px;
-  font-size: 13px;
-  color: #fbfcfc;
-
-  label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-  }
-  input {
-    accent-color: ${accent};
-  }
-  .count {
-    color: #8b9aae;
-  }
-`
-
-const htmlCheckIssueCss = css`
-  background: #172230;
-  border: 1px solid #212d3c;
-  border-radius: 8px;
-  padding: 18px 20px;
-  margin-bottom: 12px;
-
-  h3 {
-    margin: 0 0 10px;
-    color: #fbfcfc;
-    font-size: 16px;
-    font-weight: 600;
-    font-family: 'SF Mono', Menlo, Consolas, monospace;
-  }
-  .clients-row {
-    display: grid;
-    grid-template-columns: 64px 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-  .clients-row .label {
-    color: #fbfcfc;
-    font-weight: 600;
-    font-size: 13px;
-    padding-top: 4px;
-  }
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 14px;
-    align-items: center;
-  }
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: #fbfcfc;
-    font-size: 13px;
-  }
-  .chip .dot {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-  }
-  .chip .dot[data-support='no'] {
-    background: ${danger};
-  }
-  .chip .dot[data-support='partial'] {
-    background: #f5a524;
-  }
-  .chip .dot[data-support='yes'] {
-    background: ${success};
-  }
-  .chip .ver {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border-radius: 4px;
-    background: #212d3c;
-    color: #fbfcfc;
-    font-size: 11px;
-    font-weight: 600;
-    font-family: 'SF Mono', Menlo, Consolas, monospace;
-  }
-  .chip .ver[data-noted='true'] {
-    background: ${accent};
-    color: #fbfcfc;
-  }
-
-  .lines {
-    color: #8b9aae;
-    font-size: 13px;
-    margin-bottom: 8px;
-  }
-  .lines code {
-    color: ${accent};
-    font-family: 'SF Mono', Menlo, Consolas, monospace;
-  }
-
-  .toggle {
-    all: unset;
-    color: ${accent};
-    font-size: 12px;
-    cursor: pointer;
-    margin-bottom: 8px;
-    display: inline-block;
-  }
-  .toggle:hover {
-    text-decoration: underline;
-  }
-
-  .notes {
-    margin-top: 4px;
-    color: #fbfcfc;
-    font-size: 13px;
-    line-height: 1.55;
-  }
-  .notes h4 {
-    margin: 0 0 6px;
-    font-size: 13px;
-    font-weight: 600;
-  }
-  .notes ol {
-    margin: 0;
-    padding-left: 22px;
-  }
-  .notes li {
-    margin-bottom: 6px;
-  }
-
-  .reflink {
-    margin-top: 12px;
-    font-size: 12px;
-  }
-  .reflink a {
-    color: ${accent};
-    text-decoration: none;
-  }
-  .reflink a:hover {
-    text-decoration: underline;
-  }
-`
-
-const htmlCheckEmpty = css`
-  background: #172230;
-  border: 1px solid #212d3c;
-  border-radius: 8px;
-  padding: 24px;
-  color: #8b9aae;
-  font-size: 13px;
-  text-align: center;
-`
+const htmlCheckEmpty = [
+  'rounded-lg border border-border-base bg-surface-raised p-6',
+  'text-center text-[13px] text-fg-icon',
+].join(' ')
 
 /**
  * Multi-segment donut: green for supported, orange for partial, red for no.
@@ -903,10 +381,12 @@ function MarketSupportDonut({
   const radius = 78
   const stroke = 14
   const C = 2 * Math.PI * radius
+  // Use the design tokens directly for the segment colours so a future
+  // theme change picks them up.
   const segs: Array<[number, string]> = [
-    [supported, success],
+    [supported, 'var(--color-success)'],
     [partial, '#f5a524'],
-    [no, danger],
+    [no, 'var(--color-danger)'],
   ]
   let elapsedPct = 0
   return (
@@ -966,17 +446,18 @@ function ClientChips({
 }: HtmlCheckClient) {
   // Pull the affected versions from {no:[], partial:[]} - "yes" versions
   // aren't worth surfacing inside an issue (they're already supported).
-  const affected = [
-    ...(versions?.no ?? []),
-    ...(versions?.partial ?? []),
-  ]
+  const affected = [...(versions?.no ?? []), ...(versions?.partial ?? [])]
   const noteSet = new Set((notes ?? []).map((n) => String(n)))
   return (
     <span className="chip" key={`${family}-${platform}`}>
       <span className="dot" data-support={support} />
       {name}
       {affected.map((v) => (
-        <span key={v} className="ver" data-noted={noteSet.has(v) || undefined}>
+        <span
+          key={v}
+          className="ver"
+          data-noted={noteSet.has(v) || undefined}
+        >
           {v}
         </span>
       ))}
@@ -1018,7 +499,9 @@ function HtmlCheck({
     return <div className={htmlCheckEmpty}>This message has no HTML body.</div>
   }
   if (err) {
-    return <div className={htmlCheckEmpty}>Couldn't run HTML Check: {err}</div>
+    return (
+      <div className={htmlCheckEmpty}>Couldn't run HTML Check: {err}</div>
+    )
   }
   if (!report) {
     return <div className={htmlCheckEmpty}>Analyzing…</div>
@@ -1100,7 +583,7 @@ function HtmlCheck({
                     })
                   }
                 />
-                <span style={{ textTransform: 'capitalize' }}>{cat}</span>{' '}
+                <span className="capitalize">{cat}</span>{' '}
                 <span className="count">({totalsByCategory[cat]})</span>
               </label>
             ))}
@@ -1117,7 +600,8 @@ function HtmlCheck({
               // row is currently the *sole* enabled family — clicking again
               // is the natural way to undo an "Only" pick.
               const enabledCount = report.families.reduce(
-                (n, row) => (enabledFamilies[row.family] !== false ? n + 1 : n),
+                (n, row) =>
+                  enabledFamilies[row.family] !== false ? n + 1 : n,
                 0,
               )
               const isSoleEnabled =
@@ -1125,7 +609,9 @@ function HtmlCheck({
               const onClickAction = () => {
                 const next: Record<string, boolean> = {}
                 report.families.forEach((row) => {
-                  next[row.family] = isSoleEnabled ? true : row.family === f.family
+                  next[row.family] = isSoleEnabled
+                    ? true
+                    : row.family === f.family
                 })
                 setEnabledFamilies(next)
               }
@@ -1301,7 +787,8 @@ function TechInfo({ msg, headers }: { msg: Message; headers: HeadersMap }) {
         </h3>
         <p className={techBlurb}>
           Original values of the headers. When sending a real email, headers
-          can be altered by an email service provider or a mail transfer agent.
+          can be altered by an email service provider or a mail transfer
+          agent.
         </p>
         <table className={techTable}>
           <thead>
@@ -1314,7 +801,7 @@ function TechInfo({ msg, headers }: { msg: Message; headers: HeadersMap }) {
           <tbody>
             {headerRows.length === 0 && (
               <tr>
-                <td colSpan={3} style={{ color: '#687a91' }}>
+                <td colSpan={3} className="text-fg-muted">
                   (no headers)
                 </td>
               </tr>
@@ -1374,9 +861,9 @@ export default function MessageView() {
   const [enabledCategories, setEnabledCategories] = useState<
     Record<ClientCategory, boolean>
   >({ desktop: true, mobile: true, web: true })
-  const [enabledFamilies, setEnabledFamilies] = useState<Record<string, boolean>>(
-    {},
-  )
+  const [enabledFamilies, setEnabledFamilies] = useState<
+    Record<string, boolean>
+  >({})
   // Initialize family filters from the report once it lands.
   useEffect(() => {
     if (htmlCheck?.status === 'success') {
@@ -1537,13 +1024,13 @@ export default function MessageView() {
   if (error)
     return (
       <section className={wrap}>
-        <p style={{ color: danger }}>Error: {error}</p>
+        <p className="text-danger">Error: {error}</p>
       </section>
     )
   if (!msg)
     return (
       <section className={wrap}>
-        <p style={{ color: '#687a91' }}>Loading…</p>
+        <p className="text-fg-muted">Loading…</p>
       </section>
     )
 
@@ -1573,7 +1060,7 @@ export default function MessageView() {
                 }
                 onClick={onCloudForward}
                 disabled={!!cloudDisabledReason || busy || cloudSent}
-                style={cloudSent ? { color: success } : undefined}
+                className={cloudSent ? 'text-success' : undefined}
               >
                 {cloudSent ? (
                   <SuccessFilledIcon size={18} />
@@ -1584,7 +1071,10 @@ export default function MessageView() {
               <IconButton title="Download .eml" onClick={onDownload}>
                 <DownloadIcon size={18} />
               </IconButton>
-              <IconButton title="Delete email" onClick={() => setMode('delete')}>
+              <IconButton
+                title="Delete email"
+                onClick={() => setMode('delete')}
+              >
                 <DeleteIcon size={18} />
               </IconButton>
             </>
@@ -1673,7 +1163,9 @@ export default function MessageView() {
           )}
         </div>
         <div className="timesize">
-          <div>{formatDate(msg.date)}, {formatSize(msg.size)}</div>
+          <div>
+            {formatDate(msg.date)}, {formatSize(msg.size)}
+          </div>
           {msg.tags[0] && (
             <div className="category" title={`Category: ${msg.tags[0]}`}>
               {msg.tags[0]}
@@ -1747,9 +1239,9 @@ export default function MessageView() {
                 htmlCheck?.status === 'success'
                   ? noSupportIssueCount(
                       htmlCheck.issues,
-                      (Object.keys(enabledCategories) as ClientCategory[]).filter(
-                        (c) => enabledCategories[c],
-                      ),
+                      (
+                        Object.keys(enabledCategories) as ClientCategory[]
+                      ).filter((c) => enabledCategories[c]),
                       enabledFamilies,
                     )
                   : 0

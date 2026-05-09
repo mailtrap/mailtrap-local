@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ChevronDownIcon, CheckIcon } from '@radix-ui/react-icons'
-import { css } from '@linaria/core'
 import { CodeBlock } from './CodeBlock'
 import {
   SNIPPET_GROUPS,
@@ -12,117 +11,52 @@ import {
 
 const STORAGE_KEY = 'mt-local:smtp-snippet'
 
-const container = css`
-  width: 100%;
-  max-width: 850px;
-  margin: 0 auto;
-  text-align: left;
-`
+const container = 'mx-auto w-full max-w-[850px] text-left'
 
-const wrapper = css`
-  border: 1px solid #2a394b;
-  border-radius: 8px;
-  background: #172230;
-  overflow: hidden;
-  font-size: 13px;
-`
+const wrapper =
+  'overflow-hidden rounded-lg border border-border-subtle bg-surface-raised text-[13px]'
 
-const header = css`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 4px 8px 4px 4px;
-  border-bottom: 1px solid #212d3c;
-  background: #131e2b;
-`
+const header =
+  'flex items-center justify-between gap-2 border-b border-border-base bg-surface-base p-1 pl-1 pr-2'
 
-const tabsRow = css`
-  display: flex;
-  gap: 2px;
-  flex-wrap: wrap;
-  min-width: 0;
-  flex: 1 1 auto;
-`
+const tabsRow = 'flex flex-1 min-w-0 flex-wrap gap-0.5'
 
-const tabBtn = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  border: 0;
-  background: transparent;
-  color: #687a91;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 80ms ease, color 80ms ease;
+const tabBtn = [
+  'inline-flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-md',
+  'border-0 bg-transparent px-2.5 py-[5px] text-[12.5px] font-medium text-fg-muted',
+  'transition-[background-color,color] duration-[80ms]',
+  'hover:bg-surface-hover hover:text-fg',
+  'data-[active=true]:bg-surface-hover data-[active=true]:text-fg',
+  'data-[state=open]:bg-surface-hover data-[state=open]:text-fg',
+  'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
+  '[&_svg]:text-[#6b7a8c]',
+].join(' ')
 
-  &:hover { color: #fbfcfc; background: #212d3c; }
-  &[data-active='true'] { color: #fbfcfc; background: #212d3c; }
-  &[data-state='open'] { color: #fbfcfc; background: #212d3c; }
-  &:focus-visible { outline: 2px solid #4c83ee; outline-offset: -2px; }
+const copyBtn = [
+  'shrink-0 cursor-pointer rounded-md border-0 bg-transparent',
+  'px-2.5 py-[5px] text-[12.5px] font-semibold text-accent',
+  'transition-[background-color] duration-[80ms]',
+  'hover:bg-accent-soft',
+  'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
+].join(' ')
 
-  svg { color: #6b7a8c; }
-`
+const menuContent = [
+  'z-50 min-w-[180px] rounded-lg border border-border-subtle bg-surface-raised p-1',
+  'shadow-[0_8px_24px_rgba(0,0,0,0.4)]',
+].join(' ')
 
-const copyBtn = css`
-  flex: 0 0 auto;
-  padding: 5px 10px;
-  border: 0;
-  background: transparent;
-  color: #4c83ee;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 80ms ease;
+const menuItem = [
+  'flex cursor-pointer items-center justify-between gap-3 rounded px-2.5 py-1.5',
+  'text-[12.5px] text-[#c2cbd6] outline-none',
+  'data-[highlighted]:bg-surface-hover data-[highlighted]:text-fg',
+  'data-[active=true]:text-fg',
+  'data-[active=true]:[&_svg]:text-accent',
+  '[&_.check]:h-3.5 [&_.check]:w-3.5 [&_.check]:opacity-0',
+  'data-[active=true]:[&_.check]:opacity-100',
+].join(' ')
 
-  &:hover { background: rgba(76, 131, 238, 0.08); }
-  &:focus-visible { outline: 2px solid #4c83ee; outline-offset: -2px; }
-`
-
-const menuContent = css`
-  min-width: 180px;
-  background: #172230;
-  border: 1px solid #2a394b;
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 50;
-`
-
-const menuItem = css`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 10px;
-  font-size: 12.5px;
-  color: #c2cbd6;
-  border-radius: 4px;
-  cursor: pointer;
-  outline: none;
-
-  &[data-highlighted] { background: #212d3c; color: #fbfcfc; }
-  &[data-active='true'] { color: #fbfcfc; }
-  &[data-active='true'] svg { color: #4c83ee; }
-  & .check { width: 14px; height: 14px; opacity: 0; }
-  &[data-active='true'] .check { opacity: 1; }
-`
-
-const footer = css`
-  padding: 6px 14px;
-  border-top: 1px solid #212d3c;
-  color: #687a91;
-  font-size: 12px;
-  text-align: left;
-  background: #131e2b;
-`
+const footer =
+  'border-t border-border-base bg-surface-base px-3.5 py-1.5 text-left text-xs text-fg-muted'
 
 interface CodeSamplesProps {
   host?: string
@@ -140,8 +74,13 @@ export default function CodeSamples({
   const params: SnippetParams = { host, port, fromEmail, toEmail }
 
   const [active, setActive] = useState<string>(() => {
-    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null
-    return saved && SNIPPETS_FLAT.some((s) => s.id === saved) ? saved : SNIPPETS_FLAT[0].id
+    const saved =
+      typeof localStorage !== 'undefined'
+        ? localStorage.getItem(STORAGE_KEY)
+        : null
+    return saved && SNIPPETS_FLAT.some((s) => s.id === saved)
+      ? saved
+      : SNIPPETS_FLAT[0].id
   })
   const [copied, setCopied] = useState(false)
 
@@ -150,12 +89,19 @@ export default function CodeSamples({
     [active],
   )
   const activeGroupId = useMemo(() => findGroupForSnippet(active)?.id, [active])
-  const rendered = useMemo(() => activeSnippet.code(params), [activeSnippet, params])
+  const rendered = useMemo(
+    () => activeSnippet.code(params),
+    [activeSnippet, params],
+  )
 
   const selectSnippet = (id: string) => {
     setActive(id)
     setCopied(false)
-    try { localStorage.setItem(STORAGE_KEY, id) } catch { /* private mode */ }
+    try {
+      localStorage.setItem(STORAGE_KEY, id)
+    } catch {
+      /* private mode */
+    }
   }
 
   const onCopy = async () => {
@@ -163,7 +109,9 @@ export default function CodeSamples({
       await navigator.clipboard.writeText(rendered)
       setCopied(true)
       setTimeout(() => setCopied(false), 1400)
-    } catch { /* clipboard unavailable */ }
+    } catch {
+      /* clipboard unavailable */
+    }
   }
 
   return (
@@ -225,7 +173,11 @@ export default function CodeSamples({
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
-        <CodeBlock code={rendered} language={activeSnippet.lang} showLineNumbers />
+        <CodeBlock
+          code={rendered}
+          language={activeSnippet.lang}
+          showLineNumbers
+        />
         {activeSnippet.paragraph && (
           <div className={footer}>{activeSnippet.paragraph}</div>
         )}

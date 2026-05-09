@@ -1,31 +1,16 @@
 import '../../lib/prism-langs'
 import { Highlight, themes } from 'prism-react-renderer'
-import { css } from '@linaria/core'
 
-const wrapper = css`
-  margin: 0;
-  padding: 10px 14px;
-  background: transparent !important;
-  font-family: 'Fira Code', 'JetBrains Mono', ui-monospace, SFMono-Regular,
-    Menlo, monospace;
-  font-size: 12.5px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  tab-size: 2;
-  text-align: left;
-
-  .row { display: flex; }
-  .ln {
-    flex: 0 0 auto;
-    width: 36px;
-    padding-right: 12px;
-    text-align: right;
-    color: #4a5a6f;
-    user-select: none;
-  }
-  .code { flex: 1 1 auto; min-width: 0; }
-`
+const wrapper = [
+  'm-0 px-3.5 py-2.5 text-left tab-size-2',
+  '!bg-transparent',
+  "font-['Fira_Code','JetBrains_Mono',ui-monospace,SFMono-Regular,Menlo,monospace] text-[12.5px] leading-[1.55]",
+  'whitespace-pre-wrap [overflow-wrap:anywhere]',
+  // Per-line decorations applied via descendant selectors.
+  '[&_.row]:flex',
+  '[&_.ln]:w-9 [&_.ln]:flex-none [&_.ln]:pr-3 [&_.ln]:text-right [&_.ln]:text-[#4a5a6f] [&_.ln]:select-none',
+  '[&_.code]:min-w-0 [&_.code]:flex-1',
+].join(' ')
 
 interface CodeBlockProps {
   code: string
@@ -33,7 +18,11 @@ interface CodeBlockProps {
   showLineNumbers?: boolean
 }
 
-export function CodeBlock({ code, language, showLineNumbers = false }: CodeBlockProps) {
+export function CodeBlock({
+  code,
+  language,
+  showLineNumbers = false,
+}: CodeBlockProps) {
   return (
     <Highlight theme={themes.vsDark} code={code} language={language}>
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
@@ -42,9 +31,17 @@ export function CodeBlock({ code, language, showLineNumbers = false }: CodeBlock
           style={{ ...style, background: 'transparent' }}
         >
           {tokens.map((line, i) => {
-            const { key: _lk, className: lineClass, ...lineProps } = getLineProps({ line })
+            const {
+              key: _lk,
+              className: lineClass,
+              ...lineProps
+            } = getLineProps({ line })
             return (
-              <div key={i} className={`row ${lineClass ?? ''}`} {...lineProps}>
+              <div
+                key={i}
+                className={`row ${lineClass ?? ''}`}
+                {...lineProps}
+              >
                 {showLineNumbers && <span className="ln">{i + 1}</span>}
                 <span className="code">
                   {line.map((token, ti) => {

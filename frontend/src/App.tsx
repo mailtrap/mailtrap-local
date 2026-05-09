@@ -1,5 +1,4 @@
 import { Routes, Route } from 'react-router-dom'
-import { css } from '@linaria/core'
 import Sidebar from './components/Sidebar'
 import Sandbox from './pages/Sandbox'
 import MessageView from './pages/MessageView'
@@ -9,51 +8,22 @@ import { WebhookConnectionProvider } from './hooks/useWebhookConnection'
 import { useUnreadFaviconBadge } from './hooks/useUnreadFaviconBadge'
 import { useResizableSidebar } from './hooks/useResizableSidebar'
 
-// Dark theme palette (authoritative — Sidebar, MessageView, etc. consume these):
-// bg #131e2b · raised #172230 · hover #212d3c
-// text #fbfcfc · text-muted #687a91 · text-secondary #6b7a8c
-// border-light #212d3c · border-subtle #2a394b · accent #4c83ee
 // Layout: persistent split-pane — sidebar (message list) + main (detail).
-const shell = css`
-  display: grid;
-  height: 100vh;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 14px;
-  background: #131e2b;
-  color: #fbfcfc;
-`
+// Palette tokens live in src/index.css under @theme; classes here use the
+// named utilities (bg-surface-base / text-fg / etc.).
 
-const resizer = css`
-  position: relative;
-  width: 4px;
-  cursor: col-resize;
-  background: transparent;
-  flex: 0 0 auto;
-  transition: background 80ms ease;
-  user-select: none;
+const shell = 'grid h-screen bg-surface-base text-fg font-sans text-sm'
 
-  /* Wider hit-area than visible bar */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -3px;
-    right: -3px;
-  }
+// Drag handle between the sidebar and the main pane. Wider invisible
+// hit-area extends 3px past each side of the visible 4px bar.
+const resizer = [
+  'relative w-1 flex-none cursor-col-resize select-none bg-transparent',
+  'transition-[background-color] duration-[80ms]',
+  'hover:bg-accent data-[dragging=true]:bg-accent',
+  "before:absolute before:-left-[3px] before:-right-[3px] before:top-0 before:bottom-0 before:content-['']",
+].join(' ')
 
-  &:hover,
-  &[data-dragging='true'] {
-    background: #4c83ee;
-  }
-`
-
-const main = css`
-  min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 24px 32px;
-`
+const main = 'min-h-0 min-w-0 overflow-y-auto px-8 py-6'
 
 export default function App() {
   useUnreadFaviconBadge()

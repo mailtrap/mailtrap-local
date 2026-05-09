@@ -1,109 +1,13 @@
 import { forwardRef, type InputHTMLAttributes } from 'react'
-import { css } from '@linaria/core'
-import {
-  accent,
-  accentHover,
-  accentRing,
-  bg,
-  border,
-  iconIdle,
-  text,
-  textMuted,
-} from '../styles/tokens'
 
 /**
  * Compact switch toggle. A hidden `<input type="checkbox">` carries
  * focus/keyboard semantics; a sibling `<span>` renders the visual
- * track + thumb via ::before/::after pseudo-elements. Click anywhere on
- * the <label> wrapper toggles state.
+ * track + thumb via ::after. Click anywhere on the `<label>` wrapper
+ * toggles state.
  *
  * 32×18 track with a 14 thumb — fits inline with 13px dialog labels.
  */
-
-const TRACK_WIDTH = 32
-const TRACK_HEIGHT = 18
-const THUMB_SIZE = 14
-const THUMB_INSET = 2 // px gap between thumb and track edge
-
-const root = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-
-  &[data-disabled='true'] {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-`
-
-const inputCss = css`
-  /* Visually hidden but still focusable + keyboard-toggleable. */
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-`
-
-const track = css`
-  position: relative;
-  display: inline-block;
-  flex-shrink: 0;
-  width: ${TRACK_WIDTH}px;
-  height: ${TRACK_HEIGHT}px;
-  border-radius: ${TRACK_HEIGHT / 2}px;
-  background: ${bg};
-  border: 1px solid ${border};
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: ${(TRACK_HEIGHT - THUMB_SIZE) / 2 - 1}px;
-    left: ${THUMB_INSET}px;
-    width: ${THUMB_SIZE}px;
-    height: ${THUMB_SIZE}px;
-    border-radius: 50%;
-    background: ${iconIdle};
-    transition:
-      left 0.18s ease,
-      background 0.15s ease;
-  }
-
-  /* Hover on the wrapper label tightens the border. */
-  label:hover & {
-    border-color: ${textMuted};
-  }
-
-  /* Checked state — accent color, thumb slides right. */
-  input:checked ~ & {
-    background: ${accent};
-    border-color: ${accent};
-  }
-  input:checked ~ &::after {
-    left: ${TRACK_WIDTH - THUMB_SIZE - THUMB_INSET - 2}px;
-    background: ${text};
-  }
-  label:hover input:checked ~ & {
-    background: ${accentHover};
-    border-color: ${accentHover};
-  }
-
-  /* Focus ring on the input bubbles up to the visible track. */
-  input:focus-visible ~ & {
-    outline: 2px solid ${accentRing};
-    outline-offset: 2px;
-  }
-`
-
 interface ToggleProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'children'> {
   label?: string
@@ -116,19 +20,43 @@ export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(function Toggle(
 ) {
   return (
     <label
-      className={[root, className].filter(Boolean).join(' ')}
+      className={[
+        'group inline-flex cursor-pointer items-center gap-[10px] select-none',
+        'data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       data-disabled={disabled ? 'true' : undefined}
       htmlFor={id}
     >
       <input
         ref={ref}
         type="checkbox"
-        className={inputCss}
+        className="peer absolute m-[-1px] h-px w-px overflow-hidden border-0 p-0 whitespace-nowrap [clip:rect(0_0_0_0)]"
         id={id}
         disabled={disabled}
         {...rest}
       />
-      <span className={track} aria-hidden="true" />
+      <span
+        aria-hidden="true"
+        className={[
+          // Track
+          'relative inline-block h-[18px] w-8 shrink-0 rounded-full border bg-surface-base',
+          'border-border-base transition-[background-color,border-color] duration-150',
+          // Track on label hover (group)
+          'group-hover:border-fg-muted',
+          // Track when checked
+          'peer-checked:border-accent peer-checked:bg-accent',
+          'group-hover:peer-checked:border-accent-hover group-hover:peer-checked:bg-accent-hover',
+          // Focus ring (bubbles up from the hidden input)
+          'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-ring',
+          // Thumb (::after) — idle position + colour
+          "after:absolute after:top-[1px] after:left-[2px] after:h-3.5 after:w-3.5 after:rounded-full after:bg-fg-icon after:transition-[left,background-color] after:duration-[180ms] after:content-['']",
+          // Thumb when checked
+          'peer-checked:after:left-[14px] peer-checked:after:bg-fg',
+        ].join(' ')}
+      />
       {label && <span>{label}</span>}
     </label>
   )

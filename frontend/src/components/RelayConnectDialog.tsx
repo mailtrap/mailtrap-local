@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { css } from '@linaria/core'
 import { useRelayConnection } from '../hooks/useRelayConnection'
 import { Toggle } from './Toggle'
 import { extractApiError } from '../api/client'
 import { testRelayConnection } from '../api/relay'
 import type { RelayConfigKey, RelayConnection } from '../api/relay'
 import { LockedFieldHint } from './LockedFieldHint'
-import { danger, success, textMuted } from '../styles/tokens'
 import {
   actions,
   btn,
@@ -27,92 +25,23 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
-const advancedSection = css`
-  margin-top: 4px;
-  border-top: 1px solid ${textMuted}33;
-  padding-top: 12px;
+// Collapsible "Advanced — sender overrides" block. Disclosure chevron
+// + summary styling come from `.disclosure-section` in index.css.
+const advancedSection = [
+  'disclosure-section mt-1 border-t border-fg-muted/20 pt-3',
+  '[&_div.body]:pt-3',
+].join(' ')
 
-  > summary {
-    cursor: pointer;
-    list-style: none;
-    font-size: 13px;
-    font-weight: 500;
-    color: ${textMuted};
-    padding: 2px 0;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    &::-webkit-details-marker {
-      display: none;
-    }
-    /* Disclosure marker on the RIGHT, sized to match the dropdown +
-       select chevrons elsewhere. The icon mirrors components/icons.tsx
-       ChevronDownIcon at 14px — closed = rotated to point right,
-       opens to its natural down orientation when [open]. */
-    &::after {
-      content: '';
-      margin-left: auto;
-      width: 14px;
-      height: 14px;
-      flex-shrink: 0;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='%238b9aae'><path fill-rule='evenodd' d='M3.22 5.97a.75.75 0 0 1 1.06 0L8 9.69l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L3.22 7.03a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/></svg>");
-      background-repeat: no-repeat;
-      background-position: center;
-      transform: rotate(-90deg);
-      transition: transform 120ms ease;
-    }
-  }
-  &[open] > summary::after {
-    transform: rotate(0deg);
-  }
-  > summary:hover {
-    color: ${textMuted};
-    opacity: 0.85;
-  }
-  > div.body {
-    padding-top: 12px;
-  }
-`
-
-const statusRow = css`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  margin: 4px 0 8px;
-  min-height: 18px;
-  color: ${textMuted};
-
-  .dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  &[data-status='ok'] .dot {
-    background: ${success};
-  }
-  &[data-status='error'] .dot {
-    background: ${danger};
-  }
-  &[data-status='testing'] .dot {
-    background: ${textMuted};
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-  &[data-status='ok'] {
-    color: ${success};
-  }
-  &[data-status='error'] {
-    color: ${danger};
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
-  }
-`
+// Status row for the live SMTP-handshake probe. The colour + dot fill
+// follow `data-status` so the same row covers idle / testing / ok /
+// error states without conditional className gymnastics.
+const statusRow = [
+  'flex min-h-[18px] items-center gap-2 mt-1 mb-2 text-xs text-fg-muted',
+  '[&_.dot]:inline-block [&_.dot]:h-2 [&_.dot]:w-2 [&_.dot]:shrink-0 [&_.dot]:rounded-full',
+  'data-[status=ok]:text-success [&[data-status=ok]_.dot]:bg-success',
+  'data-[status=error]:text-danger [&[data-status=error]_.dot]:bg-danger',
+  '[&[data-status=testing]_.dot]:bg-fg-muted [&[data-status=testing]_.dot]:pulse-dot',
+].join(' ')
 
 const TLS_OPTIONS: Array<{ value: RelayConnection['tls']; label: string }> = [
   { value: 'auto', label: 'STARTTLS (recommended)' },
@@ -141,12 +70,12 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
     return_path: false,
   }
   const isLocked = (k: RelayConfigKey) => Boolean(lockedKeys[k])
-  const allLocked = (
-    Object.keys(lockedKeys) as RelayConfigKey[]
-  ).every((k) => lockedKeys[k])
-  const anyLocked = (
-    Object.keys(lockedKeys) as RelayConfigKey[]
-  ).some((k) => lockedKeys[k])
+  const allLocked = (Object.keys(lockedKeys) as RelayConfigKey[]).every(
+    (k) => lockedKeys[k],
+  )
+  const anyLocked = (Object.keys(lockedKeys) as RelayConfigKey[]).some(
+    (k) => lockedKeys[k],
+  )
 
   const [host, setHost] = useState('')
   const [port, setPort] = useState('587')
@@ -240,7 +169,8 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
       if (!isLocked('username')) body.username = username.trim()
       // Password: only send when user typed something. Empty input means
       // "keep saved password" (backend leaves password column untouched).
-      if (!isLocked('password') && password.length > 0) body.password = password
+      if (!isLocked('password') && password.length > 0)
+        body.password = password
       // Sender overrides: always send so an empty input clears them.
       if (!isLocked('override_from')) body.override_from = overrideFrom.trim()
       if (!isLocked('return_path')) body.return_path = returnPath.trim()
@@ -281,7 +211,7 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
               href="https://mailtrap.io/email-sending/"
               target="_blank"
               rel="noreferrer"
-              style={{ color: '#4c83ee', textDecoration: 'none' }}
+              className="text-accent no-underline"
             >
               Mailtrap
             </a>
@@ -294,7 +224,9 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
 
           {anyLocked && state?.config_path && (
             <div className={configBanner}>
-              {allLocked ? 'All settings are pinned by ' : 'Some settings are pinned by '}
+              {allLocked
+                ? 'All settings are pinned by '
+                : 'Some settings are pinned by '}
               <code>{state.config_path}</code>. Edit that file and restart to
               change them.
             </div>
@@ -314,7 +246,9 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
                 readOnly={isLocked('host')}
                 className={isLocked('host') ? lockedInput : undefined}
               />
-              {isLocked('host') && <LockedFieldHint path={state?.config_path ?? null} />}
+              {isLocked('host') && (
+                <LockedFieldHint path={state?.config_path ?? null} />
+              )}
             </div>
             <div className={field}>
               <label htmlFor="relay-port">Port</label>
@@ -329,7 +263,9 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
                 readOnly={isLocked('port')}
                 className={isLocked('port') ? lockedInput : undefined}
               />
-              {isLocked('port') && <LockedFieldHint path={state?.config_path ?? null} />}
+              {isLocked('port') && (
+                <LockedFieldHint path={state?.config_path ?? null} />
+              )}
             </div>
           </div>
 
@@ -346,7 +282,9 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
               readOnly={isLocked('username')}
               className={isLocked('username') ? lockedInput : undefined}
             />
-            {isLocked('username') && <LockedFieldHint path={state?.config_path ?? null} />}
+            {isLocked('username') && (
+              <LockedFieldHint path={state?.config_path ?? null} />
+            )}
           </div>
 
           <div className={field}>
@@ -368,7 +306,9 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
               readOnly={isLocked('password')}
               className={isLocked('password') ? lockedInput : undefined}
             />
-            {isLocked('password') && <LockedFieldHint path={state?.config_path ?? null} />}
+            {isLocked('password') && (
+              <LockedFieldHint path={state?.config_path ?? null} />
+            )}
           </div>
 
           <div className={fieldRow}>
@@ -377,7 +317,9 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
               <select
                 id="relay-tls"
                 value={tls}
-                onChange={(e) => setTls(e.target.value as RelayConnection['tls'])}
+                onChange={(e) =>
+                  setTls(e.target.value as RelayConnection['tls'])
+                }
                 disabled={busy || isLocked('tls')}
                 className={isLocked('tls') ? lockedInput : undefined}
               >
@@ -387,14 +329,18 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
                   </option>
                 ))}
               </select>
-              {isLocked('tls') && <LockedFieldHint path={state?.config_path ?? null} />}
+              {isLocked('tls') && (
+                <LockedFieldHint path={state?.config_path ?? null} />
+              )}
             </div>
             <div className={field}>
               <label htmlFor="relay-auth">Auth method</label>
               <select
                 id="relay-auth"
                 value={auth}
-                onChange={(e) => setAuth(e.target.value as RelayConnection['auth'])}
+                onChange={(e) =>
+                  setAuth(e.target.value as RelayConnection['auth'])
+                }
                 disabled={busy || isLocked('auth')}
                 className={isLocked('auth') ? lockedInput : undefined}
               >
@@ -404,7 +350,9 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
                   </option>
                 ))}
               </select>
-              {isLocked('auth') && <LockedFieldHint path={state?.config_path ?? null} />}
+              {isLocked('auth') && (
+                <LockedFieldHint path={state?.config_path ?? null} />
+              )}
             </div>
           </div>
 
@@ -421,9 +369,9 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
             )}
           </div>
           <div className={toggleDesc}>
-            When on, every new email is also delivered through this SMTP server
-            (preserving the original To). When off, forward one at a time from
-            the message view.
+            When on, every new email is also delivered through this SMTP
+            server (preserving the original To). When off, forward one at a
+            time from the message view.
           </div>
 
           <details
@@ -448,22 +396,27 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
                   onChange={(e) => setOverrideFrom(e.target.value)}
                   disabled={busy || isLocked('override_from')}
                   readOnly={isLocked('override_from')}
-                  className={isLocked('override_from') ? lockedInput : undefined}
+                  className={
+                    isLocked('override_from') ? lockedInput : undefined
+                  }
                 />
                 {isLocked('override_from') ? (
                   <LockedFieldHint path={state?.config_path ?? null} />
                 ) : (
                   <span className="hint">
-                    Rewrites the From: header on every relayed message. Required by
-                    providers that only allow verified sender domains (Mailtrap
-                    live, SendGrid, SES). Original sender is preserved in
+                    Rewrites the From: header on every relayed message.
+                    Required by providers that only allow verified sender
+                    domains (Mailtrap live, SendGrid, SES). Original sender
+                    is preserved in
                     <code> X-Original-From</code>.
                   </span>
                 )}
               </div>
 
               <div className={field}>
-                <label htmlFor="relay-return-path">Return-Path (envelope sender)</label>
+                <label htmlFor="relay-return-path">
+                  Return-Path (envelope sender)
+                </label>
                 <input
                   id="relay-return-path"
                   type="email"
@@ -473,14 +426,17 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
                   onChange={(e) => setReturnPath(e.target.value)}
                   disabled={busy || isLocked('return_path')}
                   readOnly={isLocked('return_path')}
-                  className={isLocked('return_path') ? lockedInput : undefined}
+                  className={
+                    isLocked('return_path') ? lockedInput : undefined
+                  }
                 />
                 {isLocked('return_path') ? (
                   <LockedFieldHint path={state?.config_path ?? null} />
                 ) : (
                   <span className="hint">
-                    Sets the SMTP MAIL FROM. Useful when the relay or recipient
-                    validates the bounce address (Gmail, large ISPs).
+                    Sets the SMTP MAIL FROM. Useful when the relay or
+                    recipient validates the bounce address (Gmail, large
+                    ISPs).
                   </span>
                 )}
               </div>
@@ -529,7 +485,6 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
               </button>
             )}
           </div>
-
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
