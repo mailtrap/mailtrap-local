@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mailtrap/mailtrap-local/internal/secrets"
 	_ "modernc.org/sqlite" // pure-Go SQLite driver (driver name: "sqlite")
 )
 
@@ -24,8 +25,16 @@ var schemaFS embed.FS
 // SQLite is single-writer, so we let database/sql's connection pool
 // serialize writes naturally; reads scale across the pool.
 type Store struct {
-	db *sql.DB
+	db      *sql.DB
+	secrets *secrets.Box // nil-safe: nil means "store values verbatim" (tests)
 }
+
+// SetSecrets attaches a secrets.Box for at-rest encryption of the
+// sensitive connection fields (cloud API token, relay password,
+// webhook secret). Without it, the Store falls back to plaintext —
+// fine for unit tests, never used by the real binary which always
+// calls SetSecrets right after Open.
+func (s *Store) SetSecrets(box *secrets.Box) { s.secrets = box }
 
 // Open returns a Store backed by the SQLite file at `path`. Creates the
 // file (and its parent directory) if missing, applies the schema on

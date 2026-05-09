@@ -2,9 +2,29 @@ package store
 
 import (
 	"context"
+	"crypto/rand"
 	"strings"
 	"testing"
+
+	"github.com/mailtrap/mailtrap-local/internal/secrets"
 )
+
+// withSecrets wraps a Store with a freshly-keyed secrets.Box. Used by
+// the encryption tests; the default newTestStore stays unencrypted so
+// the rest of the suite reads SQL columns verbatim.
+func withSecrets(t *testing.T, s *Store) *Store {
+	t.Helper()
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		t.Fatal(err)
+	}
+	box, err := secrets.New(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.SetSecrets(box)
+	return s
+}
 
 // helper — a Store backed by :memory:. Each test gets a fresh DB so
 // they're independent under -parallel.
@@ -352,6 +372,122 @@ func TestRetentionEvictsByCascade(t *testing.T) {
 	atts, _ = s.LoadAttachments(ctx, id)
 	if len(atts) != 0 {
 		t.Errorf("expected 0 attachments after delete; got %d", len(atts))
+	}
+}
+
+// TestSecretsEncryptedAtRest — with a Box attached, every sensitive
+// column actually contains ciphertext (not the plaintext) on disk,
+// and the user-facing Get/Upsert API still returns plaintext.
+func TestSecretsEncryptedAtRest(t *testing.T) {
+	t.Parallel()
+	s := withSecrets(t, newTestStore(t))
+	ctx := context.Background()
+
+	const (
+		token  = "sandbox-tok-secret-abc"
+		passwd = "smtp-relay-passw0rd"
+		whSec  = "webhook-shh-shh"
+	)
+	if err := s.CloudUpsert(ctx, &CloudConnection{APIToken: token, SandboxID: 7}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.RelayUpsert(ctx, &RelayConnection{
+		Host: "smtp.x", Port: 587, Username: "u", Password: passwd, Auth: "plain", TLS: "auto",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.WebhookUpsert(ctx, &WebhookConnection{
+		URL: "https://h.x/", Secret: whSec, Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Raw DB rows must NOT contain the plaintext anywhere.
+	var rawTok, rawPass, rawSec string
+	_ = s.DB().QueryRowContext(ctx, `SELECT api_token FROM cloud_connections`).Scan(&rawTok)
+	_ = s.DB().QueryRowContext(ctx, `SELECT password FROM relay_connections`).Scan(&rawPass)
+	_ = s.DB().QueryRowContext(ctx, `SELECT secret FROM webhook_connections`).Scan(&rawSec)
+
+	if strings.Contains(rawTok, token) {
+		t.Errorf("api_token row leaked plaintext: %q", rawTok)
+	}
+	if strings.Contains(rawPass, passwd) {
+		t.Errorf("relay password row leaked plaintext: %q", rawPass)
+	}
+	if strings.Contains(rawSec, whSec) {
+		t.Errorf("webhook secret row leaked plaintext: %q", rawSec)
+	}
+	for _, raw := range []string{rawTok, rawPass, rawSec} {
+		if !secrets.IsEncrypted(raw) {
+			t.Errorf("expected encrypted prefix on raw row, got %q", raw)
+		}
+	}
+
+	// Round-trip via the public API still yields plaintext.
+	c, _ := s.CloudGet(ctx)
+	r, _ := s.RelayGet(ctx)
+	w, _ := s.WebhookGet(ctx)
+	if c.APIToken != token {
+		t.Errorf("cloud APIToken round-trip: got %q, want %q", c.APIToken, token)
+	}
+	if r.Password != passwd {
+		t.Errorf("relay Password round-trip: got %q, want %q", r.Password, passwd)
+	}
+	if w.Secret != whSec {
+		t.Errorf("webhook Secret round-trip: got %q, want %q", w.Secret, whSec)
+	}
+}
+
+// TestSecretsLazyMigratesPlaintext — rows written by an old binary
+// (plaintext, no Box) are returned correctly by Get and re-written as
+// ciphertext on the same call. Subsequent reads see ciphertext only.
+func TestSecretsLazyMigratesPlaintext(t *testing.T) {
+	t.Parallel()
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	// 1. Write rows the OLD way (no encryption box attached).
+	_ = s.CloudUpsert(ctx, &CloudConnection{APIToken: "legacy-tok", SandboxID: 1})
+	_ = s.RelayUpsert(ctx, &RelayConnection{Host: "h", Port: 1, Password: "legacy-pass", Auth: "plain", TLS: "auto"})
+	_ = s.WebhookUpsert(ctx, &WebhookConnection{URL: "https://h", Secret: "legacy-sec", Enabled: true})
+
+	// Confirm: no prefix, plaintext on disk.
+	var rawTok string
+	_ = s.DB().QueryRowContext(ctx, `SELECT api_token FROM cloud_connections`).Scan(&rawTok)
+	if rawTok != "legacy-tok" {
+		t.Fatalf("setup: expected plaintext row, got %q", rawTok)
+	}
+
+	// 2. Attach a Box and read. Get should return plaintext AND
+	//    re-encrypt the row in place.
+	withSecrets(t, s)
+
+	c, err := s.CloudGet(ctx)
+	if err != nil || c.APIToken != "legacy-tok" {
+		t.Fatalf("cloud get after attach: %+v err=%v", c, err)
+	}
+	r, err := s.RelayGet(ctx)
+	if err != nil || r.Password != "legacy-pass" {
+		t.Fatalf("relay get after attach: %+v err=%v", r, err)
+	}
+	w, err := s.WebhookGet(ctx)
+	if err != nil || w.Secret != "legacy-sec" {
+		t.Fatalf("webhook get after attach: %+v err=%v", w, err)
+	}
+
+	// 3. The rows on disk are now encrypted.
+	_ = s.DB().QueryRowContext(ctx, `SELECT api_token FROM cloud_connections`).Scan(&rawTok)
+	if !secrets.IsEncrypted(rawTok) {
+		t.Errorf("after migrate read, api_token still plaintext: %q", rawTok)
+	}
+	var rawPass, rawSec string
+	_ = s.DB().QueryRowContext(ctx, `SELECT password FROM relay_connections`).Scan(&rawPass)
+	_ = s.DB().QueryRowContext(ctx, `SELECT secret FROM webhook_connections`).Scan(&rawSec)
+	if !secrets.IsEncrypted(rawPass) {
+		t.Errorf("after migrate read, relay password still plaintext: %q", rawPass)
+	}
+	if !secrets.IsEncrypted(rawSec) {
+		t.Errorf("after migrate read, webhook secret still plaintext: %q", rawSec)
 	}
 }
 

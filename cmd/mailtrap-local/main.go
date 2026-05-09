@@ -25,6 +25,7 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/jobs"
 	"github.com/mailtrap/mailtrap-local/internal/live"
 	"github.com/mailtrap/mailtrap-local/internal/relay"
+	"github.com/mailtrap/mailtrap-local/internal/secrets"
 	"github.com/mailtrap/mailtrap-local/internal/smtpd"
 	"github.com/mailtrap/mailtrap-local/internal/store"
 	"github.com/mailtrap/mailtrap-local/internal/webhook"
@@ -83,6 +84,19 @@ func main() {
 		log.Fatalf("open store: %v", err)
 	}
 	defer st.Close()
+
+	// At-rest encryption for the cloud API token / relay password /
+	// webhook secret. Key file auto-generated on first use; override
+	// path with $MAILTRAP_LOCAL_SECRET_KEY_FILE. Failure here is fatal
+	// because every subsequent connection-CRUD call would fail.
+	box, err := secrets.FromDefaultKeyFile()
+	if err != nil {
+		log.Fatalf("init secret key: %v", err)
+	}
+	st.SetSecrets(box)
+	if p, _ := secrets.DefaultKeyPath(); p != "" {
+		log.Printf("Secret key: %s", p)
+	}
 
 	hub := live.NewHub()
 	cfg := config.NewLoader()
