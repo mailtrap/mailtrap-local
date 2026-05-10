@@ -71,7 +71,13 @@ export default function CodeSamples({
   fromEmail = 'sender@example.test',
   toEmail = 'rcpt@example.test',
 }: CodeSamplesProps) {
-  const params: SnippetParams = { host, port, fromEmail, toEmail }
+  // Memoize the SnippetParams object so it doesn't change identity on
+  // every render — otherwise the `rendered` useMemo below re-runs each
+  // time even when none of host/port/fromEmail/toEmail actually moved.
+  const params: SnippetParams = useMemo(
+    () => ({ host, port, fromEmail, toEmail }),
+    [host, port, fromEmail, toEmail],
+  )
 
   const [active, setActive] = useState<string>(() => {
     const saved =

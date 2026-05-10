@@ -34,15 +34,23 @@ export default defineConfig([
       ],
 
       // react-hooks v7+ flags every setState inside a useEffect as an
-      // anti-pattern. Several of our dialogs use the (legitimate but
-      // flagged) "reset form fields when the dialog opens" idiom. The
-      // strictly-correct fix is to remount the component on open via a
-      // `key` prop or move the state into a child mounted only when
-      // open — both worth doing, but neither blocks v0.1.0. Demote to
-      // warn until we refactor those callsites.
-      // TODO(post-v0.1.0): refactor the flagged Cloud/Relay/Webhook/
-      // MessageView dialogs to remount-on-open and re-promote this
-      // rule to error.
+      // anti-pattern. Most of the flag-able callsites in this repo
+      // were the "reset form fields when the dialog opens" idiom —
+      // those are refactored to mount-on-open via a child <Body>
+      // component (Cloud / Relay / Webhook). The remaining warnings
+      // are legitimate uses we don't plan to refactor:
+      //
+      //   - useXxxConnection.tsx: provider on mount triggers a
+      //     `refresh()` that calls setState inside the effect.
+      //   - Sidebar: auto-mark-as-read on activeId change, search
+      //     debounce reset.
+      //   - MessageView: per-message state reset on route :id change.
+      //   - RelayConnectDialog: SMTP probe debounce.
+      //
+      // Each is a textbook case of the pattern (debouncer or
+      // sync-with-prop-change). We accept the rule warning rather
+      // than do an awkward refactor. Stays at `warn` so new
+      // accidental introductions are still flagged.
       'react-hooks/set-state-in-effect': 'warn',
 
       // The `useXxxConnection.tsx` files deliberately colocate the
