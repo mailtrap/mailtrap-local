@@ -236,17 +236,39 @@ func (s *Server) updateRead(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("ok"))
 }
 
-// destroyMessages handles DELETE /api/v1/messages — single/bulk/all.
-// With non-empty ids body: deletes those. Without body or empty ids:
-// deletes all.
+// destroyMessages handles DELETE /api/v1/messages.
+//
+// Body shape:
+//
+//	{ "ids": ["abc", "def"] }   delete those specific messages
+//	{ "all": true }             wipe the entire sandbox
+//
+// Both empty body and unrecognised shapes are rejected with 422 to
+// keep "wipe everything" explicit. Earlier versions of this handler
+// treated an empty body as "delete all", which meant a malformed JSON
+// request silently fell through to a full mailbox wipe — the kind of
+// bug that turns a typo in a curl one-liner into a data loss event.
 func (s *Server) destroyMessages(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		IDs []string `json:"ids"`
+		All bool     `json:"all"`
 	}
-	if r.ContentLength != 0 {
-		_ = json.NewDecoder(r.Body).Decode(&body)
+	if r.ContentLength == 0 {
+		writeError(w, http.StatusUnprocessableEntity,
+			"DELETE /api/v1/messages requires a JSON body: {\"ids\":[...]} or {\"all\":true}")
+		return
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "decode body: "+err.Error())
+		return
 	}
 	ids := nonBlank(body.IDs)
+	if len(ids) == 0 && !body.All {
+		writeError(w, http.StatusUnprocessableEntity,
+			"specify {\"ids\":[...]} to delete specific messages, or {\"all\":true} to wipe the sandbox")
+		return
+	}
+
 	deleted, err := s.Store.Delete(r.Context(), ids...)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())

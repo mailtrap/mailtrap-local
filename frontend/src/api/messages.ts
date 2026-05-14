@@ -205,16 +205,28 @@ export async function getHtmlCheck(id: string): Promise<HtmlCheckReport> {
 
 /**
  * DELETE /api/v1/messages — bulk/single/all delete.
- * Pass { ids: [...] } to delete specific messages, or no body to delete all.
+ *
+ * Pass `{ ids: [...] }` to delete specific messages, or `{ all: true }`
+ * to wipe the entire sandbox. The server rejects empty bodies + bodies
+ * without either key with 422 — wiping everything has to be explicit,
+ * so a malformed body never silently truncates the mailbox.
+ *
  * Axios sends the body under `data` for DELETE requests.
  */
-export async function deleteMessages(body?: { ids?: string[] }): Promise<void> {
-  await api.delete('/messages', { data: body ?? {} })
+export async function deleteMessages(
+  body: { ids: string[] } | { all: true },
+): Promise<void> {
+  await api.delete('/messages', { data: body })
 }
 
 /** Convenience wrapper for deleting a single message. */
 export async function deleteMessage(id: string): Promise<void> {
   await deleteMessages({ ids: [id] })
+}
+
+/** Convenience wrapper for wiping every message in the sandbox. */
+export async function deleteAllMessages(): Promise<void> {
+  await deleteMessages({ all: true })
 }
 
 /**

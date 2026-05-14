@@ -123,22 +123,45 @@ paths:
       tags: [messages]
       summary: Delete messages
       description: |
-        With a non-empty `ids` array in the body, deletes those specific messages.
-        Without a body (or with empty `ids`), deletes **all** messages in the sandbox.
+        Two shapes are accepted:
+
+          - `{ "ids": ["abc", "def"] }` — delete those specific messages.
+          - `{ "all": true }` — wipe the entire sandbox.
+
+        Anything else (empty body, `{}`, `{"ids":[]}`, malformed JSON,
+        `{"all":false}`) is rejected. Wiping the sandbox has to be
+        explicit so a malformed body never silently truncates the
+        mailbox.
       operationId: deleteMessages
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                ids:
-                  type: array
-                  items:
-                    type: string
-              example:
-                ids: ["abc123"]
+              oneOf:
+                - type: object
+                  required: [ids]
+                  properties:
+                    ids:
+                      type: array
+                      minItems: 1
+                      items:
+                        type: string
+                - type: object
+                  required: [all]
+                  properties:
+                    all:
+                      type: boolean
+                      enum: [true]
+              examples:
+                byId:
+                  summary: Delete specific messages
+                  value:
+                    ids: ["abc123", "def456"]
+                wipe:
+                  summary: Wipe the entire sandbox
+                  value:
+                    all: true
       responses:
         '200':
           description: '"ok" plain-text body.'
@@ -147,6 +170,18 @@ paths:
               schema:
                 type: string
                 example: ok
+        '400':
+          description: Body wasn't decodable JSON.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Body was decodable but didn't carry `ids` or `all`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # ---- Search ----------------------------------------------------------
 

@@ -11,7 +11,7 @@ import {
 } from './icons'
 import mailtrapLogo from '../assets/mailtrap-logo.svg'
 import {
-  deleteMessages,
+  deleteAllMessages,
   getMessages,
   markAllRead,
   searchMessages,
@@ -274,7 +274,7 @@ export default function Sidebar() {
     setBusy(true)
     setActionError(null)
     try {
-      await deleteMessages()
+      await deleteAllMessages()
       fetchMessages()
       navigate('/', { replace: true })
       setConfirmDeleteAll(false)

@@ -22,14 +22,14 @@ import type { CableMessage } from '../lib/cable'
 
 // ---------------------------------------------------------------------
 // Mocks. The Sidebar reaches for:
-//   - api/messages (getMessages, deleteMessages, markAllRead, searchMessages)
+//   - api/messages (getMessages, deleteAllMessages, markAllRead, searchMessages)
 //   - api/cloud / api/relay / api/webhook (via the three provider hooks)
 //   - lib/cable (live updates)
 // ---------------------------------------------------------------------
 
 const getMessages = vi.fn()
 const searchMessages = vi.fn()
-const deleteMessages = vi.fn()
+const deleteAllMessages = vi.fn()
 const markAllRead = vi.fn()
 
 vi.mock('../api/messages', async () => {
@@ -40,7 +40,7 @@ vi.mock('../api/messages', async () => {
     ...actual,
     getMessages: (...args: unknown[]) => getMessages(...args),
     searchMessages: (...args: unknown[]) => searchMessages(...args),
-    deleteMessages: (...args: unknown[]) => deleteMessages(...args),
+    deleteAllMessages: (...args: unknown[]) => deleteAllMessages(...args),
     markAllRead: (...args: unknown[]) => markAllRead(...args),
   }
 })
@@ -99,7 +99,7 @@ beforeEach(() => {
   cableSub = null
   getMessages.mockReset()
   searchMessages.mockReset()
-  deleteMessages.mockReset()
+  deleteAllMessages.mockReset()
   markAllRead.mockReset()
 })
 
@@ -209,7 +209,7 @@ describe('Sidebar', () => {
       count: 1,
       messages: [makeSummary({ id: 'x', subject: 'Some' })],
     })
-    deleteMessages.mockResolvedValue(undefined)
+    deleteAllMessages.mockResolvedValue(undefined)
 
     const user = userEvent.setup()
     renderWithProviders(<Sidebar />)
@@ -227,7 +227,7 @@ describe('Sidebar', () => {
     getMessages.mockResolvedValueOnce(emptyResp)
     await user.click(confirmBtn)
 
-    await waitFor(() => expect(deleteMessages).toHaveBeenCalled())
+    await waitFor(() => expect(deleteAllMessages).toHaveBeenCalled())
   })
 
   it('Mark-all-read sends the markAllRead request', async () => {

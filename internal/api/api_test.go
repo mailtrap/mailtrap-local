@@ -191,7 +191,7 @@ func TestDeleteAndReadToggle(t *testing.T) {
 	_ = ingestSample(t, ts.URL, "c", "a@x", "b@y", "")
 
 	// Bulk read
-	body, _ := json.Marshal(map[string]any{"Read": true})
+	body, _ := json.Marshal(map[string]any{"read": true})
 	req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/messages", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
@@ -206,8 +206,8 @@ func TestDeleteAndReadToggle(t *testing.T) {
 		t.Errorf("after bulk-read, unread = %d, want 0", listResp.Unread)
 	}
 
-	// Delete two by ID
-	delBody, _ := json.Marshal(map[string]any{"IDs": []string{id1, id2}})
+	// Delete two by id
+	delBody, _ := json.Marshal(map[string]any{"ids": []string{id1, id2}})
 	req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", bytes.NewReader(delBody))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = http.DefaultClient.Do(req)
@@ -218,13 +218,109 @@ func TestDeleteAndReadToggle(t *testing.T) {
 		t.Errorf("after delete-2, total = %d, want 1", listResp.Total)
 	}
 
-	// Delete all
-	req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", nil)
+	// Delete all — must use the explicit {"all":true} signal.
+	allBody, _ := json.Marshal(map[string]any{"all": true})
+	req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", bytes.NewReader(allBody))
+	req.Header.Set("Content-Type", "application/json")
 	resp, _ = http.DefaultClient.Do(req)
 	resp.Body.Close()
 	getJSON(t, ts.URL+"/api/v1/messages", &listResp)
 	if listResp.Total != 0 {
 		t.Errorf("after delete-all, total = %d, want 0", listResp.Total)
+	}
+}
+
+// TestDeleteMessagesRequiresExplicitSignal pins the safety contract on
+// DELETE /api/v1/messages: every shape that doesn't unambiguously mean
+// "delete these" or "wipe the sandbox" must be rejected and must not
+// touch the DB.
+//
+// Regression for the silent-decode bug Leonid caught: an earlier
+// version of destroyMessages swallowed json.NewDecoder().Decode()
+// errors, then fell through to Delete(ctx) with empty ids — which
+// store.Delete interprets as "wipe everything". A typo in a curl
+// request was enough to truncate the user's mailbox.
+func TestDeleteMessagesRequiresExplicitSignal(t *testing.T) {
+	t.Parallel()
+	_, ts := newTestServer(t)
+	ingestSample(t, ts.URL, "x", "a@x", "b@y", "")
+	ingestSample(t, ts.URL, "y", "a@x", "b@y", "")
+
+	cases := []struct {
+		name    string
+		body    []byte
+		setCT   bool
+		wantSC  int
+		wantMsg string // substring to find in the error body
+	}{
+		{
+			name:    "no body (Content-Length = 0)",
+			body:    nil,
+			setCT:   false,
+			wantSC:  http.StatusUnprocessableEntity,
+			wantMsg: "requires a JSON body",
+		},
+		{
+			name:    "empty JSON object",
+			body:    []byte(`{}`),
+			setCT:   true,
+			wantSC:  http.StatusUnprocessableEntity,
+			wantMsg: `all\":true`,
+		},
+		{
+			name:    "ids: []",
+			body:    []byte(`{"ids":[]}`),
+			setCT:   true,
+			wantSC:  http.StatusUnprocessableEntity,
+			wantMsg: `all\":true`,
+		},
+		{
+			name:    "malformed JSON",
+			body:    []byte(`{"ids": ["abc",`),
+			setCT:   true,
+			wantSC:  http.StatusBadRequest,
+			wantMsg: "decode body",
+		},
+		{
+			name:    "all: false (typo where user meant true)",
+			body:    []byte(`{"all":false}`),
+			setCT:   true,
+			wantSC:  http.StatusUnprocessableEntity,
+			wantMsg: `all\":true`,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var req *http.Request
+			if c.body == nil {
+				req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", nil)
+			} else {
+				req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", bytes.NewReader(c.body))
+			}
+			if c.setCT {
+				req.Header.Set("Content-Type", "application/json")
+			}
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != c.wantSC {
+				t.Errorf("status = %d, want %d", resp.StatusCode, c.wantSC)
+			}
+			raw, _ := io.ReadAll(resp.Body)
+			if !bytes.Contains(raw, []byte(c.wantMsg)) {
+				t.Errorf("body missing %q\n  got: %s", c.wantMsg, raw)
+			}
+
+			// The critical assertion: nothing got deleted.
+			var listResp MessagesResponse
+			getJSON(t, ts.URL+"/api/v1/messages", &listResp)
+			if listResp.Total != 2 {
+				t.Errorf("malformed delete request truncated the mailbox: total = %d, want 2",
+					listResp.Total)
+			}
+		})
 	}
 }
 
