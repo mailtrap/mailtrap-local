@@ -268,6 +268,44 @@ func TestSearchMultiTokenAnd(t *testing.T) {
 	}
 }
 
+// Existing DBs that predate the FTS5 index have rows in `messages`
+// but nothing in `messages_fts` — Open() should rebuild the index on
+// first boot so Search works without requiring a re-ingest.
+func TestSearchBackfillsOnOpen(t *testing.T) {
+	t.Parallel()
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	// Insert two rows, then wipe the FTS index to simulate an
+	// upgraded-from-pre-FTS5 DB.
+	_, _ = s.Insert(ctx, fixturePayload("Hello FTS world", "a@x", "b@y", ""))
+	_, _ = s.Insert(ctx, fixturePayload("Goodbye later", "c@x", "d@y", ""))
+	if _, err := s.db.Exec(`INSERT INTO messages_fts(messages_fts) VALUES('delete-all')`); err != nil {
+		t.Fatalf("simulate stale FTS: %v", err)
+	}
+	// Sanity: search returns nothing now (FTS index is empty).
+	res, _ := s.Search(ctx, SearchOpts{Query: "hello", Limit: 50})
+	if len(res.Messages) != 0 {
+		t.Fatalf("pre-backfill search should return 0, got %d", len(res.Messages))
+	}
+
+	// Re-running applySchema() triggers the backfill path.
+	if err := s.applySchema(); err != nil {
+		t.Fatal(err)
+	}
+	// fixturePayload puts "Hello <subject>" in Text for every row, so
+	// both rows match — we just want non-zero, indicating the index
+	// was rebuilt from the existing content table.
+	res, _ = s.Search(ctx, SearchOpts{Query: "hello", Limit: 50})
+	if len(res.Messages) != 2 {
+		t.Errorf("after backfill: search for 'hello' returned %d, want 2", len(res.Messages))
+	}
+	res, _ = s.Search(ctx, SearchOpts{Query: "goodbye", Limit: 50})
+	if len(res.Messages) != 1 {
+		t.Errorf("after backfill: search for 'goodbye' returned %d, want 1", len(res.Messages))
+	}
+}
+
 func TestSearchEscapesLikeWildcards(t *testing.T) {
 	t.Parallel()
 	s := newTestStore(t)

@@ -53,6 +53,17 @@ CREATE TABLE IF NOT EXISTS attachments (
 
 CREATE INDEX IF NOT EXISTS idx_attachments_message ON attachments (message_id);
 
+-- Full-text search index over messages. External-content
+-- (content='messages', content_rowid='rowid') means rows live in the
+-- messages table and this index just stores tokens, keeping disk usage
+-- reasonable. Trigger-driven sync lives in Go (see store.go) because
+-- our splitStatements helper doesn't grok BEGIN...END trigger blocks.
+CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
+  subject, from_name, from_address, recipients_text, snippet, text_body, category,
+  content='messages', content_rowid='rowid',
+  tokenize='unicode61 remove_diacritics 2'
+);
+
 -- Singleton connection tables. The app writes at most one row per
 -- table — effective config merges (config-file overlay, the single
 -- DB row).

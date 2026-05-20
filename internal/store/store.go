@@ -102,7 +102,8 @@ func (s *Store) applySchema() error {
 	if err != nil {
 		return fmt.Errorf("read schema: %w", err)
 	}
-	// CREATE TABLE / INDEX statements are idempotent (IF NOT EXISTS).
+	// CREATE TABLE / INDEX / VIRTUAL TABLE statements are idempotent
+	// (IF NOT EXISTS).
 	for _, stmt := range splitStatements(string(raw)) {
 		if strings.TrimSpace(stmt) == "" {
 			continue
@@ -111,7 +112,67 @@ func (s *Store) applySchema() error {
 			return fmt.Errorf("apply schema: %w\n  in stmt: %s", err, stmt)
 		}
 	}
+	// FTS triggers live here (not schema.sql) because splitStatements
+	// doesn't understand BEGIN...END.
+	for _, t := range ftsTriggers {
+		if _, err := s.db.Exec(t); err != nil {
+			return fmt.Errorf("apply fts trigger: %w\n  in stmt: %s", err, t)
+		}
+	}
+	// First-time backfill: if there are messages but no FTS rows
+	// (existing DB upgraded from a schema without FTS), rebuild the
+	// index. Subsequent boots find the index populated and skip.
+	if err := s.backfillFTSIfNeeded(); err != nil {
+		return fmt.Errorf("backfill fts: %w", err)
+	}
 	return nil
+}
+
+// ftsTriggers keeps messages_fts in sync with messages. External-
+// content FTS5 stores no row data of its own, so the triggers fire on
+// every messages row change and rebuild that row's tokens.
+var ftsTriggers = []string{
+	`CREATE TRIGGER IF NOT EXISTS messages_ai AFTER INSERT ON messages BEGIN
+		INSERT INTO messages_fts (rowid, subject, from_name, from_address, recipients_text, snippet, text_body, category)
+		VALUES (new.rowid, new.subject, new.from_name, new.from_address, new.recipients_text, new.snippet, new.text_body, COALESCE(new.category, ''));
+	END`,
+	`CREATE TRIGGER IF NOT EXISTS messages_ad AFTER DELETE ON messages BEGIN
+		INSERT INTO messages_fts (messages_fts, rowid, subject, from_name, from_address, recipients_text, snippet, text_body, category)
+		VALUES ('delete', old.rowid, old.subject, old.from_name, old.from_address, old.recipients_text, old.snippet, old.text_body, COALESCE(old.category, ''));
+	END`,
+	`CREATE TRIGGER IF NOT EXISTS messages_au AFTER UPDATE ON messages BEGIN
+		INSERT INTO messages_fts (messages_fts, rowid, subject, from_name, from_address, recipients_text, snippet, text_body, category)
+		VALUES ('delete', old.rowid, old.subject, old.from_name, old.from_address, old.recipients_text, old.snippet, old.text_body, COALESCE(old.category, ''));
+		INSERT INTO messages_fts (rowid, subject, from_name, from_address, recipients_text, snippet, text_body, category)
+		VALUES (new.rowid, new.subject, new.from_name, new.from_address, new.recipients_text, new.snippet, new.text_body, COALESCE(new.category, ''));
+	END`,
+}
+
+// backfillFTSIfNeeded rebuilds the FTS index when an upgraded DB has
+// messages but no indexed tokens (the trigger only fires on writes
+// after install, so pre-existing rows wouldn't show up otherwise).
+//
+// External-content FTS5 makes `SELECT COUNT(*) FROM messages_fts`
+// proxy through to the content table, so it's useless for "is the
+// index populated?". The shadow table `messages_fts_docsize` holds
+// one row per *indexed* document — that's the right signal.
+func (s *Store) backfillFTSIfNeeded() error {
+	var msgCount int
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM messages`).Scan(&msgCount); err != nil {
+		return err
+	}
+	if msgCount == 0 {
+		return nil
+	}
+	var indexed int
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM messages_fts_docsize`).Scan(&indexed); err != nil {
+		return err
+	}
+	if indexed >= msgCount {
+		return nil
+	}
+	_, err := s.db.Exec(`INSERT INTO messages_fts(messages_fts) VALUES('rebuild')`)
+	return err
 }
 
 // splitStatements splits a multi-statement SQL string on `;` boundaries.

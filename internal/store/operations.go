@@ -127,22 +127,11 @@ type SearchOpts struct {
 	Category string // optional further narrowing
 }
 
-// SEARCHABLE_COLUMNS — case-insensitive substring across these columns.
-// Mirrors the documented search service behavior.
-var searchableColumns = []string{
-	"subject",
-	"from_name",
-	"from_address",
-	"recipients_text",
-	"snippet",
-	"text_body",
-	"category",
-}
-
-// Search runs a multi-token AND search across `searchableColumns`.
-// Whitespace splits the query; each token must match (case-insensitive
-// LIKE) at least one of the searchable columns. SQL `%` and `_` wildcards
-// in user input are escaped via `ESCAPE '\'`.
+// Search runs a multi-token AND search against the FTS5 index. Each
+// whitespace-separated token is wrapped as a quoted phrase, then
+// joined with spaces — FTS5's default AND-of-phrases semantics gives
+// the same "every token matches somewhere" behaviour the old LIKE
+// implementation had, but with an actual index doing the work.
 func (s *Store) Search(ctx context.Context, opts SearchOpts) (*ListResult, error) {
 	tokens := splitTokens(opts.Query)
 	if len(tokens) == 0 {
@@ -153,31 +142,28 @@ func (s *Store) Search(ctx context.Context, opts SearchOpts) (*ListResult, error
 		}, nil
 	}
 
-	whereParts := []string{}
-	args := []any{}
-	for _, t := range tokens {
-		like := "%" + escapeLike(t) + "%"
-		var ors []string
-		for _, col := range searchableColumns {
-			ors = append(ors, `LOWER(`+col+`) LIKE LOWER(?) ESCAPE '\'`)
-			args = append(args, like)
-		}
-		whereParts = append(whereParts, "("+strings.Join(ors, " OR ")+")")
-	}
+	matchExpr := buildFTSMatchExpr(tokens)
+	args := []any{matchExpr}
+	categoryClause := ""
 	if opts.Category != "" {
-		whereParts = append(whereParts, "category = ?")
+		categoryClause = " AND m.category = ?"
 		args = append(args, opts.Category)
 	}
-	where := "WHERE " + strings.Join(whereParts, " AND ")
 
 	var total, unread int
-	if err := s.db.QueryRowContext(ctx,
-		`SELECT COUNT(*) FROM messages `+where, args...,
+	if err := s.db.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM messages m JOIN messages_fts f ON f.rowid = m.rowid
+		WHERE messages_fts MATCH ?`+categoryClause,
+		args...,
 	).Scan(&total); err != nil {
 		return nil, err
 	}
-	if err := s.db.QueryRowContext(ctx,
-		`SELECT COUNT(*) FROM messages `+where+` AND read_at IS NULL`, args...,
+	if err := s.db.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM messages m JOIN messages_fts f ON f.rowid = m.rowid
+		WHERE messages_fts MATCH ?`+categoryClause+` AND m.read_at IS NULL`,
+		args...,
 	).Scan(&unread); err != nil {
 		return nil, err
 	}
@@ -193,9 +179,10 @@ func (s *Store) Search(ctx context.Context, opts SearchOpts) (*ListResult, error
 	}
 	pageArgs := append(append([]any{}, args...), limit, opts.Start)
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT `+messageColumns+`
-		FROM messages `+where+`
-		ORDER BY created_at DESC, rowid DESC
+		SELECT `+messageColumnsM+`
+		FROM messages m JOIN messages_fts f ON f.rowid = m.rowid
+		WHERE messages_fts MATCH ?`+categoryClause+`
+		ORDER BY m.created_at DESC, m.rowid DESC
 		LIMIT ? OFFSET ?
 	`, pageArgs...)
 	if err != nil {
@@ -329,10 +316,19 @@ func splitTokens(q string) []string {
 	return out
 }
 
-// escapeLike escapes the SQL LIKE wildcards `%` and `_` plus the
-// escape char `\` itself, so user input "50%" matches a literal % rather
-// than "anything".
-func escapeLike(s string) string {
-	r := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
-	return r.Replace(s)
+// buildFTSMatchExpr turns a slice of whitespace-split user tokens into
+// an FTS5 MATCH expression. Each token is wrapped in double quotes so
+// FTS5 operators inside the token (parens, hyphens, AND/OR, etc.) are
+// treated as literal text. Internal double quotes are escaped per
+// FTS5's "" rule. Tokens are space-joined: FTS5's default is implicit
+// AND across phrases.
+func buildFTSMatchExpr(tokens []string) string {
+	if len(tokens) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(tokens))
+	for _, t := range tokens {
+		parts = append(parts, `"`+strings.ReplaceAll(t, `"`, `""`)+`"`)
+	}
+	return strings.Join(parts, " ")
 }

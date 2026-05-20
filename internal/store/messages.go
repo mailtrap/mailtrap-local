@@ -413,6 +413,19 @@ const messageColumns = `
 	created_at, updated_at
 `
 
+// messageColumnsM is messageColumns with every column qualified by
+// the `m.` alias. Used by JOIN queries (the FTS-backed Search) where
+// columns collide between messages and messages_fts.
+const messageColumnsM = `
+	m.id, m.smtp_from, m.smtp_to, m.message_id,
+	m.from_name, m.from_address,
+	m.to_addresses, m.cc_addresses, m.bcc_addresses, m.reply_to,
+	m.return_path, m.subject, m.date, m.category,
+	m.text_body, m.html, m.raw, m.size, m.snippet,
+	m.recipients_text, m.list_unsubscribe, m.read_at,
+	m.created_at, m.updated_at
+`
+
 // scanner is the subset of *sql.Row / *sql.Rows we actually need, so
 // scanMessage can serve both.
 type scanner interface {
