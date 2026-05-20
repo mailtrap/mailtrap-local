@@ -25,13 +25,13 @@ import (
 
 // Tuning knobs:
 //
-//   queueSize    per-subscriber buffer; absorbs bursts of created /
-//                destroyed events without dropping
-//   pushTimeout  how long broadcast waits on a full queue before
-//                deciding the subscriber is too slow. Long enough to
-//                ride out scheduler hiccups under concurrent broadcast
-//                load; short enough that an actually-stuck consumer
-//                gets evicted promptly.
+//	queueSize    per-subscriber buffer; absorbs bursts of created /
+//	             destroyed events without dropping
+//	pushTimeout  how long broadcast waits on a full queue before
+//	             deciding the subscriber is too slow. Long enough to
+//	             ride out scheduler hiccups under concurrent broadcast
+//	             load; short enough that an actually-stuck consumer
+//	             gets evicted promptly.
 const (
 	queueSize   = 64
 	pushTimeout = 50 * time.Millisecond
