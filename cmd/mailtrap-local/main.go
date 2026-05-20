@@ -123,6 +123,7 @@ func main() {
 			return json.Marshal(api.WireDetail(m, inline, atts))
 		},
 	}
+	dispatcher.Start()
 
 	frontendFS, err := fs.Sub(distEmbed, "dist")
 	if err != nil {
@@ -146,7 +147,6 @@ func main() {
 	if err := srv.Start(); err != nil {
 		log.Fatalf("start smtpd: %v", err)
 	}
-	defer srv.Close()
 
 	httpSrv := &http.Server{
 		Addr:              *httpListen,
@@ -168,10 +168,28 @@ func main() {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
-
 	log.Println("shutting down...")
-	_ = httpSrv.Close()
-	_ = srv.Close()
+
+	// Graceful shutdown order, bounded by a single 10s deadline:
+	//   1. Stop accepting new SMTP + HTTP connections (so no further
+	//      AfterIngest goroutines spawn).
+	//   2. Drain in-flight HTTP requests via Shutdown.
+	//   3. Cancel + wait for dispatcher background goroutines (cloud
+	//      mirror, relay mirror, webhook delivery, retention). When
+	//      the deadline expires, Shutdown returns an error and the
+	//      remaining goroutines are abandoned — the process exits.
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Close(); err != nil {
+		log.Printf("smtp close: %v", err)
+	}
+	if err := httpSrv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("http shutdown: %v", err)
+	}
+	if err := dispatcher.Shutdown(shutdownCtx); err != nil {
+		log.Printf("dispatcher shutdown: %v (some side-effects abandoned)", err)
+	}
 }
 
 // broadcastCreated builds a MessageSummary for the broadcasted JSON

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/mailtrap/mailtrap-local/internal/cloud"
@@ -21,6 +22,12 @@ import (
 )
 
 // Dispatcher fans out post-ingest work to background goroutines.
+//
+// Lifecycle: optional. Call Start() to make the dispatcher
+// shutdown-aware; Shutdown(ctx) then cancels in-flight work and waits
+// for goroutines to return. Without Start, AfterIngest still works —
+// goroutines run with a background parent context and Shutdown is a
+// no-op. Tests use the unstarted form; main.go calls Start.
 type Dispatcher struct {
 	Store   *store.Store
 	Relay   *relay.Client
@@ -37,17 +44,75 @@ type Dispatcher struct {
 	// webhook receiver expects (full message detail, same shape as
 	// GET /message/:id). Wired by main.go.
 	SerializeSummary func(*store.Message) ([]byte, error)
+
+	// Lifecycle plumbing. Zero values are safe; Start() initialises.
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+}
+
+// Start prepares the dispatcher for graceful shutdown. Subsequent
+// AfterIngest goroutines inherit a cancellable context, and Shutdown
+// will wait for them. Idempotent.
+func (d *Dispatcher) Start() {
+	if d.ctx != nil {
+		return
+	}
+	d.ctx, d.cancel = context.WithCancel(context.Background())
+}
+
+// Shutdown cancels every in-flight goroutine spawned by AfterIngest
+// and waits for them to return, bounded by ctx. Returns ctx.Err() if
+// the deadline expires before all goroutines finish — the caller can
+// log "some side-effects were abandoned" in that case.
+//
+// No-op if Start() was never called (e.g. in tests).
+func (d *Dispatcher) Shutdown(ctx context.Context) error {
+	if d.cancel == nil {
+		return nil
+	}
+	d.cancel()
+	done := make(chan struct{})
+	go func() {
+		d.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// parentCtx returns the dispatcher's cancellable context if Start was
+// called, otherwise a background context (for unstarted use in tests).
+func (d *Dispatcher) parentCtx() context.Context {
+	if d.ctx != nil {
+		return d.ctx
+	}
+	return context.Background()
+}
+
+// spawn runs fn in a goroutine tracked by d.wg. When the dispatcher is
+// started, Shutdown waits on the WaitGroup.
+func (d *Dispatcher) spawn(fn func()) {
+	d.wg.Add(1)
+	go func() {
+		defer d.wg.Done()
+		fn()
+	}()
 }
 
 // AfterIngest is called right after a successful Insert. Synchronous-
-// looking but each branch dispatches to a goroutine; the call returns
-// immediately.
+// looking but each branch dispatches to a tracked goroutine; the call
+// returns immediately.
 func (d *Dispatcher) AfterIngest(msgID string) {
-	go d.broadcast(msgID)
-	go d.cloudMirror(msgID)
-	go d.relayMirror(msgID)
-	go d.webhookDelivery(msgID)
-	go d.enforceRetention()
+	d.spawn(func() { d.broadcast(msgID) })
+	d.spawn(func() { d.cloudMirror(msgID) })
+	d.spawn(func() { d.relayMirror(msgID) })
+	d.spawn(func() { d.webhookDelivery(msgID) })
+	d.spawn(func() { d.enforceRetention() })
 }
 
 func (d *Dispatcher) broadcast(msgID string) {
@@ -64,7 +129,7 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 	apiToken := ""
 	var sandboxID int64
 
-	if c, err := d.Store.CloudGet(context.Background()); err == nil {
+	if c, err := d.Store.CloudGet(d.parentCtx()); err == nil {
 		mirror = c.MirrorEnabled
 		apiToken = c.APIToken
 		sandboxID = c.SandboxID
@@ -83,7 +148,7 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(d.parentCtx(), 30*time.Second)
 	defer cancel()
 
 	m, err := d.Store.Get(ctx, msgID)
@@ -104,7 +169,7 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 // relayMirror auto-relays via the SMTP server if auto_relay_enabled.
 func (d *Dispatcher) relayMirror(msgID string) {
 	cfg := d.Config.Get()
-	conn, err := d.Store.RelayGet(context.Background())
+	conn, err := d.Store.RelayGet(d.parentCtx())
 	if errors.Is(err, store.ErrNotFound) {
 		return
 	}
@@ -122,7 +187,7 @@ func (d *Dispatcher) relayMirror(msgID string) {
 
 	overlay := overlayRelay(conn, cfg.Relay)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(d.parentCtx(), 30*time.Second)
 	defer cancel()
 
 	m, err := d.Store.Get(ctx, msgID)
@@ -140,12 +205,12 @@ func (d *Dispatcher) relayMirror(msgID string) {
 // webhookDelivery POSTs to the configured URL.
 func (d *Dispatcher) webhookDelivery(msgID string) {
 	cfg := d.Config.Get()
-	conn, _ := d.Store.WebhookGet(context.Background())
+	conn, _ := d.Store.WebhookGet(d.parentCtx())
 	url, secret, enabled := overlayWebhook(conn, cfg.Webhook)
 	if !enabled || url == "" {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(d.parentCtx(), 30*time.Second)
 	defer cancel()
 	m, err := d.Store.Get(ctx, msgID)
 	if err != nil {
@@ -176,7 +241,7 @@ func (d *Dispatcher) enforceRetention() {
 	if cap <= 0 {
 		return
 	}
-	ctx := context.Background()
+	ctx := d.parentCtx()
 
 	// Quick count
 	var total int
@@ -212,7 +277,8 @@ func (d *Dispatcher) enforceRetention() {
 	}
 	for _, id := range deleted {
 		if d.BroadcastDestroyed != nil {
-			go d.BroadcastDestroyed(id)
+			id := id // capture
+			d.spawn(func() { d.BroadcastDestroyed(id) })
 		}
 	}
 }

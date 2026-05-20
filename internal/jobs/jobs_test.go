@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -236,4 +237,128 @@ func TestRetentionEvictsOldest(t *testing.T) {
 // we don't need to spell out per-test.
 func writeFile(path, content string) error {
 	return os.WriteFile(path, []byte(content), 0o600)
+}
+
+// ---------------------------------------------------------------------
+// Graceful-shutdown tests
+// ---------------------------------------------------------------------
+
+// Happy path: all goroutines complete, Shutdown returns nil.
+func TestShutdownHappyPath(t *testing.T) {
+	t.Parallel()
+	s, _ := store.OpenMemory()
+	defer s.Close()
+
+	var hits atomic.Int32
+	receiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer receiver.Close()
+
+	if err := s.WebhookUpsert(context.Background(), &store.WebhookConnection{
+		URL: receiver.URL, Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	d := &Dispatcher{
+		Store: s, Config: config.NewLoader(),
+		Relay: &relay.Client{}, Webhook: webhook.NewClient(),
+		BroadcastCreated:   func(string) {},
+		BroadcastDestroyed: func(string) {},
+		SerializeSummary:   func(*store.Message) ([]byte, error) { return []byte("{}"), nil },
+	}
+	d.Start()
+
+	id := ingest(t, s, "shutdown-happy")
+	d.AfterIngest(id)
+
+	// Wait for the webhook to land so we know the goroutines are
+	// actually doing the work. Shutdown should then return nil
+	// promptly — all goroutines have already returned.
+	waitFor(t, 3*time.Second, func() bool { return hits.Load() >= 1 })
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := d.Shutdown(ctx); err != nil {
+		t.Fatalf("Shutdown returned %v, want nil", err)
+	}
+}
+
+// Deadline path: a stuck webhook receiver keeps a goroutine alive past
+// the shutdown deadline. Shutdown must return ctx.Err() rather than
+// block forever.
+func TestShutdownReturnsDeadlineExceeded(t *testing.T) {
+	t.Parallel()
+	s, _ := store.OpenMemory()
+	defer s.Close()
+
+	// Receiver blocks until its request context is cancelled by the
+	// client (which happens when the dispatcher's parent context is
+	// cancelled by Shutdown). Even so, the goroutine then has to walk
+	// the retry loop, so we test with a deadline shorter than that
+	// total time.
+	release := make(chan struct{})
+	receiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer receiver.Close()
+	defer close(release)
+
+	if err := s.WebhookUpsert(context.Background(), &store.WebhookConnection{
+		URL: receiver.URL, Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	d := &Dispatcher{
+		Store: s, Config: config.NewLoader(),
+		Relay: &relay.Client{}, Webhook: webhook.NewClient(),
+		BroadcastCreated:   func(string) {},
+		BroadcastDestroyed: func(string) {},
+		SerializeSummary:   func(*store.Message) ([]byte, error) { return []byte("{}"), nil },
+	}
+	d.Start()
+
+	id := ingest(t, s, "shutdown-stuck")
+	d.AfterIngest(id)
+
+	// Give the dispatcher a beat to actually start the POST, otherwise
+	// Shutdown might fire before any goroutine is mid-flight.
+	time.Sleep(50 * time.Millisecond)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	err := d.Shutdown(ctx)
+	if err == nil {
+		t.Fatalf("Shutdown returned nil, want a deadline error")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Shutdown returned %v, want DeadlineExceeded", err)
+	}
+}
+
+// Shutdown with no Start is a no-op (preserves the test-friendly
+// "unstarted dispatcher" contract).
+func TestShutdownWithoutStartIsNoop(t *testing.T) {
+	t.Parallel()
+	s, _ := store.OpenMemory()
+	defer s.Close()
+	d := &Dispatcher{
+		Store: s, Config: config.NewLoader(),
+		Relay: &relay.Client{}, Webhook: webhook.NewClient(),
+		BroadcastCreated:   func(string) {},
+		BroadcastDestroyed: func(string) {},
+		SerializeSummary:   func(*store.Message) ([]byte, error) { return []byte("{}"), nil },
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := d.Shutdown(ctx); err != nil {
+		t.Fatalf("Shutdown on unstarted dispatcher = %v, want nil", err)
+	}
 }
