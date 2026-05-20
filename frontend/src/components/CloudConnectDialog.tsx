@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
 import { useCloudConnection } from '../hooks/useCloudConnection'
 import { parseSandboxId } from '../api/cloud'
 import type { CloudConfigKey } from '../api/cloud'
@@ -8,21 +7,18 @@ import { Toggle } from './Toggle'
 import { extractApiError } from '../api/client'
 import { LockedFieldHint } from './LockedFieldHint'
 import {
-  actions,
-  btn,
-  configBanner,
-  configBannerCode,
-  content,
-  dialogLead,
-  dialogTitle,
+  ConnectionDialogShell,
+  DialogActions,
+  DialogButton,
+  DialogConfigBanner,
+  DialogField,
+  fieldInput,
+  lockedInput,
+} from './dialogAtoms'
+import {
   errorBox,
-  field,
   fieldHint,
   fieldHintLink,
-  fieldInput,
-  fieldLabel,
-  lockedInput,
-  overlay,
   toggleDesc,
   toggleRow,
 } from './dialogStyles'
@@ -32,21 +28,16 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
-/**
- * Outer wrapper. The actual form is in <Body>, mounted only when
- * `open=true`. Each open ⇒ fresh useState initialisers ⇒ form fields
- * sync with the current connection state without a reset-effect.
- */
 export default function CloudConnectDialog({ open, onOpenChange }: Props) {
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className={overlay} />
-        <Dialog.Content className={content} aria-describedby={undefined}>
-          {open && <Body onOpenChange={onOpenChange} />}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <ConnectionDialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Connect to Mailtrap Sandbox"
+      lead="Link this local sandbox to a Mailtrap cloud sandbox. All incoming emails can be mirrored, or forwarded one-by-one from the message view."
+    >
+      <Body onOpenChange={onOpenChange} />
+    </ConnectionDialogShell>
   )
 }
 
@@ -66,8 +57,6 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
     (k) => lockedKeys[k],
   )
 
-  // Initial values pulled directly from `state` — runs once at mount,
-  // discarded on close. No useEffect-based reset.
   const [apiToken, setApiToken] = useState('')
   const [sandboxInput, setSandboxInput] = useState(
     state?.sandbox_id ? String(state.sandbox_id) : '',
@@ -122,31 +111,35 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
 
   return (
     <>
-      <Dialog.Title asChild>
-        <h2 className={dialogTitle}>Connect to Mailtrap Sandbox</h2>
-      </Dialog.Title>
-      <p className={dialogLead}>
-        Link this local sandbox to a Mailtrap cloud sandbox. All incoming
-        emails can be mirrored, or forwarded one-by-one from the message
-        view.
-      </p>
-
       {error && <div className={errorBox}>{error}</div>}
 
       {anyLocked && state?.config_path && (
-        <div className={configBanner}>
-          {allLocked
-            ? 'All settings are pinned by '
-            : 'Some settings are pinned by '}
-          <code className={configBannerCode}>{state.config_path}</code>. Edit
-          that file and restart to change them.
-        </div>
+        <DialogConfigBanner
+          allLocked={allLocked}
+          configPath={state.config_path}
+        />
       )}
 
-      <div className={field}>
-        <label className={fieldLabel} htmlFor="api-token">
-          API token
-        </label>
+      <DialogField
+        label="API token"
+        htmlFor="api-token"
+        locked={isLocked('api_token')}
+        configPath={state?.config_path}
+        hint={
+          <>
+            Create one at{' '}
+            <a
+              className={fieldHintLink}
+              href="https://mailtrap.io/account/api-tokens"
+              target="_blank"
+              rel="noreferrer"
+            >
+              mailtrap.io/account/api-tokens
+            </a>
+            .
+          </>
+        }
+      >
         <input
           id="api-token"
           type="password"
@@ -166,28 +159,18 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             isLocked('api_token') ? `${fieldInput} ${lockedInput}` : fieldInput
           }
         />
-        {isLocked('api_token') ? (
-          <LockedFieldHint path={state?.config_path ?? null} />
-        ) : (
-          <span className={fieldHint}>
-            Create one at{' '}
-            <a
-              className={fieldHintLink}
-              href="https://mailtrap.io/account/api-tokens"
-              target="_blank"
-              rel="noreferrer"
-            >
-              mailtrap.io/account/api-tokens
-            </a>
-            .
-          </span>
-        )}
-      </div>
+      </DialogField>
 
-      <div className={field}>
-        <label className={fieldLabel} htmlFor="sandbox-id">
-          Sandbox ID
-        </label>
+      {/* Sandbox-ID field — the hint slot is unusual: when a sandboxUrl
+          is parsed from the input, we render an accent-coloured link
+          INSTEAD of the default muted hint. So we don't use the
+          DialogField.hint prop and roll the trailing element by hand. */}
+      <DialogField
+        label="Sandbox ID"
+        htmlFor="sandbox-id"
+        locked={isLocked('sandbox_id')}
+        configPath={state?.config_path}
+      >
         <input
           id="sandbox-id"
           type="text"
@@ -202,27 +185,26 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             isLocked('sandbox_id') ? `${fieldInput} ${lockedInput}` : fieldInput
           }
         />
-        {isLocked('sandbox_id') ? (
-          <LockedFieldHint path={state?.config_path ?? null} />
-        ) : sandboxUrl ? (
-          <a
-            className={`${fieldHint} ${fieldHintLink}`}
-            href={sandboxUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {sandboxUrl} <ExternalLinkIcon size={11} />
-          </a>
-        ) : (
-          <span className={fieldHint}>
-            Enter the numeric ID from your sandbox URL (
-            <code className="text-accent">
-              mailtrap.io/sandboxes/<b>ID</b>
-            </code>
-            ).
-          </span>
-        )}
-      </div>
+        {!isLocked('sandbox_id') &&
+          (sandboxUrl ? (
+            <a
+              className={`${fieldHint} ${fieldHintLink}`}
+              href={sandboxUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {sandboxUrl} <ExternalLinkIcon size={11} />
+            </a>
+          ) : (
+            <span className={fieldHint}>
+              Enter the numeric ID from your sandbox URL (
+              <code className="text-accent">
+                mailtrap.io/sandboxes/<b>ID</b>
+              </code>
+              ).
+            </span>
+          ))}
+      </DialogField>
 
       <div className={toggleRow}>
         <Toggle
@@ -241,39 +223,33 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
         sandbox. When off, forward one at a time from the message view.
       </div>
 
-      <div className={actions}>
+      <DialogActions>
         {isConnected && (
-          <button
-            type="button"
-            className={btn}
-            data-variant="danger-text"
+          <DialogButton
+            variant="danger-text"
             onClick={handleDisconnect}
             disabled={busy}
           >
             Disconnect
-          </button>
+          </DialogButton>
         )}
-        <button
-          type="button"
-          className={btn}
-          data-variant="outline"
+        <DialogButton
+          variant="outline"
           onClick={() => onOpenChange(false)}
           disabled={busy}
         >
           Cancel
-        </button>
+        </DialogButton>
         {!allLocked && (
-          <button
-            type="button"
-            className={btn}
-            data-variant="primary"
+          <DialogButton
+            variant="primary"
             onClick={handleSave}
             disabled={!canSave}
           >
             {isConnected ? 'Save' : 'Connect'}
-          </button>
+          </DialogButton>
         )}
-      </div>
+      </DialogActions>
     </>
   )
 }

@@ -1,66 +1,38 @@
 import { useRef, useState } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
 import { useWebhookConnection } from '../hooks/useWebhookConnection'
 import { Toggle } from './Toggle'
 import { extractApiError } from '../api/client'
 import { testWebhookConnection } from '../api/webhook'
 import type { WebhookConfigKey } from '../api/webhook'
-import { LockedFieldHint } from './LockedFieldHint'
 import {
-  actions,
-  btn,
-  configBanner,
-  configBannerCode,
-  content,
-  dialogLead,
-  dialogTitle,
-  errorBox,
-  field,
-  fieldHint,
+  ConnectionDialogShell,
+  DialogActions,
+  DialogButton,
+  DialogConfigBanner,
+  DialogField,
+  DialogStatusRow,
   fieldInput,
-  fieldLabel,
   lockedInput,
-  overlay,
-  toggleDesc,
-  toggleRow,
-} from './dialogStyles'
+  type DialogStatus,
+} from './dialogAtoms'
+import { LockedFieldHint } from './LockedFieldHint'
+import { errorBox, toggleDesc, toggleRow } from './dialogStyles'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-// Same status-row pattern as RelayConnectDialog. The wrapper carries
-// `group` + `data-status`; the dot reads it via `group-data-[status=…]:`.
-// Pulse animation comes from `.pulse-dot` in index.css.
-const statusRowCss = [
-  'group flex min-h-[18px] items-center gap-2 mt-1 mb-2 text-xs text-fg-muted',
-  'data-[status=ok]:text-success',
-  'data-[status=error]:text-danger',
-].join(' ')
-
-const statusRowDotCss = [
-  'inline-block h-2 w-2 shrink-0 rounded-full',
-  'group-data-[status=ok]:bg-success',
-  'group-data-[status=error]:bg-danger',
-  'group-data-[status=testing]:bg-fg-muted group-data-[status=testing]:pulse-dot',
-].join(' ')
-
-/**
- * Outer wrapper. The actual form is in <Body>, mounted only when
- * `open=true`. Each open ⇒ fresh useState initialisers ⇒ form fields
- * sync with the current connection state without a reset-effect.
- */
 export default function WebhookConnectDialog({ open, onOpenChange }: Props) {
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className={overlay} />
-        <Dialog.Content className={content} aria-describedby={undefined}>
-          {open && <Body onOpenChange={onOpenChange} />}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <ConnectionDialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Configure Webhook"
+      lead="POST every newly-captured email to a URL you control — for CI tests, local automation, or piping into another tool. Payload mirrors the inbox API; signed with HMAC-SHA256 when a shared secret is set."
+    >
+      <Body onOpenChange={onOpenChange} />
+    </ConnectionDialogShell>
   )
 }
 
@@ -80,16 +52,12 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
     (k) => lockedKeys[k],
   )
 
-  // Initial values pulled directly from `state` — runs once at mount,
-  // discarded on close.
   const [url, setUrl] = useState(state?.url ?? '')
   const [secret, setSecret] = useState('') // never echo
   const [enabled, setEnabled] = useState(state?.enabled === true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [testStatus, setTestStatus] = useState<
-    'idle' | 'testing' | 'ok' | 'error'
-  >('idle')
+  const [testStatus, setTestStatus] = useState<DialogStatus>('idle')
   const [testMessage, setTestMessage] = useState('')
 
   const isHttpUrl = /^https?:\/\//i.test(url.trim())
@@ -155,32 +123,16 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
 
   return (
     <>
-      <Dialog.Title asChild>
-        <h2 className={dialogTitle}>Configure Webhook</h2>
-      </Dialog.Title>
-      <p className={dialogLead}>
-        POST every newly-captured email to a URL you control — for CI
-        tests, local automation, or piping into another tool. Payload
-        mirrors the inbox API; signed with HMAC-SHA256 when a shared
-        secret is set.
-      </p>
-
       {error && <div className={errorBox}>{error}</div>}
 
       {anyLocked && state?.config_path && (
-        <div className={configBanner}>
-          {allLocked
-            ? 'All settings are pinned by '
-            : 'Some settings are pinned by '}
-          <code className={configBannerCode}>{state.config_path}</code>. Edit
-          that file and restart to change them.
-        </div>
+        <DialogConfigBanner
+          allLocked={allLocked}
+          configPath={state.config_path}
+        />
       )}
 
-      <div className={field}>
-        <label className={fieldLabel} htmlFor="webhook-url">
-          URL
-        </label>
+      <DialogField label="URL" htmlFor="webhook-url" locked={isLocked('url')} configPath={state?.config_path}>
         <input
           id="webhook-url"
           type="url"
@@ -194,15 +146,21 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             isLocked('url') ? `${fieldInput} ${lockedInput}` : fieldInput
           }
         />
-        {isLocked('url') && (
-          <LockedFieldHint path={state?.config_path ?? null} />
-        )}
-      </div>
+      </DialogField>
 
-      <div className={field}>
-        <label className={fieldLabel} htmlFor="webhook-secret">
-          Secret (optional)
-        </label>
+      <DialogField
+        label="Secret (optional)"
+        htmlFor="webhook-secret"
+        locked={isLocked('secret')}
+        configPath={state?.config_path}
+        hint={
+          <>
+            When set, requests carry{' '}
+            <code>X-Mailtrap-Local-Signature: sha256=&lt;hex&gt;</code>. Verify
+            by recomputing HMAC-SHA256 over the raw body.
+          </>
+        }
+      >
         <input
           id="webhook-secret"
           type="password"
@@ -222,16 +180,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             isLocked('secret') ? `${fieldInput} ${lockedInput}` : fieldInput
           }
         />
-        {isLocked('secret') ? (
-          <LockedFieldHint path={state?.config_path ?? null} />
-        ) : (
-          <span className={fieldHint}>
-            When set, requests carry{' '}
-            <code>X-Mailtrap-Local-Signature: sha256=&lt;hex&gt;</code>.
-            Verify by recomputing HMAC-SHA256 over the raw body.
-          </span>
-        )}
-      </div>
+      </DialogField>
 
       <div className={toggleRow}>
         <Toggle
@@ -246,61 +195,42 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
         )}
       </div>
       <div className={toggleDesc}>
-        Off ships nothing — useful while you wire up the receiver. Use
-        "Send test" below to verify the URL without sending real mail.
+        Off ships nothing — useful while you wire up the receiver. Use "Send
+        test" below to verify the URL without sending real mail.
       </div>
 
-      <div className={statusRowCss} data-status={testStatus}>
-        {testStatus !== 'idle' && (
-          <>
-            <span className={statusRowDotCss} />
-            <span>{testMessage}</span>
-          </>
-        )}
-      </div>
+      <DialogStatusRow status={testStatus} message={testMessage} />
 
-      <div className={actions}>
+      <DialogActions>
         {isConfigured && (
-          <button
-            type="button"
-            className={btn}
-            data-variant="danger-text"
+          <DialogButton
+            variant="danger-text"
             onClick={handleDisconnect}
             disabled={busy}
           >
             Remove
-          </button>
+          </DialogButton>
         )}
-        <button
-          type="button"
-          className={btn}
-          data-variant="outline"
-          onClick={handleTest}
-          disabled={!canTest}
-        >
+        <DialogButton variant="outline" onClick={handleTest} disabled={!canTest}>
           Send test
-        </button>
-        <button
-          type="button"
-          className={btn}
-          data-variant="outline"
+        </DialogButton>
+        <DialogButton
+          variant="outline"
           onClick={() => onOpenChange(false)}
           disabled={busy}
         >
           Cancel
-        </button>
+        </DialogButton>
         {!allLocked && (
-          <button
-            type="button"
-            className={btn}
-            data-variant="primary"
+          <DialogButton
+            variant="primary"
             onClick={handleSave}
             disabled={!canSave}
           >
             {isConfigured ? 'Save' : 'Configure'}
-          </button>
+          </DialogButton>
         )}
-      </div>
+      </DialogActions>
     </>
   )
 }
