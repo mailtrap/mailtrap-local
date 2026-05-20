@@ -6,19 +6,25 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // fakeSubscriber records every Send and reports counts. The optional
 // `failOnSend` flag makes Send return an error so we can exercise the
-// "drop subscriber on send failure" path.
+// "drop subscriber on send failure" path; `blockSend` blocks every
+// Send until released, to exercise the slow-subscriber path.
 type fakeSubscriber struct {
 	mu         sync.Mutex
 	frames     [][]byte
 	closed     atomic.Bool
 	failOnSend bool
+	blockSend  chan struct{} // nil → no block; non-nil → wait until closed
 }
 
 func (f *fakeSubscriber) Send(b []byte) error {
+	if f.blockSend != nil {
+		<-f.blockSend
+	}
 	if f.failOnSend {
 		return errors.New("send: simulated failure")
 	}
@@ -51,6 +57,21 @@ func (f *fakeSubscriber) lastFrame() []byte {
 	return f.frames[len(f.frames)-1]
 }
 
+// waitFor polls fn until it returns true or the deadline passes. Used
+// throughout because Send is now async — broadcasts queue the frame
+// and a per-subscriber goroutine drains it.
+func waitFor(t *testing.T, deadline time.Duration, msg string, fn func() bool) {
+	t.Helper()
+	end := time.Now().Add(deadline)
+	for time.Now().Before(end) {
+		if fn() {
+			return
+		}
+		time.Sleep(2 * time.Millisecond)
+	}
+	t.Fatalf("waitFor timed out after %v: %s", deadline, msg)
+}
+
 func TestHubSubscribeAndCount(t *testing.T) {
 	t.Parallel()
 	h := NewHub()
@@ -73,9 +94,8 @@ func TestHubUnsubscribeClosesSubscriber(t *testing.T) {
 	if h.Count() != 0 {
 		t.Errorf("after unsubscribe: Count() = %d, want 0", h.Count())
 	}
-	if !s.closed.Load() {
-		t.Errorf("Unsubscribe should call Close() on the subscriber")
-	}
+	// Close happens in the writer goroutine's defer, so we wait.
+	waitFor(t, time.Second, "subscriber.Close()", func() bool { return s.closed.Load() })
 }
 
 func TestBroadcastCreatedFanout(t *testing.T) {
@@ -92,9 +112,10 @@ func TestBroadcastCreatedFanout(t *testing.T) {
 	h.BroadcastCreated(payload)
 
 	for name, s := range map[string]*fakeSubscriber{"a": a, "b": b, "c": c} {
-		if s.frameCount() != 1 {
-			t.Errorf("subscriber %s: frameCount = %d, want 1", name, s.frameCount())
-		}
+		// Async dispatch — wait for the writer goroutine to drain.
+		waitFor(t, time.Second, "subscriber "+name+" frame", func() bool {
+			return s.frameCount() == 1
+		})
 		var frame struct {
 			Type    string          `json:"type"`
 			Message json.RawMessage `json:"message"`
@@ -120,9 +141,9 @@ func TestBroadcastDestroyedFanout(t *testing.T) {
 
 	h.BroadcastDestroyed("msg-42")
 
-	if s.frameCount() != 1 {
-		t.Fatalf("frameCount = %d, want 1", s.frameCount())
-	}
+	waitFor(t, time.Second, "destroyed frame", func() bool {
+		return s.frameCount() == 1
+	})
 	var frame struct {
 		Type string `json:"type"`
 		ID   string `json:"id"`
@@ -148,22 +169,19 @@ func TestBroadcastDropsFailingSubscriber(t *testing.T) {
 
 	h.BroadcastCreated(json.RawMessage(`{}`))
 
-	if h.Count() != 1 {
-		t.Errorf("after broadcast with failing sub: Count() = %d, want 1", h.Count())
-	}
-	if !broken.closed.Load() {
-		t.Errorf("broken subscriber should have been Closed by Unsubscribe")
-	}
-	if healthy.frameCount() != 1 {
-		t.Errorf("healthy subscriber lost a frame because of broken peer: count = %d, want 1",
-			healthy.frameCount())
-	}
+	// Wait for the broken writer to discover the Send error and self-
+	// drop. Count drops from 2 to 1.
+	waitFor(t, time.Second, "broken sub dropped", func() bool {
+		return h.Count() == 1
+	})
+	waitFor(t, time.Second, "broken sub Close()", func() bool { return broken.closed.Load() })
+	waitFor(t, time.Second, "healthy sub frame", func() bool { return healthy.frameCount() == 1 })
 
 	// A second broadcast still reaches healthy.
 	h.BroadcastDestroyed("x")
-	if healthy.frameCount() != 2 {
-		t.Errorf("healthy subscriber: post-drop frameCount = %d, want 2", healthy.frameCount())
-	}
+	waitFor(t, time.Second, "second frame to healthy", func() bool {
+		return healthy.frameCount() == 2
+	})
 }
 
 // TestBroadcastWithNoSubscribers — broadcasting against an empty hub
@@ -175,10 +193,53 @@ func TestBroadcastWithNoSubscribers(t *testing.T) {
 	h.BroadcastDestroyed("x")                 // no panic
 }
 
-// TestBroadcastConcurrent — many concurrent broadcasts + subscribes
-// shouldn't trip the race detector or drop frames spuriously. The key
-// invariant: a subscriber that's already in the set when the broadcast
-// loop snapshots `subs` always gets the frame.
+// TestSlowSubscriberDoesNotStallOthers — the central invariant. One
+// subscriber blocks indefinitely on Send; broadcasts to all other
+// subscribers still complete promptly. Eventually the slow subscriber
+// is dropped via queue overflow.
+func TestSlowSubscriberDoesNotStallOthers(t *testing.T) {
+	t.Parallel()
+	h := NewHub()
+
+	slow := &fakeSubscriber{blockSend: make(chan struct{})}
+	defer close(slow.blockSend) // unblock at test end so goroutine can exit
+
+	fast := &fakeSubscriber{}
+
+	h.Subscribe(slow)
+	h.Subscribe(fast)
+
+	// Drive enough broadcasts to overflow the slow queue (size 64).
+	// The slow subscriber will accept the first 1 (in-flight in Send)
+	// + queueSize buffered, then start dropping. The fast subscriber
+	// must receive every frame.
+	const N = queueSize + 32
+	start := time.Now()
+	for i := 0; i < N; i++ {
+		h.BroadcastDestroyed("x")
+	}
+	elapsed := time.Since(start)
+
+	// The broadcast loop must not have blocked on the slow subscriber.
+	// Generous bound — we're really checking it didn't approach the
+	// 10s WebSocket write deadline.
+	if elapsed > 2*time.Second {
+		t.Errorf("broadcast stalled on slow subscriber: took %v", elapsed)
+	}
+
+	// Fast subscriber receives every frame.
+	waitFor(t, 2*time.Second, "fast got all frames", func() bool {
+		return fast.frameCount() == N
+	})
+
+	// Slow subscriber should have been dropped via queue overflow.
+	waitFor(t, 2*time.Second, "slow dropped", func() bool { return h.Count() == 1 })
+}
+
+// TestBroadcastConcurrent — many concurrent broadcasts to fast
+// subscribers must deliver every frame. The per-subscriber writer is
+// fast (fakeSubscriber.Send is just an append), so queues drain
+// quickly and nothing overflows.
 func TestBroadcastConcurrent(t *testing.T) {
 	t.Parallel()
 	h := NewHub()
@@ -203,9 +264,26 @@ func TestBroadcastConcurrent(t *testing.T) {
 	wg.Wait()
 
 	for i, s := range subs {
-		if s.frameCount() != broadcasts {
-			t.Errorf("subscriber %d: frameCount = %d, want %d",
-				i, s.frameCount(), broadcasts)
+		waitFor(t, 2*time.Second, "subscriber drained", func() bool {
+			return s.frameCount() == broadcasts
+		})
+		if got := s.frameCount(); got != broadcasts {
+			t.Errorf("subscriber %d: frameCount = %d, want %d", i, got, broadcasts)
 		}
+	}
+}
+
+// TestDoubleSubscribeReplacesPrior — subscribing the same Subscriber
+// twice replaces the prior worker. The old goroutine exits and Close
+// is called on the subscriber via that goroutine's defer. (The second
+// Subscribe registers a fresh worker, so Count is still 1.)
+func TestDoubleSubscribeReplacesPrior(t *testing.T) {
+	t.Parallel()
+	h := NewHub()
+	s := &fakeSubscriber{}
+	h.Subscribe(s)
+	h.Subscribe(s) // replace
+	if h.Count() != 1 {
+		t.Errorf("Count after double-subscribe = %d, want 1", h.Count())
 	}
 }
