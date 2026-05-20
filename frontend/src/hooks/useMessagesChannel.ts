@@ -1,10 +1,16 @@
 import { useEffect, useRef } from 'react'
-import { subscribe } from '../lib/cable'
+import { subscribe, subscribeReconnect } from '../lib/cable'
 import type { MessageSummary } from '../api/messages'
 
 export interface MessagesChannelHandlers {
   onCreated?: (message: MessageSummary) => void
   onDestroyed?: (id: string) => void
+  /**
+   * Fires when the underlying WebSocket reopens after a drop. Use to
+   * refetch list state — frames the server tried to push during the
+   * gap are lost. Never fires on the initial connection.
+   */
+  onReconnect?: () => void
 }
 
 /**
@@ -23,11 +29,13 @@ export interface MessagesChannelHandlers {
 export function useMessagesChannel({
   onCreated,
   onDestroyed,
+  onReconnect,
 }: MessagesChannelHandlers): void {
   // Refs let the (stable) listener closure read the latest callback
   // identity without re-subscribing.
   const onCreatedRef = useRef(onCreated)
   const onDestroyedRef = useRef(onDestroyed)
+  const onReconnectRef = useRef(onReconnect)
 
   // Sync refs after each render. (react-hooks v7 forbids writing refs
   // in render body.) The microsecond gap between render commit and
@@ -37,13 +45,21 @@ export function useMessagesChannel({
   useEffect(() => {
     onCreatedRef.current = onCreated
     onDestroyedRef.current = onDestroyed
+    onReconnectRef.current = onReconnect
   })
 
   useEffect(() => {
-    return subscribe((msg) => {
+    const unsubMsg = subscribe((msg) => {
       if (msg.type === 'created') onCreatedRef.current?.(msg.message)
       else if (msg.type === 'destroyed') onDestroyedRef.current?.(msg.id)
     })
+    const unsubReconnect = subscribeReconnect(() => {
+      onReconnectRef.current?.()
+    })
+    return () => {
+      unsubMsg()
+      unsubReconnect()
+    }
     // Empty deps: the subscription persists for the lifetime of the
     // consumer. Refs above carry the freshest callback identity into
     // the dispatch.

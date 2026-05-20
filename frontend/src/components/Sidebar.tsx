@@ -274,6 +274,10 @@ export default function Sidebar() {
   useMessagesChannel({
     onCreated: onMessageCreated,
     onDestroyed: onMessageDestroyed,
+    // When the WebSocket reconnects after a drop (e.g. laptop sleep
+    // /wake), the in-memory list is stale — any frames the server
+    // tried to push during the gap are lost. Refetch.
+    onReconnect: () => fetchMessages(),
   })
 
   // When the user opens a message, the server marks it as read via

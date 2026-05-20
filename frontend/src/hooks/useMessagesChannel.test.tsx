@@ -18,6 +18,7 @@ const subscribeSpy = vi.fn<
   (listener: (msg: { type: string; message?: unknown; id?: string }) => void) => () => void
 >()
 let activeListeners: Array<(msg: { type: string; message?: unknown; id?: string }) => void> = []
+let reconnectListeners: Array<() => void> = []
 
 vi.mock('../lib/cable', () => {
   return {
@@ -28,12 +29,19 @@ vi.mock('../lib/cable', () => {
         activeListeners = activeListeners.filter((l) => l !== listener)
       }
     },
+    subscribeReconnect: (handler: () => void) => {
+      reconnectListeners.push(handler)
+      return () => {
+        reconnectListeners = reconnectListeners.filter((h) => h !== handler)
+      }
+    },
   }
 })
 
 beforeEach(() => {
   subscribeSpy.mockClear()
   activeListeners = []
+  reconnectListeners = []
 })
 
 afterEach(() => {
@@ -137,5 +145,17 @@ describe('useMessagesChannel', () => {
     })
     expect(onDestroyed).toHaveBeenCalledWith('gone')
     expect(onCreated).not.toHaveBeenCalled()
+  })
+
+  it('fires onReconnect when the cable signals a reconnect', async () => {
+    const { useMessagesChannel } = await import('./useMessagesChannel')
+    const onReconnect = vi.fn()
+    renderHook(() => useMessagesChannel({ onReconnect }))
+
+    expect(reconnectListeners).toHaveLength(1)
+    act(() => {
+      reconnectListeners[0]?.()
+    })
+    expect(onReconnect).toHaveBeenCalledTimes(1)
   })
 })

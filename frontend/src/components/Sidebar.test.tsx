@@ -78,6 +78,7 @@ vi.mock('../lib/cable', () => {
         cableSub = null
       }
     },
+    subscribeReconnect: () => () => {},
   }
 })
 
