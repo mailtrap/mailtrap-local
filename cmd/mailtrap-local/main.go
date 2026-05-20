@@ -11,7 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -61,6 +61,15 @@ func main() {
 		os.Exit(sendmailMain(defaultSendmailConfig(), argv, os.Stdin, os.Stderr))
 	}
 
+	// Structured logging. TextHandler is logfmt-ish (`time=... level=...
+	// msg="..." key=value`) — readable in a terminal and parseable by
+	// any standard log shipper. Level INFO matches the previous log.*
+	// default; promote to DEBUG via --log-level=debug if you need it.
+	logLevel := new(slog.LevelVar)
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: logLevel,
+	})))
+
 	var (
 		smtpListen = flag.String("smtp-listen", "127.0.0.1:3535",
 			"SMTP listen address(es), comma-separated host:port. Default binds both IPv4 and IPv6 loopback.")
@@ -72,8 +81,20 @@ func main() {
 			"Print version and exit.")
 		unsafeNonLoopback = flag.Bool("unsafe-non-loopback", false,
 			"Allow binding to non-loopback addresses. The server has no auth/TLS/rate-limiting; only use on trusted networks.")
+		logLevelFlag = flag.String("log-level", "info",
+			"Log level: debug, info, warn, error.")
 	)
 	flag.Parse()
+	switch strings.ToLower(*logLevelFlag) {
+	case "debug":
+		logLevel.Set(slog.LevelDebug)
+	case "warn":
+		logLevel.Set(slog.LevelWarn)
+	case "error":
+		logLevel.Set(slog.LevelError)
+	default:
+		logLevel.Set(slog.LevelInfo)
+	}
 
 	if *showVersion {
 		fmt.Printf("mailtrap-local %s (commit %s, built %s, %s/%s)\n",
@@ -89,16 +110,17 @@ func main() {
 	if !*unsafeNonLoopback {
 		for _, addr := range append(strings.Split(*smtpListen, ","), *httpListen) {
 			if err := requireLoopback(addr); err != nil {
-				log.Fatalf("%v\n\nPass --unsafe-non-loopback to override; the server has no auth or TLS.", err)
+				fatal("listen check", err, "hint", "pass --unsafe-non-loopback to override; the server has no auth or TLS")
 			}
 		}
 	}
 
-	log.Printf("mailtrap-local %s (commit %s)", version, commit)
+	slog.Info("mailtrap-local starting",
+		slog.String("version", version), slog.String("commit", commit))
 
 	st, err := store.Open(*dbPath)
 	if err != nil {
-		log.Fatalf("open store: %v", err)
+		fatal("open store", err)
 	}
 	defer st.Close()
 
@@ -108,11 +130,11 @@ func main() {
 	// because every subsequent connection-CRUD call would fail.
 	box, err := secrets.FromDefaultKeyFile()
 	if err != nil {
-		log.Fatalf("init secret key: %v", err)
+		fatal("init secret key", err)
 	}
 	st.SetSecrets(box)
 	if p, _ := secrets.DefaultKeyPath(); p != "" {
-		log.Printf("Secret key: %s", p)
+		slog.Info("secret key", slog.String("path", p))
 	}
 
 	hub := live.NewHub()
@@ -144,7 +166,7 @@ func main() {
 
 	frontendFS, err := fs.Sub(distEmbed, "dist")
 	if err != nil {
-		log.Fatalf("embed dist: %v", err)
+		fatal("embed dist", err)
 	}
 
 	apiSrv := &api.Server{
@@ -162,7 +184,7 @@ func main() {
 		AfterInsert: dispatcher.AfterIngest,
 	}
 	if err := srv.Start(); err != nil {
-		log.Fatalf("start smtpd: %v", err)
+		fatal("start smtpd", err)
 	}
 
 	httpSrv := &http.Server{
@@ -171,21 +193,21 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	go func() {
-		log.Printf("HTTP listening on %s", *httpListen)
+		slog.Info("HTTP listening", slog.String("addr", *httpListen))
 		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("http: %v", err)
+			fatal("http", err)
 		}
 	}()
-	log.Printf("SMTP listening on %v", srv.Addrs())
-	log.Printf("DB: %s", *dbPath)
+	slog.Info("SMTP listening", slog.Any("addrs", srv.Addrs()))
+	slog.Info("DB", slog.String("path", *dbPath))
 	if p := cfg.Get().SourcePath; p != "" {
-		log.Printf("Config: %s", p)
+		slog.Info("Config", slog.String("path", p))
 	}
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
-	log.Println("shutting down...")
+	slog.Info("shutting down")
 
 	// Graceful shutdown order, bounded by a single 10s deadline:
 	//   1. Stop accepting new SMTP + HTTP connections (so no further
@@ -199,14 +221,25 @@ func main() {
 	defer cancel()
 
 	if err := srv.Close(); err != nil {
-		log.Printf("smtp close: %v", err)
+		slog.Warn("smtp close", slog.Any("err", err))
 	}
 	if err := httpSrv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("http shutdown: %v", err)
+		slog.Warn("http shutdown", slog.Any("err", err))
 	}
 	if err := dispatcher.Shutdown(shutdownCtx); err != nil {
-		log.Printf("dispatcher shutdown: %v (some side-effects abandoned)", err)
+		slog.Warn("dispatcher shutdown — some side-effects abandoned",
+			slog.Any("err", err))
 	}
+}
+
+// fatal logs at ERROR with the provided message+err pair (plus any
+// extra k/v attributes), then os.Exit(1). slog has no built-in
+// equivalent of log.Fatalf, hence the helper.
+func fatal(msg string, err error, kv ...any) {
+	attrs := []any{slog.Any("err", err)}
+	attrs = append(attrs, kv...)
+	slog.Error(msg, attrs...)
+	os.Exit(1)
 }
 
 // broadcastCreated builds a MessageSummary for the broadcasted JSON

@@ -48,6 +48,13 @@ func (s *Server) Router() http.Handler {
 	r.Get("/cable", s.cable)
 
 	r.Route("/api/v1", func(r chi.Router) {
+		// Per-request structured-log middleware. Lives only on /api/v1
+		// (not the SPA static handler) — no point logging every CSS
+		// asset GET. Injects a logger into the request context with
+		// rid + method + path, and emits one access-log line per
+		// request with status + duration.
+		r.Use(requestLogger)
+
 		// Bare /api/v1 — redirect a human-loading the URL straight
 		// to the docs site rather than 404'ing them.
 		r.Get("/", s.docsRedirect)

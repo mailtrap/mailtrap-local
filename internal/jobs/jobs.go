@@ -10,7 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -191,7 +191,8 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 	if err := withRetry(3, func() error {
 		return cl.Send(ctx, m, inline, atts)
 	}); err != nil {
-		log.Printf("[cloud-mirror] %s: %v", msgID, err)
+		slog.Warn("cloud-mirror failed",
+			slog.String("msg_id", msgID), slog.Any("err", err))
 	}
 }
 
@@ -227,7 +228,8 @@ func (d *Dispatcher) relayMirror(msgID string) {
 	if err := withRetry(3, func() error {
 		return d.Relay.Forward(ctx, overlay, m, m.SMTPTo)
 	}); err != nil {
-		log.Printf("[relay-mirror] %s: %v", msgID, err)
+		slog.Warn("relay-mirror failed",
+			slog.String("msg_id", msgID), slog.Any("err", err))
 	}
 }
 
@@ -255,7 +257,8 @@ func (d *Dispatcher) webhookDelivery(msgID string) {
 	if err := withRetry(3, func() error {
 		return d.Webhook.Deliver(ctx, url, secret, payload)
 	}); err != nil {
-		log.Printf("[webhook] %s: %v", msgID, err)
+		slog.Warn("webhook delivery failed",
+			slog.String("msg_id", msgID), slog.Any("err", err))
 	}
 }
 
@@ -301,7 +304,7 @@ func (d *Dispatcher) enforceRetention() {
 	}
 	deleted, err := d.Store.Delete(ctx, ids...)
 	if err != nil {
-		log.Printf("[retention] %v", err)
+		slog.Warn("retention sweep failed", slog.Any("err", err))
 		return
 	}
 	for _, id := range deleted {

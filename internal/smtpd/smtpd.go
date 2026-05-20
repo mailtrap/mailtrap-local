@@ -12,9 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/mail"
-	"os"
 	"strings"
 	"time"
 
@@ -22,10 +22,6 @@ import (
 	"github.com/jhillyerd/enmime/v2"
 	"github.com/mailtrap/mailtrap-local/internal/store"
 )
-
-// stderrWriter is the destination for boot/serve diagnostics. Wrapped
-// so tests can swap it out via package var if needed later.
-var stderrWriter io.Writer = os.Stderr
 
 // Server wraps the emersion/go-smtp listener with our backend +
 // metadata. Caller drives the lifecycle via Start / Close.
@@ -82,9 +78,9 @@ func (s *Server) Start() error {
 		go func(l net.Listener) {
 			// smtp.Server.Serve returns net.ErrClosed on Close — ignore.
 			if err := srv.Serve(l); err != nil && !errors.Is(err, net.ErrClosed) {
-				// Real failure; log via stdlib so we don't depend on a
-				// project logger here.
-				fmt.Fprintf(stderrWriter, "[smtpd] serve %s: %v\n", l.Addr(), err)
+				slog.Warn("smtpd serve failed",
+					slog.String("addr", l.Addr().String()),
+					slog.Any("err", err))
 			}
 		}(l)
 	}
