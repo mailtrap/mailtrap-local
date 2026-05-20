@@ -51,14 +51,41 @@ type Dispatcher struct {
 	wg     sync.WaitGroup
 }
 
-// Start prepares the dispatcher for graceful shutdown. Subsequent
-// AfterIngest goroutines inherit a cancellable context, and Shutdown
-// will wait for them. Idempotent.
+// retentionInterval controls how often the retention loop wakes up
+// to enforce storage.max_messages. Trades worst-case over-cap drift
+// against wasted scans. Variable so tests can crank it down.
+var retentionInterval = 60 * time.Second
+
+// Start prepares the dispatcher for graceful shutdown and spawns the
+// background retention loop. Subsequent AfterIngest goroutines inherit
+// a cancellable context, and Shutdown will wait for them and the
+// retention loop. Idempotent.
 func (d *Dispatcher) Start() {
 	if d.ctx != nil {
 		return
 	}
 	d.ctx, d.cancel = context.WithCancel(context.Background())
+	// Enforce retention on a ticker instead of on every ingest — the
+	// SELECT COUNT(*) over messages is wasted work for the common case
+	// where the inbox is well under cap, so amortise it.
+	d.spawn(d.retentionLoop)
+}
+
+// retentionLoop ticks every retentionInterval and runs enforceRetention.
+// First sweep fires immediately so a freshly-started binary cleans up
+// any pre-existing over-cap state from a prior session.
+func (d *Dispatcher) retentionLoop() {
+	d.enforceRetention()
+	t := time.NewTicker(retentionInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-d.ctx.Done():
+			return
+		case <-t.C:
+			d.enforceRetention()
+		}
+	}
 }
 
 // Shutdown cancels every in-flight goroutine spawned by AfterIngest
@@ -107,12 +134,14 @@ func (d *Dispatcher) spawn(fn func()) {
 // AfterIngest is called right after a successful Insert. Synchronous-
 // looking but each branch dispatches to a tracked goroutine; the call
 // returns immediately.
+//
+// Retention is NOT triggered here — see retentionLoop, which runs on a
+// ticker via Start. That avoids a per-message SELECT COUNT(*).
 func (d *Dispatcher) AfterIngest(msgID string) {
 	d.spawn(func() { d.broadcast(msgID) })
 	d.spawn(func() { d.cloudMirror(msgID) })
 	d.spawn(func() { d.relayMirror(msgID) })
 	d.spawn(func() { d.webhookDelivery(msgID) })
-	d.spawn(func() { d.enforceRetention() })
 }
 
 func (d *Dispatcher) broadcast(msgID string) {

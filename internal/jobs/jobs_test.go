@@ -343,6 +343,54 @@ func TestShutdownReturnsDeadlineExceeded(t *testing.T) {
 	}
 }
 
+// TestRetentionLoopRunsOnStart verifies the new behaviour: retention
+// fires from a background ticker, not from AfterIngest. Starting the
+// dispatcher kicks off an immediate sweep, so over-cap messages are
+// evicted without any ingest activity.
+func TestRetentionLoopRunsOnStart(t *testing.T) {
+	s, _ := store.OpenMemory()
+	defer s.Close()
+
+	tmp := t.TempDir() + "/config.yml"
+	if err := writeFile(tmp, "storage:\n  max_messages: 2\n"); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("MAILTRAP_LOCAL_CONFIG", tmp)
+	cfg := config.NewLoader()
+	cfg.Reload()
+
+	d := &Dispatcher{
+		Store: s, Config: cfg,
+		Relay: &relay.Client{}, Webhook: webhook.NewClient(),
+		BroadcastCreated:   func(string) {},
+		BroadcastDestroyed: func(string) {},
+		SerializeSummary:   func(*store.Message) ([]byte, error) { return []byte("{}"), nil },
+	}
+
+	// Pre-populate over the cap. Retention hasn't run yet because we
+	// haven't called Start.
+	for i := 0; i < 5; i++ {
+		ingest(t, s, "msg")
+	}
+	if res, _ := s.List(context.Background(), store.ListOpts{Limit: 50}); res.Total != 5 {
+		t.Fatalf("pre-Start total = %d, want 5", res.Total)
+	}
+
+	d.Start()
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		_ = d.Shutdown(ctx)
+	}()
+
+	// Initial retention sweep runs synchronously in the loop's first
+	// iteration; give it a beat to land.
+	waitFor(t, 2*time.Second, func() bool {
+		res, _ := s.List(context.Background(), store.ListOpts{Limit: 50})
+		return res.Total == 2
+	})
+}
+
 // Shutdown with no Start is a no-op (preserves the test-friendly
 // "unstarted dispatcher" contract).
 func TestShutdownWithoutStartIsNoop(t *testing.T) {
