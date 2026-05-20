@@ -57,8 +57,15 @@ CREATE INDEX IF NOT EXISTS idx_attachments_message ON attachments (message_id);
 -- table — effective config merges (config-file overlay, the single
 -- DB row).
 
+-- Singleton connection tables. `CHECK (id = 1)` makes the
+-- "at most one row" invariant load-bearing in the database, not just
+-- in the Go code. The matching upserts in internal/store/connections.go
+-- always write id=1 explicitly. (Existing DBs migrated from an earlier
+-- schema kept their original AUTOINCREMENT IDs and miss the CHECK
+-- because `CREATE TABLE IF NOT EXISTS` is a no-op — fine, the code-
+-- side invariant still holds.)
 CREATE TABLE IF NOT EXISTS cloud_connections (
-  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  id              INTEGER PRIMARY KEY CHECK (id = 1),
   api_token       TEXT    NOT NULL,
   sandbox_id      INTEGER NOT NULL,
   mirror_enabled  INTEGER NOT NULL DEFAULT 0,
@@ -67,7 +74,7 @@ CREATE TABLE IF NOT EXISTS cloud_connections (
 );
 
 CREATE TABLE IF NOT EXISTS relay_connections (
-  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  id                  INTEGER PRIMARY KEY CHECK (id = 1),
   host                TEXT    NOT NULL,
   port                INTEGER NOT NULL DEFAULT 587,
   username            TEXT,
@@ -82,7 +89,7 @@ CREATE TABLE IF NOT EXISTS relay_connections (
 );
 
 CREATE TABLE IF NOT EXISTS webhook_connections (
-  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  id           INTEGER PRIMARY KEY CHECK (id = 1),
   url          TEXT    NOT NULL,
   secret       TEXT,
   enabled      INTEGER NOT NULL DEFAULT 0,

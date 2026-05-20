@@ -108,8 +108,8 @@ func (s *Store) CloudUpsert(ctx context.Context, c *CloudConnection) error {
 		return err
 	}
 	_, err = s.db.ExecContext(ctx, `
-		INSERT INTO cloud_connections (api_token, sandbox_id, mirror_enabled)
-		VALUES (?, ?, ?)
+		INSERT INTO cloud_connections (id, api_token, sandbox_id, mirror_enabled)
+		VALUES (1, ?, ?, ?)
 	`, enc, c.SandboxID, boolToInt(c.MirrorEnabled))
 	return err
 }
@@ -166,9 +166,9 @@ func (s *Store) RelayUpsert(ctx context.Context, r *RelayConnection) error {
 	}
 	_, err = s.db.ExecContext(ctx, `
 		INSERT INTO relay_connections (
-			host, port, username, password, auth, tls,
+			id, host, port, username, password, auth, tls,
 			auto_relay_enabled, override_from, return_path
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		r.Host, r.Port,
 		nullString(r.Username), nullString(enc),
@@ -223,8 +223,8 @@ func (s *Store) WebhookUpsert(ctx context.Context, w *WebhookConnection) error {
 		return err
 	}
 	_, err = s.db.ExecContext(ctx, `
-		INSERT INTO webhook_connections (url, secret, enabled)
-		VALUES (?, ?, ?)
+		INSERT INTO webhook_connections (id, url, secret, enabled)
+		VALUES (1, ?, ?, ?)
 	`, w.URL, nullString(enc), boolToInt(w.Enabled))
 	return err
 }
