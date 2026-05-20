@@ -16,7 +16,7 @@ import {
 interface CloudConnectionContextValue {
   state: CloudConnection | null
   loading: boolean
-  refresh: () => Promise<void>
+  refresh: (signal?: AbortSignal) => Promise<void>
   update: (body: Parameters<typeof updateCloudConnection>[0]) => Promise<void>
   disconnect: () => Promise<void>
 }
@@ -29,14 +29,14 @@ export function CloudConnectionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<CloudConnection | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
-      const s = await getCloudConnection()
-      setState(s)
+      const s = await getCloudConnection(signal)
+      if (!signal?.aborted) setState(s)
     } catch {
       // Keep prior state on network blip; next refresh will retry.
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
   }, [])
 
@@ -54,7 +54,9 @@ export function CloudConnectionProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    refresh()
+    const c = new AbortController()
+    refresh(c.signal)
+    return () => c.abort()
   }, [refresh])
 
   return (

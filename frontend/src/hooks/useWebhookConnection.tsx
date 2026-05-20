@@ -16,7 +16,7 @@ import {
 interface WebhookConnectionContextValue {
   state: WebhookConnection | null
   loading: boolean
-  refresh: () => Promise<void>
+  refresh: (signal?: AbortSignal) => Promise<void>
   update: (body: Parameters<typeof updateWebhookConnection>[0]) => Promise<void>
   disconnect: () => Promise<void>
 }
@@ -28,14 +28,14 @@ export function WebhookConnectionProvider({ children }: { children: ReactNode })
   const [state, setState] = useState<WebhookConnection | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
-      const s = await getWebhookConnection()
-      setState(s)
+      const s = await getWebhookConnection(signal)
+      if (!signal?.aborted) setState(s)
     } catch {
       // Keep prior state on network blip.
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
   }, [])
 
@@ -53,7 +53,9 @@ export function WebhookConnectionProvider({ children }: { children: ReactNode })
   }, [])
 
   useEffect(() => {
-    refresh()
+    const c = new AbortController()
+    refresh(c.signal)
+    return () => c.abort()
   }, [refresh])
 
   return (

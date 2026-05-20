@@ -49,29 +49,38 @@ export interface RelayConnection {
   config_path: string | null
 }
 
-export async function getRelayConnection(): Promise<RelayConnection> {
-  const res = await api.get<RelayConnection>('/relay_connection')
+export async function getRelayConnection(
+  signal?: AbortSignal,
+): Promise<RelayConnection> {
+  const res = await api.get<RelayConnection>('/relay_connection', { signal })
   return res.data
 }
 
-export async function updateRelayConnection(body: {
-  host?: string
-  port?: number
-  username?: string
-  password?: string
-  auth?: RelayConnection['auth']
-  tls?: RelayConnection['tls']
-  auto_relay_enabled?: boolean
-  /** Empty string clears the saved value; omit to leave unchanged. */
-  override_from?: string
-  return_path?: string
-}): Promise<RelayConnection> {
-  const res = await api.put<RelayConnection>('/relay_connection', body)
+export async function updateRelayConnection(
+  body: {
+    host?: string
+    port?: number
+    username?: string
+    password?: string
+    auth?: RelayConnection['auth']
+    tls?: RelayConnection['tls']
+    auto_relay_enabled?: boolean
+    /** Empty string clears the saved value; omit to leave unchanged. */
+    override_from?: string
+    return_path?: string
+  },
+  signal?: AbortSignal,
+): Promise<RelayConnection> {
+  const res = await api.put<RelayConnection>('/relay_connection', body, {
+    signal,
+  })
   return res.data
 }
 
-export async function disconnectRelay(): Promise<RelayConnection> {
-  const res = await api.delete<RelayConnection>('/relay_connection')
+export async function disconnectRelay(
+  signal?: AbortSignal,
+): Promise<RelayConnection> {
+  const res = await api.delete<RelayConnection>('/relay_connection', { signal })
   return res.data
 }
 
@@ -87,15 +96,22 @@ export interface RelayTestResult {
  * without sending. Used by the dialog to live-validate credentials.
  * Empty `password` falls back to the saved one when `username` matches.
  */
-export async function testRelayConnection(body: {
-  host: string
-  port: number
-  username?: string
-  password?: string
-  auth?: RelayConnection['auth']
-  tls?: RelayConnection['tls']
-}): Promise<RelayTestResult> {
-  const res = await api.post<RelayTestResult>('/relay_connection/test', body)
+export async function testRelayConnection(
+  body: {
+    host: string
+    port: number
+    username?: string
+    password?: string
+    auth?: RelayConnection['auth']
+    tls?: RelayConnection['tls']
+  },
+  signal?: AbortSignal,
+): Promise<RelayTestResult> {
+  const res = await api.post<RelayTestResult>(
+    '/relay_connection/test',
+    body,
+    { signal },
+  )
   return res.data
 }
 
@@ -107,6 +123,7 @@ export async function testRelayConnection(body: {
 export async function releaseMessage(
   id: string,
   to: string[],
+  signal?: AbortSignal,
 ): Promise<void> {
-  await api.post(`/message/${id}/release`, { to })
+  await api.post(`/message/${id}/release`, { to }, { signal })
 }

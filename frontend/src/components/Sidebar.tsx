@@ -25,7 +25,7 @@ import { useRelayConnection } from '../hooks/useRelayConnection'
 import { useWebhookConnection } from '../hooks/useWebhookConnection'
 import { useMessagesChannel } from '../hooks/useMessagesChannel'
 import { IconButton } from './IconButton'
-import { extractApiError } from '../api/client'
+import { extractApiError, isAbortError } from '../api/client'
 
 const sidebar = 'flex min-h-0 flex-col border-r border-border-base'
 
@@ -239,17 +239,21 @@ export default function Sidebar() {
   const webhookActive =
     webhookState?.connected === true && webhookState?.enabled === true
 
-  const fetchMessages = useCallback(() => {
-    getMessages({ limit: 100 })
+  const fetchMessages = useCallback((signal?: AbortSignal) => {
+    getMessages({ limit: 100 }, signal)
       .then((r) => setMessages(r.messages))
-      .catch((e) => setError(String(e)))
+      .catch((e) => {
+        if (!isAbortError(e)) setError(String(e))
+      })
   }, [])
 
   // Initial fetch on mount. Subsequent inbound deliveries arrive over
   // the WebSocket channel (see useMessagesChannel below); user actions
   // still call fetchMessages() directly when they need a full refresh.
   useEffect(() => {
-    fetchMessages()
+    const c = new AbortController()
+    fetchMessages(c.signal)
+    return () => c.abort()
   }, [fetchMessages])
 
   // Live updates: prepend incoming messages to the top of the list and
@@ -334,14 +338,22 @@ export default function Sidebar() {
       return
     }
     setSearching(true)
+    const controller = new AbortController()
     const handle = setTimeout(() => {
-      searchMessages({ query: trimmed, limit: 100 })
+      searchMessages({ query: trimmed, limit: 100 }, controller.signal)
         .then((r) => setSearchResults(r.messages))
-        .catch((e) => setError(String(e)))
-        .finally(() => setSearching(false))
+        .catch((e) => {
+          if (!isAbortError(e)) setError(String(e))
+        })
+        .finally(() => {
+          // Don't flip the spinner off if we were cancelled mid-flight —
+          // the next keystroke's effect already set it back to true.
+          if (!controller.signal.aborted) setSearching(false)
+        })
     }, 200)
     return () => {
       clearTimeout(handle)
+      controller.abort()
     }
   }, [query])
 
@@ -417,7 +429,11 @@ export default function Sidebar() {
         >
           <MarkReadIcon size={16} />
         </IconButton>
-        <IconButton variant="toolbar" title="Refresh" onClick={fetchMessages}>
+        <IconButton
+          variant="toolbar"
+          title="Refresh"
+          onClick={() => fetchMessages()}
+        >
           <ReloadIcon size={16} />
         </IconButton>
         <IconButton

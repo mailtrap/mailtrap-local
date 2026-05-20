@@ -40,7 +40,7 @@ import { releaseMessage } from '../api/relay'
 import { useCloudConnection } from '../hooks/useCloudConnection'
 import { useRelayConnection } from '../hooks/useRelayConnection'
 import { IconButton } from '../components/IconButton'
-import { extractApiError } from '../api/client'
+import { extractApiError, isAbortError } from '../api/client'
 
 const wrap = 'm-0'
 
@@ -1030,8 +1030,20 @@ export default function MessageView() {
     setForwardEmail('')
     setHtmlCheck(null)
     setHtmlCheckErr(null)
-    Promise.all([getMessage(id), getRawMessage(id), getHeaders(id)])
+
+    // Cancellable fetch: if the user clicks a different message before
+    // these resolve, the cleanup aborts the in-flight requests so a
+    // stale response can't overwrite the new message's state.
+    const controller = new AbortController()
+    const { signal } = controller
+
+    Promise.all([
+      getMessage(id, signal),
+      getRawMessage(id, signal),
+      getHeaders(id, signal),
+    ])
       .then(([m, r, h]) => {
+        if (signal.aborted) return
         setMsg(m)
         setRaw(r)
         setHeaders(h)
@@ -1039,12 +1051,20 @@ export default function MessageView() {
         // the result drives the tab's issue-count badge, so it has to load
         // before the user opens the tab.
         if (m.html) {
-          getHtmlCheck(id)
-            .then(setHtmlCheck)
-            .catch((e) => setHtmlCheckErr(extractApiError(e)))
+          getHtmlCheck(id, signal)
+            .then((rep) => {
+              if (!signal.aborted) setHtmlCheck(rep)
+            })
+            .catch((e) => {
+              if (!isAbortError(e)) setHtmlCheckErr(extractApiError(e))
+            })
         }
       })
-      .catch((e) => setError(String(e)))
+      .catch((e) => {
+        if (!isAbortError(e)) setError(String(e))
+      })
+
+    return () => controller.abort()
   }, [id])
 
   // Auto-dismiss the success strip after a few seconds — the user has

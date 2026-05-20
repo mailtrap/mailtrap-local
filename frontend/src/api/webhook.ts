@@ -18,22 +18,35 @@ export interface WebhookConnection {
   config_path: string | null
 }
 
-export async function getWebhookConnection(): Promise<WebhookConnection> {
-  const res = await api.get<WebhookConnection>('/webhook_connection')
+export async function getWebhookConnection(
+  signal?: AbortSignal,
+): Promise<WebhookConnection> {
+  const res = await api.get<WebhookConnection>('/webhook_connection', {
+    signal,
+  })
   return res.data
 }
 
-export async function updateWebhookConnection(body: {
-  url?: string
-  secret?: string
-  enabled?: boolean
-}): Promise<WebhookConnection> {
-  const res = await api.put<WebhookConnection>('/webhook_connection', body)
+export async function updateWebhookConnection(
+  body: {
+    url?: string
+    secret?: string
+    enabled?: boolean
+  },
+  signal?: AbortSignal,
+): Promise<WebhookConnection> {
+  const res = await api.put<WebhookConnection>('/webhook_connection', body, {
+    signal,
+  })
   return res.data
 }
 
-export async function disconnectWebhook(): Promise<WebhookConnection> {
-  const res = await api.delete<WebhookConnection>('/webhook_connection')
+export async function disconnectWebhook(
+  signal?: AbortSignal,
+): Promise<WebhookConnection> {
+  const res = await api.delete<WebhookConnection>('/webhook_connection', {
+    signal,
+  })
   return res.data
 }
 
@@ -49,10 +62,17 @@ export interface WebhookTestResult {
  * verify their endpoint code paths without sending a real email. Empty
  * `secret` falls back to the saved one when the URL matches.
  */
-export async function testWebhookConnection(body: {
-  url: string
-  secret?: string
-}): Promise<WebhookTestResult> {
-  const res = await api.post<WebhookTestResult>('/webhook_connection/test', body)
+export async function testWebhookConnection(
+  body: {
+    url: string
+    secret?: string
+  },
+  signal?: AbortSignal,
+): Promise<WebhookTestResult> {
+  const res = await api.post<WebhookTestResult>(
+    '/webhook_connection/test',
+    body,
+    { signal },
+  )
   return res.data
 }

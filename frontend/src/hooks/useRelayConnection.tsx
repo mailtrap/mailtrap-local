@@ -16,7 +16,7 @@ import {
 interface RelayConnectionContextValue {
   state: RelayConnection | null
   loading: boolean
-  refresh: () => Promise<void>
+  refresh: (signal?: AbortSignal) => Promise<void>
   update: (body: Parameters<typeof updateRelayConnection>[0]) => Promise<void>
   disconnect: () => Promise<void>
 }
@@ -29,14 +29,14 @@ export function RelayConnectionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RelayConnection | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
-      const s = await getRelayConnection()
-      setState(s)
+      const s = await getRelayConnection(signal)
+      if (!signal?.aborted) setState(s)
     } catch {
       // Keep prior state on network blip.
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
   }, [])
 
@@ -54,7 +54,9 @@ export function RelayConnectionProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    refresh()
+    const c = new AbortController()
+    refresh(c.signal)
+    return () => c.abort()
   }, [refresh])
 
   return (

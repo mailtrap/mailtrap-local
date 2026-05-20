@@ -88,18 +88,21 @@ export interface MessagesResponse {
 
 export type HeadersMap = Record<string, string[]>
 
-export async function getMessages(params: {
-  start?: number
-  limit?: number
-  /**
-   * Optional category filter. Server matches exact equality on the message's
-   * stored category (read from the X-MT-Category / Category header at
-   * ingest). The response's `tags` field still lists distinct categories
-   * across the *unfiltered* sandbox so callers can render a picker.
-   */
-  category?: string
-} = {}): Promise<MessagesResponse> {
-  const res = await api.get<MessagesResponse>('/messages', { params })
+export async function getMessages(
+  params: {
+    start?: number
+    limit?: number
+    /**
+     * Optional category filter. Server matches exact equality on the message's
+     * stored category (read from the X-MT-Category / Category header at
+     * ingest). The response's `tags` field still lists distinct categories
+     * across the *unfiltered* sandbox so callers can render a picker.
+     */
+    category?: string
+  } = {},
+  signal?: AbortSignal,
+): Promise<MessagesResponse> {
+  const res = await api.get<MessagesResponse>('/messages', { params, signal })
   return res.data
 }
 
@@ -112,31 +115,44 @@ export async function getMessages(params: {
  * The response shape mirrors `MessagesResponse` — `total` and
  * `messages_count` reflect the *matched* set, not the whole sandbox.
  */
-export async function searchMessages(params: {
-  query: string
-  start?: number
-  limit?: number
-  category?: string
-}): Promise<MessagesResponse> {
-  const res = await api.get<MessagesResponse>('/search', { params })
+export async function searchMessages(
+  params: {
+    query: string
+    start?: number
+    limit?: number
+    category?: string
+  },
+  signal?: AbortSignal,
+): Promise<MessagesResponse> {
+  const res = await api.get<MessagesResponse>('/search', { params, signal })
   return res.data
 }
 
-export async function getMessage(id: string): Promise<Message> {
-  const res = await api.get<Message>(`/message/${id}`)
+export async function getMessage(
+  id: string,
+  signal?: AbortSignal,
+): Promise<Message> {
+  const res = await api.get<Message>(`/message/${id}`, { signal })
   return res.data
 }
 
-export async function getRawMessage(id: string): Promise<string> {
+export async function getRawMessage(
+  id: string,
+  signal?: AbortSignal,
+): Promise<string> {
   const res = await api.get<string>(`/message/${id}/raw`, {
     responseType: 'text',
     transformResponse: [(v) => v],
+    signal,
   })
   return res.data
 }
 
-export async function getHeaders(id: string): Promise<HeadersMap> {
-  const res = await api.get<HeadersMap>(`/message/${id}/headers`)
+export async function getHeaders(
+  id: string,
+  signal?: AbortSignal,
+): Promise<HeadersMap> {
+  const res = await api.get<HeadersMap>(`/message/${id}/headers`, { signal })
   return res.data
 }
 
@@ -198,8 +214,13 @@ export type HtmlCheckReport =
   | { status: 'size_limit_exceeded'; limit: number }
   | { status: 'error'; msg: string }
 
-export async function getHtmlCheck(id: string): Promise<HtmlCheckReport> {
-  const res = await api.get<HtmlCheckReport>(`/message/${id}/html_check`)
+export async function getHtmlCheck(
+  id: string,
+  signal?: AbortSignal,
+): Promise<HtmlCheckReport> {
+  const res = await api.get<HtmlCheckReport>(`/message/${id}/html_check`, {
+    signal,
+  })
   return res.data
 }
 
@@ -215,33 +236,40 @@ export async function getHtmlCheck(id: string): Promise<HtmlCheckReport> {
  */
 export async function deleteMessages(
   body: { ids: string[] } | { all: true },
+  signal?: AbortSignal,
 ): Promise<void> {
-  await api.delete('/messages', { data: body })
+  await api.delete('/messages', { data: body, signal })
 }
 
 /** Convenience wrapper for deleting a single message. */
-export async function deleteMessage(id: string): Promise<void> {
-  await deleteMessages({ ids: [id] })
+export async function deleteMessage(
+  id: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await deleteMessages({ ids: [id] }, signal)
 }
 
 /** Convenience wrapper for wiping every message in the sandbox. */
-export async function deleteAllMessages(): Promise<void> {
-  await deleteMessages({ all: true })
+export async function deleteAllMessages(signal?: AbortSignal): Promise<void> {
+  await deleteMessages({ all: true }, signal)
 }
 
 /**
  * PUT /api/v1/messages — read/unread toggle.
  * Pass `ids` to mark specific messages, omit to mark ALL messages.
  */
-export async function setReadStatus(body: {
-  read: boolean
-  ids?: string[]
-}): Promise<void> {
-  await api.put('/messages', body)
+export async function setReadStatus(
+  body: {
+    read: boolean
+    ids?: string[]
+  },
+  signal?: AbortSignal,
+): Promise<void> {
+  await api.put('/messages', body, { signal })
 }
 
-export async function markAllRead(): Promise<void> {
-  await setReadStatus({ read: true })
+export async function markAllRead(signal?: AbortSignal): Promise<void> {
+  await setReadStatus({ read: true }, signal)
 }
 
 /** Absolute URL to the raw .eml — inline or forced-download via ?dl=1. */

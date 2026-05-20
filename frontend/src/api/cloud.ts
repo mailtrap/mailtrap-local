@@ -22,28 +22,40 @@ export interface CloudConnection {
   config_path: string | null
 }
 
-export async function getCloudConnection(): Promise<CloudConnection> {
-  const res = await api.get<CloudConnection>('/cloud_connection')
+export async function getCloudConnection(
+  signal?: AbortSignal,
+): Promise<CloudConnection> {
+  const res = await api.get<CloudConnection>('/cloud_connection', { signal })
   return res.data
 }
 
-export async function updateCloudConnection(body: {
-  api_token?: string
-  sandbox_id?: number
-  mirror_enabled?: boolean
-}): Promise<CloudConnection> {
-  const res = await api.put<CloudConnection>('/cloud_connection', body)
+export async function updateCloudConnection(
+  body: {
+    api_token?: string
+    sandbox_id?: number
+    mirror_enabled?: boolean
+  },
+  signal?: AbortSignal,
+): Promise<CloudConnection> {
+  const res = await api.put<CloudConnection>('/cloud_connection', body, {
+    signal,
+  })
   return res.data
 }
 
-export async function disconnectCloud(): Promise<CloudConnection> {
-  const res = await api.delete<CloudConnection>('/cloud_connection')
+export async function disconnectCloud(
+  signal?: AbortSignal,
+): Promise<CloudConnection> {
+  const res = await api.delete<CloudConnection>('/cloud_connection', { signal })
   return res.data
 }
 
 /** One-off forward: sends a single stored message to the connected sandbox. */
-export async function sendMessageToCloud(id: string): Promise<void> {
-  await api.post(`/message/${id}/send_to_cloud`)
+export async function sendMessageToCloud(
+  id: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await api.post(`/message/${id}/send_to_cloud`, undefined, { signal })
 }
 
 /** Parses a sandbox ID out of either a bare number or a Mailtrap URL. */
