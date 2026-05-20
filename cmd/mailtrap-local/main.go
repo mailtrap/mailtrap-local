@@ -12,11 +12,13 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -68,6 +70,8 @@ func main() {
 			"SQLite database file. Empty/`:memory:` for an ephemeral DB.")
 		showVersion = flag.Bool("version", false,
 			"Print version and exit.")
+		unsafeNonLoopback = flag.Bool("unsafe-non-loopback", false,
+			"Allow binding to non-loopback addresses. The server has no auth/TLS/rate-limiting; only use on trusted networks.")
 	)
 	flag.Parse()
 
@@ -75,6 +79,19 @@ func main() {
 		fmt.Printf("mailtrap-local %s (commit %s, built %s, %s/%s)\n",
 			version, commit, buildDate, runtime.GOOS, runtime.GOARCH)
 		return
+	}
+
+	// Refuse non-loopback binds without explicit opt-in. The server has
+	// no authentication, no TLS, and CORS is wide open — appropriate
+	// for a single-developer localhost tool, dangerous on a shared
+	// network. The flag exists as an escape hatch (e.g. container
+	// networking, intentional LAN access) but must be set deliberately.
+	if !*unsafeNonLoopback {
+		for _, addr := range append(strings.Split(*smtpListen, ","), *httpListen) {
+			if err := requireLoopback(addr); err != nil {
+				log.Fatalf("%v\n\nPass --unsafe-non-loopback to override; the server has no auth or TLS.", err)
+			}
+		}
 	}
 
 	log.Printf("mailtrap-local %s (commit %s)", version, commit)
@@ -214,4 +231,36 @@ func broadcastCreated(hub *live.Hub, st *store.Store, msgID string) {
 
 func defaultDBPath() string {
 	return filepath.Join("data", "mailtrap-local.sqlite3")
+}
+
+// requireLoopback validates a `host:port` listen string and returns
+// an error if the host isn't a loopback address. Accepts: "127.x.x.x",
+// "::1", "localhost", and the literal forms `[::1]:port` / "0.0.0.0"
+// is explicitly rejected since it binds to all interfaces.
+func requireLoopback(addr string) error {
+	addr = strings.TrimSpace(addr)
+	if addr == "" {
+		return fmt.Errorf("empty listen address")
+	}
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return fmt.Errorf("listen %q: %w", addr, err)
+	}
+	if host == "" {
+		// e.g. ":3535" — Go binds all interfaces; refuse.
+		return fmt.Errorf("listen %q binds all interfaces", addr)
+	}
+	if host == "localhost" {
+		return nil
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		// A hostname that's not "localhost". We don't resolve here —
+		// the user should pass an explicit IP they trust.
+		return fmt.Errorf("listen %q: hostname is not loopback (use 127.0.0.1, ::1, or localhost)", addr)
+	}
+	if !ip.IsLoopback() {
+		return fmt.Errorf("listen %q: %s is not a loopback address", addr, ip)
+	}
+	return nil
 }
