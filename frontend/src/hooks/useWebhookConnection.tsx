@@ -12,10 +12,12 @@ import {
   updateWebhookConnection,
   type WebhookConnection,
 } from '../api/webhook'
+import { extractApiError, isAbortError } from '../api/client'
 
 interface WebhookConnectionContextValue {
   state: WebhookConnection | null
   loading: boolean
+  error: string | null
   refresh: (signal?: AbortSignal) => Promise<void>
   update: (body: Parameters<typeof updateWebhookConnection>[0]) => Promise<void>
   disconnect: () => Promise<void>
@@ -27,13 +29,18 @@ const WebhookConnectionContext =
 export function WebhookConnectionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<WebhookConnection | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
       const s = await getWebhookConnection(signal)
-      if (!signal?.aborted) setState(s)
-    } catch {
-      // Keep prior state on network blip.
+      if (!signal?.aborted) {
+        setState(s)
+        setError(null)
+      }
+    } catch (e) {
+      if (signal?.aborted || isAbortError(e)) return
+      setError(extractApiError(e) || 'Failed to load webhook connection')
     } finally {
       if (!signal?.aborted) setLoading(false)
     }
@@ -60,7 +67,7 @@ export function WebhookConnectionProvider({ children }: { children: ReactNode })
 
   return (
     <WebhookConnectionContext.Provider
-      value={{ state, loading, refresh, update, disconnect }}
+      value={{ state, loading, error, refresh, update, disconnect }}
     >
       {children}
     </WebhookConnectionContext.Provider>

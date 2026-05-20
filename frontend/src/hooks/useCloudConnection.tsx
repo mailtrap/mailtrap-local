@@ -12,10 +12,18 @@ import {
   updateCloudConnection,
   type CloudConnection,
 } from '../api/cloud'
+import { extractApiError, isAbortError } from '../api/client'
 
 interface CloudConnectionContextValue {
   state: CloudConnection | null
   loading: boolean
+  /**
+   * The last error from refresh(), or null if the most recent call
+   * succeeded (or hasn't yet completed). Consumers render an error
+   * banner when state is still null and error is set — i.e. the
+   * initial load never landed.
+   */
+  error: string | null
   refresh: (signal?: AbortSignal) => Promise<void>
   update: (body: Parameters<typeof updateCloudConnection>[0]) => Promise<void>
   disconnect: () => Promise<void>
@@ -28,13 +36,18 @@ const CloudConnectionContext = createContext<CloudConnectionContextValue | null>
 export function CloudConnectionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<CloudConnection | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
       const s = await getCloudConnection(signal)
-      if (!signal?.aborted) setState(s)
-    } catch {
-      // Keep prior state on network blip; next refresh will retry.
+      if (!signal?.aborted) {
+        setState(s)
+        setError(null)
+      }
+    } catch (e) {
+      if (signal?.aborted || isAbortError(e)) return
+      setError(extractApiError(e) || 'Failed to load cloud connection')
     } finally {
       if (!signal?.aborted) setLoading(false)
     }
@@ -61,7 +74,7 @@ export function CloudConnectionProvider({ children }: { children: ReactNode }) {
 
   return (
     <CloudConnectionContext.Provider
-      value={{ state, loading, refresh, update, disconnect }}
+      value={{ state, loading, error, refresh, update, disconnect }}
     >
       {children}
     </CloudConnectionContext.Provider>

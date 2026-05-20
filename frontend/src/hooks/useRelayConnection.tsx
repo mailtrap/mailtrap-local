@@ -12,10 +12,12 @@ import {
   updateRelayConnection,
   type RelayConnection,
 } from '../api/relay'
+import { extractApiError, isAbortError } from '../api/client'
 
 interface RelayConnectionContextValue {
   state: RelayConnection | null
   loading: boolean
+  error: string | null
   refresh: (signal?: AbortSignal) => Promise<void>
   update: (body: Parameters<typeof updateRelayConnection>[0]) => Promise<void>
   disconnect: () => Promise<void>
@@ -28,13 +30,18 @@ const RelayConnectionContext = createContext<RelayConnectionContextValue | null>
 export function RelayConnectionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<RelayConnection | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
       const s = await getRelayConnection(signal)
-      if (!signal?.aborted) setState(s)
-    } catch {
-      // Keep prior state on network blip.
+      if (!signal?.aborted) {
+        setState(s)
+        setError(null)
+      }
+    } catch (e) {
+      if (signal?.aborted || isAbortError(e)) return
+      setError(extractApiError(e) || 'Failed to load relay connection')
     } finally {
       if (!signal?.aborted) setLoading(false)
     }
@@ -61,7 +68,7 @@ export function RelayConnectionProvider({ children }: { children: ReactNode }) {
 
   return (
     <RelayConnectionContext.Provider
-      value={{ state, loading, refresh, update, disconnect }}
+      value={{ state, loading, error, refresh, update, disconnect }}
     >
       {children}
     </RelayConnectionContext.Provider>

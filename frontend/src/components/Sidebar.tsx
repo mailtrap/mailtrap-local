@@ -18,6 +18,7 @@ import {
   type MessageSummary,
 } from '../api/messages'
 import CloudConnectDialog from './CloudConnectDialog'
+import { ConnectionErrorBanner } from './ConnectionErrorBanner'
 import RelayConnectDialog from './RelayConnectDialog'
 import SettingsMenu from './SettingsMenu'
 import { useCloudConnection } from '../hooks/useCloudConnection'
@@ -363,6 +364,7 @@ export default function Sidebar() {
 
   return (
     <aside className={sidebar}>
+      <ConnectionErrorBanner />
       <div className={toolbar}>
         <div className={searchWrapCss} data-expanded={searchExpanded}>
           <SearchIcon className={searchIconCss} size={14} />
