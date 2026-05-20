@@ -29,8 +29,9 @@ const tabBtn = [
   'data-[active=true]:bg-surface-hover data-[active=true]:text-fg',
   'data-[state=open]:bg-surface-hover data-[state=open]:text-fg',
   'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent',
-  '[&_svg]:text-[#6b7a8c]',
 ].join(' ')
+
+const tabBtnChevronCss = 'text-[#6b7a8c]'
 
 const copyBtn = [
   'shrink-0 cursor-pointer rounded-md border-0 bg-transparent',
@@ -46,14 +47,14 @@ const menuContent = [
 ].join(' ')
 
 const menuItem = [
-  'flex cursor-pointer items-center justify-between gap-3 rounded px-2.5 py-1.5',
+  'group flex cursor-pointer items-center justify-between gap-3 rounded px-2.5 py-1.5',
   'text-[12.5px] text-[#c2cbd6] outline-none',
   'data-[highlighted]:bg-surface-hover data-[highlighted]:text-fg',
   'data-[active=true]:text-fg',
-  'data-[active=true]:[&_svg]:text-accent',
-  '[&_.check]:h-3.5 [&_.check]:w-3.5 [&_.check]:opacity-0',
-  'data-[active=true]:[&_.check]:opacity-100',
 ].join(' ')
+
+const menuItemCheckCss =
+  'h-3.5 w-3.5 opacity-0 group-data-[active=true]:text-accent group-data-[active=true]:opacity-100'
 
 const footer =
   'border-t border-border-base bg-surface-base px-3.5 py-1.5 text-left text-xs text-fg-muted'
@@ -149,7 +150,11 @@ export default function CodeSamples({
                       data-active={isActiveGroup}
                     >
                       {group.label}
-                      <ChevronDownIcon width={12} height={12} />
+                      <ChevronDownIcon
+                        width={12}
+                        height={12}
+                        className={tabBtnChevronCss}
+                      />
                     </button>
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Portal>
@@ -166,7 +171,7 @@ export default function CodeSamples({
                           onSelect={() => selectSnippet(item.id)}
                         >
                           <span>{item.label}</span>
-                          <CheckIcon className="check" />
+                          <CheckIcon className={menuItemCheckCss} />
                         </DropdownMenu.Item>
                       ))}
                     </DropdownMenu.Content>

@@ -1,4 +1,4 @@
-import { lockedHint } from './dialogStyles'
+import { lockedHint, lockedHintCode } from './dialogStyles'
 
 /**
  * Inline hint shown beneath a locked input. Reads "from <config-path>" so
@@ -9,7 +9,12 @@ import { lockedHint } from './dialogStyles'
 export function LockedFieldHint({ path }: { path: string | null }) {
   return (
     <span className={lockedHint}>
-      from {path ? <code>{path}</code> : <code>config</code>}
+      from{' '}
+      {path ? (
+        <code className={lockedHintCode}>{path}</code>
+      ) : (
+        <code className={lockedHintCode}>config</code>
+      )}
     </span>
   )
 }

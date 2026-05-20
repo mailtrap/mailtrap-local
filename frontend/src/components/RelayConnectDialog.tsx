@@ -10,10 +10,17 @@ import {
   actions,
   btn,
   configBanner,
+  configBannerCode,
   content,
+  dialogLead,
+  dialogTitle,
   errorBox,
   field,
+  fieldHint,
+  fieldInput,
+  fieldLabel,
   fieldRow,
+  fieldSelect,
   lockedInput,
   overlay,
   toggleDesc,
@@ -26,21 +33,26 @@ interface Props {
 }
 
 // Collapsible "Advanced — sender overrides" block. Disclosure chevron
-// + summary styling come from `.disclosure-section` in index.css.
-const advancedSection = [
-  'disclosure-section mt-1 border-t border-fg-muted/20 pt-3',
-  '[&_div.body]:pt-3',
+// + summary styling come from `.disclosure-section` in index.css; the
+// inner .body div carries its own top padding directly.
+const advancedSectionCss =
+  'disclosure-section mt-1 border-t border-fg-muted/20 pt-3'
+
+const advancedSectionBodyCss = 'pt-3'
+
+// Status row for the live SMTP-handshake probe. The wrapper carries
+// `group` + `data-status`; the dot reads it via `group-data-[status=…]:`.
+const statusRowCss = [
+  'group flex min-h-[18px] items-center gap-2 mt-1 mb-2 text-xs text-fg-muted',
+  'data-[status=ok]:text-success',
+  'data-[status=error]:text-danger',
 ].join(' ')
 
-// Status row for the live SMTP-handshake probe. The colour + dot fill
-// follow `data-status` so the same row covers idle / testing / ok /
-// error states without conditional className gymnastics.
-const statusRow = [
-  'flex min-h-[18px] items-center gap-2 mt-1 mb-2 text-xs text-fg-muted',
-  '[&_.dot]:inline-block [&_.dot]:h-2 [&_.dot]:w-2 [&_.dot]:shrink-0 [&_.dot]:rounded-full',
-  'data-[status=ok]:text-success [&[data-status=ok]_.dot]:bg-success',
-  'data-[status=error]:text-danger [&[data-status=error]_.dot]:bg-danger',
-  '[&[data-status=testing]_.dot]:bg-fg-muted [&[data-status=testing]_.dot]:pulse-dot',
+const statusRowDotCss = [
+  'inline-block h-2 w-2 shrink-0 rounded-full',
+  'group-data-[status=ok]:bg-success',
+  'group-data-[status=error]:bg-danger',
+  'group-data-[status=testing]:bg-fg-muted group-data-[status=testing]:pulse-dot',
 ].join(' ')
 
 const TLS_OPTIONS: Array<{ value: RelayConnection['tls']; label: string }> = [
@@ -212,9 +224,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   return (
     <>
       <Dialog.Title asChild>
-        <h2>Configure SMTP Relay</h2>
+        <h2 className={dialogTitle}>Configure SMTP Relay</h2>
       </Dialog.Title>
-      <p className="lead">
+      <p className={dialogLead}>
         Forward messages through any SMTP server — your corporate relay,
         a transactional provider (e.g.{' '}
         <a
@@ -237,14 +249,16 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           {allLocked
             ? 'All settings are pinned by '
             : 'Some settings are pinned by '}
-          <code>{state.config_path}</code>. Edit that file and restart to
-          change them.
+          <code className={configBannerCode}>{state.config_path}</code>. Edit
+          that file and restart to change them.
         </div>
       )}
 
       <div className={fieldRow}>
         <div className={field}>
-          <label htmlFor="relay-host">Host</label>
+          <label className={fieldLabel} htmlFor="relay-host">
+            Host
+          </label>
           <input
             id="relay-host"
             type="text"
@@ -254,14 +268,18 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             onChange={(e) => setHost(e.target.value)}
             disabled={busy || isLocked('host')}
             readOnly={isLocked('host')}
-            className={isLocked('host') ? lockedInput : undefined}
+            className={
+              isLocked('host') ? `${fieldInput} ${lockedInput}` : fieldInput
+            }
           />
           {isLocked('host') && (
             <LockedFieldHint path={state?.config_path ?? null} />
           )}
         </div>
         <div className={field}>
-          <label htmlFor="relay-port">Port</label>
+          <label className={fieldLabel} htmlFor="relay-port">
+            Port
+          </label>
           <input
             id="relay-port"
             type="number"
@@ -271,7 +289,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             onChange={(e) => setPort(e.target.value)}
             disabled={busy || isLocked('port')}
             readOnly={isLocked('port')}
-            className={isLocked('port') ? lockedInput : undefined}
+            className={
+              isLocked('port') ? `${fieldInput} ${lockedInput}` : fieldInput
+            }
           />
           {isLocked('port') && (
             <LockedFieldHint path={state?.config_path ?? null} />
@@ -280,7 +300,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
       </div>
 
       <div className={field}>
-        <label htmlFor="relay-username">Username (optional)</label>
+        <label className={fieldLabel} htmlFor="relay-username">
+          Username (optional)
+        </label>
         <input
           id="relay-username"
           type="text"
@@ -290,7 +312,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           onChange={(e) => setUsername(e.target.value)}
           disabled={busy || isLocked('username')}
           readOnly={isLocked('username')}
-          className={isLocked('username') ? lockedInput : undefined}
+          className={
+            isLocked('username') ? `${fieldInput} ${lockedInput}` : fieldInput
+          }
         />
         {isLocked('username') && (
           <LockedFieldHint path={state?.config_path ?? null} />
@@ -298,7 +322,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
       </div>
 
       <div className={field}>
-        <label htmlFor="relay-password">Password</label>
+        <label className={fieldLabel} htmlFor="relay-password">
+          Password
+        </label>
         <input
           id="relay-password"
           type="password"
@@ -314,7 +340,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           onChange={(e) => setPassword(e.target.value)}
           disabled={busy || isLocked('password')}
           readOnly={isLocked('password')}
-          className={isLocked('password') ? lockedInput : undefined}
+          className={
+            isLocked('password') ? `${fieldInput} ${lockedInput}` : fieldInput
+          }
         />
         {isLocked('password') && (
           <LockedFieldHint path={state?.config_path ?? null} />
@@ -323,7 +351,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
 
       <div className={fieldRow}>
         <div className={field}>
-          <label htmlFor="relay-tls">TLS</label>
+          <label className={fieldLabel} htmlFor="relay-tls">
+            TLS
+          </label>
           <select
             id="relay-tls"
             value={tls}
@@ -331,7 +361,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
               setTls(e.target.value as RelayConnection['tls'])
             }
             disabled={busy || isLocked('tls')}
-            className={isLocked('tls') ? lockedInput : undefined}
+            className={
+              isLocked('tls') ? `${fieldSelect} ${lockedInput}` : fieldSelect
+            }
           >
             {TLS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -344,7 +376,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           )}
         </div>
         <div className={field}>
-          <label htmlFor="relay-auth">Auth method</label>
+          <label className={fieldLabel} htmlFor="relay-auth">
+            Auth method
+          </label>
           <select
             id="relay-auth"
             value={auth}
@@ -352,7 +386,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
               setAuth(e.target.value as RelayConnection['auth'])
             }
             disabled={busy || isLocked('auth')}
-            className={isLocked('auth') ? lockedInput : undefined}
+            className={
+              isLocked('auth') ? `${fieldSelect} ${lockedInput}` : fieldSelect
+            }
           >
             {AUTH_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -385,7 +421,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
       </div>
 
       <details
-        className={advancedSection}
+        className={advancedSectionCss}
         open={
           overrideFrom.length > 0 ||
           returnPath.length > 0 ||
@@ -394,9 +430,11 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
         }
       >
         <summary>Advanced — sender overrides</summary>
-        <div className="body">
+        <div className={advancedSectionBodyCss}>
           <div className={field}>
-            <label htmlFor="relay-override-from">Override From</label>
+            <label className={fieldLabel} htmlFor="relay-override-from">
+              Override From
+            </label>
             <input
               id="relay-override-from"
               type="email"
@@ -407,13 +445,15 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
               disabled={busy || isLocked('override_from')}
               readOnly={isLocked('override_from')}
               className={
-                isLocked('override_from') ? lockedInput : undefined
+                isLocked('override_from')
+                  ? `${fieldInput} ${lockedInput}`
+                  : fieldInput
               }
             />
             {isLocked('override_from') ? (
               <LockedFieldHint path={state?.config_path ?? null} />
             ) : (
-              <span className="hint">
+              <span className={fieldHint}>
                 Rewrites the From: header on every relayed message.
                 Required by providers that only allow verified sender
                 domains (Mailtrap live, SendGrid, SES). Original sender
@@ -424,7 +464,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           </div>
 
           <div className={field}>
-            <label htmlFor="relay-return-path">
+            <label className={fieldLabel} htmlFor="relay-return-path">
               Return-Path (envelope sender)
             </label>
             <input
@@ -437,13 +477,15 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
               disabled={busy || isLocked('return_path')}
               readOnly={isLocked('return_path')}
               className={
-                isLocked('return_path') ? lockedInput : undefined
+                isLocked('return_path')
+                  ? `${fieldInput} ${lockedInput}`
+                  : fieldInput
               }
             />
             {isLocked('return_path') ? (
               <LockedFieldHint path={state?.config_path ?? null} />
             ) : (
-              <span className="hint">
+              <span className={fieldHint}>
                 Sets the SMTP MAIL FROM. Useful when the relay or
                 recipient validates the bounce address (Gmail, large
                 ISPs).
@@ -453,10 +495,10 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
         </div>
       </details>
 
-      <div className={statusRow} data-status={testStatus}>
+      <div className={statusRowCss} data-status={testStatus}>
         {testStatus !== 'idle' && (
           <>
-            <span className="dot" />
+            <span className={statusRowDotCss} />
             <span>{testMessage}</span>
           </>
         )}

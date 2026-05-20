@@ -10,9 +10,15 @@ import {
   actions,
   btn,
   configBanner,
+  configBannerCode,
   content,
+  dialogLead,
+  dialogTitle,
   errorBox,
   field,
+  fieldHint,
+  fieldInput,
+  fieldLabel,
   lockedInput,
   overlay,
   toggleDesc,
@@ -24,14 +30,20 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
-// Same status-row pattern as RelayConnectDialog. Pulse animation comes
-// from `.pulse-dot` in index.css.
-const statusRow = [
-  'flex min-h-[18px] items-center gap-2 mt-1 mb-2 text-xs text-fg-muted',
-  '[&_.dot]:inline-block [&_.dot]:h-2 [&_.dot]:w-2 [&_.dot]:shrink-0 [&_.dot]:rounded-full',
-  'data-[status=ok]:text-success [&[data-status=ok]_.dot]:bg-success',
-  'data-[status=error]:text-danger [&[data-status=error]_.dot]:bg-danger',
-  '[&[data-status=testing]_.dot]:bg-fg-muted [&[data-status=testing]_.dot]:pulse-dot',
+// Same status-row pattern as RelayConnectDialog. The wrapper carries
+// `group` + `data-status`; the dot reads it via `group-data-[status=…]:`.
+// Pulse animation comes from `.pulse-dot` in index.css.
+const statusRowCss = [
+  'group flex min-h-[18px] items-center gap-2 mt-1 mb-2 text-xs text-fg-muted',
+  'data-[status=ok]:text-success',
+  'data-[status=error]:text-danger',
+].join(' ')
+
+const statusRowDotCss = [
+  'inline-block h-2 w-2 shrink-0 rounded-full',
+  'group-data-[status=ok]:bg-success',
+  'group-data-[status=error]:bg-danger',
+  'group-data-[status=testing]:bg-fg-muted group-data-[status=testing]:pulse-dot',
 ].join(' ')
 
 /**
@@ -144,9 +156,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   return (
     <>
       <Dialog.Title asChild>
-        <h2>Configure Webhook</h2>
+        <h2 className={dialogTitle}>Configure Webhook</h2>
       </Dialog.Title>
-      <p className="lead">
+      <p className={dialogLead}>
         POST every newly-captured email to a URL you control — for CI
         tests, local automation, or piping into another tool. Payload
         mirrors the inbox API; signed with HMAC-SHA256 when a shared
@@ -160,13 +172,15 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           {allLocked
             ? 'All settings are pinned by '
             : 'Some settings are pinned by '}
-          <code>{state.config_path}</code>. Edit that file and restart to
-          change them.
+          <code className={configBannerCode}>{state.config_path}</code>. Edit
+          that file and restart to change them.
         </div>
       )}
 
       <div className={field}>
-        <label htmlFor="webhook-url">URL</label>
+        <label className={fieldLabel} htmlFor="webhook-url">
+          URL
+        </label>
         <input
           id="webhook-url"
           type="url"
@@ -176,7 +190,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           onChange={(e) => setUrl(e.target.value)}
           disabled={busy || isLocked('url')}
           readOnly={isLocked('url')}
-          className={isLocked('url') ? lockedInput : undefined}
+          className={
+            isLocked('url') ? `${fieldInput} ${lockedInput}` : fieldInput
+          }
         />
         {isLocked('url') && (
           <LockedFieldHint path={state?.config_path ?? null} />
@@ -184,7 +200,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
       </div>
 
       <div className={field}>
-        <label htmlFor="webhook-secret">Secret (optional)</label>
+        <label className={fieldLabel} htmlFor="webhook-secret">
+          Secret (optional)
+        </label>
         <input
           id="webhook-secret"
           type="password"
@@ -200,12 +218,14 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           onChange={(e) => setSecret(e.target.value)}
           disabled={busy || isLocked('secret')}
           readOnly={isLocked('secret')}
-          className={isLocked('secret') ? lockedInput : undefined}
+          className={
+            isLocked('secret') ? `${fieldInput} ${lockedInput}` : fieldInput
+          }
         />
         {isLocked('secret') ? (
           <LockedFieldHint path={state?.config_path ?? null} />
         ) : (
-          <span className="hint">
+          <span className={fieldHint}>
             When set, requests carry{' '}
             <code>X-Mailtrap-Local-Signature: sha256=&lt;hex&gt;</code>.
             Verify by recomputing HMAC-SHA256 over the raw body.
@@ -230,10 +250,10 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
         "Send test" below to verify the URL without sending real mail.
       </div>
 
-      <div className={statusRow} data-status={testStatus}>
+      <div className={statusRowCss} data-status={testStatus}>
         {testStatus !== 'idle' && (
           <>
-            <span className="dot" />
+            <span className={statusRowDotCss} />
             <span>{testMessage}</span>
           </>
         )}

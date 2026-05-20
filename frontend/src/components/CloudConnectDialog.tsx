@@ -11,9 +11,16 @@ import {
   actions,
   btn,
   configBanner,
+  configBannerCode,
   content,
+  dialogLead,
+  dialogTitle,
   errorBox,
   field,
+  fieldHint,
+  fieldHintLink,
+  fieldInput,
+  fieldLabel,
   lockedInput,
   overlay,
   toggleDesc,
@@ -116,9 +123,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   return (
     <>
       <Dialog.Title asChild>
-        <h2>Connect to Mailtrap Sandbox</h2>
+        <h2 className={dialogTitle}>Connect to Mailtrap Sandbox</h2>
       </Dialog.Title>
-      <p className="lead">
+      <p className={dialogLead}>
         Link this local sandbox to a Mailtrap cloud sandbox. All incoming
         emails can be mirrored, or forwarded one-by-one from the message
         view.
@@ -131,13 +138,15 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           {allLocked
             ? 'All settings are pinned by '
             : 'Some settings are pinned by '}
-          <code>{state.config_path}</code>. Edit that file and restart to
-          change them.
+          <code className={configBannerCode}>{state.config_path}</code>. Edit
+          that file and restart to change them.
         </div>
       )}
 
       <div className={field}>
-        <label htmlFor="api-token">API token</label>
+        <label className={fieldLabel} htmlFor="api-token">
+          API token
+        </label>
         <input
           id="api-token"
           type="password"
@@ -153,14 +162,17 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           onChange={(e) => setApiToken(e.target.value)}
           disabled={busy || isLocked('api_token')}
           readOnly={isLocked('api_token')}
-          className={isLocked('api_token') ? lockedInput : undefined}
+          className={
+            isLocked('api_token') ? `${fieldInput} ${lockedInput}` : fieldInput
+          }
         />
         {isLocked('api_token') ? (
           <LockedFieldHint path={state?.config_path ?? null} />
         ) : (
-          <span className="hint">
+          <span className={fieldHint}>
             Create one at{' '}
             <a
+              className={fieldHintLink}
               href="https://mailtrap.io/account/api-tokens"
               target="_blank"
               rel="noreferrer"
@@ -173,7 +185,9 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
       </div>
 
       <div className={field}>
-        <label htmlFor="sandbox-id">Sandbox ID</label>
+        <label className={fieldLabel} htmlFor="sandbox-id">
+          Sandbox ID
+        </label>
         <input
           id="sandbox-id"
           type="text"
@@ -184,13 +198,15 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           onChange={(e) => setSandboxInput(e.target.value)}
           disabled={busy || isLocked('sandbox_id')}
           readOnly={isLocked('sandbox_id')}
-          className={isLocked('sandbox_id') ? lockedInput : undefined}
+          className={
+            isLocked('sandbox_id') ? `${fieldInput} ${lockedInput}` : fieldInput
+          }
         />
         {isLocked('sandbox_id') ? (
           <LockedFieldHint path={state?.config_path ?? null} />
         ) : sandboxUrl ? (
           <a
-            className="hint text-accent no-underline"
+            className={`${fieldHint} ${fieldHintLink}`}
             href={sandboxUrl}
             target="_blank"
             rel="noreferrer"
@@ -198,7 +214,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             {sandboxUrl} <ExternalLinkIcon size={11} />
           </a>
         ) : (
-          <span className="hint">
+          <span className={fieldHint}>
             Enter the numeric ID from your sandbox URL (
             <code className="text-accent">
               mailtrap.io/sandboxes/<b>ID</b>

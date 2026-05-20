@@ -36,36 +36,43 @@ const toolbar = [
   'min-h-[58px] border-b border-border-base p-3',
 ].join(' ')
 
-const footer = [
-  'flex items-center justify-between border-t border-border-base bg-surface-base px-3 py-2.5',
-  '[&_.brand]:inline-flex [&_.brand]:items-center [&_.brand]:gap-2 [&_.brand]:text-fg [&_.brand]:no-underline [&_.brand]:text-[13px] [&_.brand]:font-semibold [&_.brand]:tracking-[0.01em] [&_.brand]:opacity-95',
-  '[&_.brand:hover]:opacity-100',
-  '[&_.brand_img]:block [&_.brand_img]:h-7 [&_.brand_img]:w-auto',
+const footerCss =
+  'flex items-center justify-between border-t border-border-base bg-surface-base px-3 py-2.5'
+
+const footerBrandCss = [
+  'inline-flex items-center gap-2 text-fg no-underline',
+  'text-[13px] font-semibold tracking-[0.01em] opacity-95 hover:opacity-100',
 ].join(' ')
 
+const footerBrandImgCss = 'block h-7 w-auto'
+
 // Search input + its expanded "cover the toolbar" mode + the inline
-// clear button. data-expanded=true positions the wrapper absolutely
-// over the rest of the toolbar.
-const searchWrap = [
-  'relative',
-  // Idle layout
-  '[&_input]:w-full [&_input]:rounded-[7px] [&_input]:border [&_input]:border-border-base',
-  '[&_input]:bg-surface-base [&_input]:py-1.5 [&_input]:pl-2.5 [&_input]:pr-8',
-  '[&_input]:text-sm [&_input]:text-fg [&_input]:outline-none',
-  '[&_input::placeholder]:text-fg-muted',
-  '[&_input:focus]:border-accent',
-  // Magnifier (left/center icon decoration)
-  '[&_.icon]:pointer-events-none [&_.icon]:absolute [&_.icon]:right-2.5 [&_.icon]:top-1/2 [&_.icon]:-translate-y-1/2 [&_.icon]:text-fg',
-  // Expanded — cover the icon row to the right.
-  'data-[expanded=true]:absolute data-[expanded=true]:left-3 data-[expanded=true]:right-3 data-[expanded=true]:top-3 data-[expanded=true]:bottom-3 data-[expanded=true]:z-[2]',
-  '[&[data-expanded=true]_.icon]:hidden',
-  '[&[data-expanded=true]_input]:pr-9 [&[data-expanded=true]_input]:bg-surface-base',
-  // Clear (×) button
-  '[&_.clear]:absolute [&_.clear]:right-1.5 [&_.clear]:top-1/2 [&_.clear]:-translate-y-1/2',
-  '[&_.clear]:inline-flex [&_.clear]:items-center [&_.clear]:justify-center',
-  '[&_.clear]:h-6 [&_.clear]:w-6 [&_.clear]:rounded',
-  '[&_.clear]:cursor-pointer [&_.clear]:text-fg-icon',
-  '[&_.clear:hover]:bg-accent-soft [&_.clear:hover]:text-fg',
+// clear button. The wrapper carries `group` + `data-expanded`; child
+// behaviors that depend on expansion use `group-data-[expanded=true]:`.
+const searchWrapCss = [
+  'group relative',
+  // Expanded — absolutely position over the icon row to the right.
+  'data-[expanded=true]:absolute data-[expanded=true]:left-3 data-[expanded=true]:right-3',
+  'data-[expanded=true]:top-3 data-[expanded=true]:bottom-3 data-[expanded=true]:z-[2]',
+].join(' ')
+
+const searchInputCss = [
+  'w-full rounded-[7px] border border-border-base bg-surface-base',
+  'py-1.5 pl-2.5 pr-8 text-sm text-fg outline-none',
+  'placeholder:text-fg-muted focus:border-accent',
+  // Wider right padding when the clear (×) button is visible.
+  'group-data-[expanded=true]:bg-surface-base group-data-[expanded=true]:pr-9',
+].join(' ')
+
+const searchIconCss = [
+  'pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-fg',
+  'group-data-[expanded=true]:hidden',
+].join(' ')
+
+const searchClearCss = [
+  'absolute right-1.5 top-1/2 -translate-y-1/2',
+  'inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded',
+  'text-fg-icon hover:bg-accent-soft hover:text-fg',
 ].join(' ')
 
 // Status badge rendered inside the cloud / relay IconButtons. data-on
@@ -81,11 +88,13 @@ const scroll = 'min-h-0 flex-1 overflow-y-auto'
 
 // Inline confirmation strip — replaces the native confirm() for
 // destructive sidebar actions (currently "delete all").
-const promptBar = [
+const promptBarCss = [
   'flex items-center gap-2 border-b border-surface-hover bg-surface-raised',
   'px-3 py-2.5 text-[13px] text-fg',
-  '[&_span]:flex-1 [&_span]:min-w-0 [&_span]:overflow-hidden [&_span]:text-ellipsis [&_span]:whitespace-nowrap',
 ].join(' ')
+
+const promptBarTextCss =
+  'flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap'
 
 const promptBtnBase = [
   'cursor-pointer rounded-md border border-transparent px-3 py-1 text-xs font-semibold',
@@ -105,11 +114,12 @@ const promptBtnOutline = [
 ].join(' ')
 
 // Dismissable error strip for failed sidebar actions.
-const errorBar = [
+const errorBarCss = [
   'flex items-center gap-2 border-b border-danger-border bg-danger-soft',
   'px-3 py-2 text-xs leading-[1.4] text-danger',
-  '[&_span]:flex-1 [&_span]:min-w-0',
 ].join(' ')
+
+const errorBarTextCss = 'flex-1 min-w-0'
 
 const errorDismissBtn = [
   'inline-flex h-[18px] w-[18px] cursor-pointer items-center justify-center',
@@ -117,52 +127,63 @@ const errorDismissBtn = [
   'hover:bg-danger-border',
 ].join(' ')
 
-// Message-row list. Each row is a 2-col / 2-row grid:
+// Message-row list. Each row (the <Link>) is a 2-col / 2-row grid:
 //   col1 row1: subject  · col2 row1: time
 //   col1 row2: recipient · col2 row2: category badge
-const list = [
-  'list-none p-0 m-0',
-  '[&_li]:border-b [&_li]:border-border-base',
-  '[&_a]:grid [&_a]:grid-cols-[1fr_auto] [&_a]:grid-rows-[auto_auto] [&_a]:gap-x-3 [&_a]:gap-y-0.5',
-  '[&_a]:px-4 [&_a]:py-3 [&_a]:text-inherit [&_a]:no-underline',
-  '[&_a]:bg-surface-raised [&_a]:transition-[background-color] [&_a]:duration-150',
-  '[&_a:hover]:bg-surface-hover',
+//
+// The row carries `group` + `data-read` + `data-active`; nested
+// elements use `group-data-[…]:` variants to react to row state.
+const listCss = 'list-none p-0 m-0'
+
+const listItemCss = 'border-b border-border-base'
+
+// Active vs read: Tailwind v4 emits `data-[active=true]:` and
+// `data-[read=true]:` in a stable variant order (not className source
+// order), so the active utilities need `!` to win the tiebreak — same
+// situation the original code had to work around.
+const listRowCss = [
+  'group grid grid-cols-[1fr_auto] grid-rows-[auto_auto] gap-x-3 gap-y-0.5',
+  'px-4 py-3 text-inherit no-underline',
+  'bg-surface-raised transition-[background-color] duration-150',
+  'hover:bg-surface-hover',
   // Read state — blends with page background until hovered.
-  '[&_a[data-read=true]]:bg-surface-base',
-  '[&_a[data-read=true]:hover]:bg-surface-hover',
-  // Subject
-  '[&_.subject]:col-start-1 [&_.subject]:overflow-hidden [&_.subject]:text-ellipsis [&_.subject]:whitespace-nowrap',
-  '[&_.subject]:font-semibold [&_.subject]:text-fg',
-  '[&_a[data-read=true]_.subject]:font-normal [&_a[data-read=true]_.subject]:text-fg-muted',
-  // Time
-  '[&_.time]:col-start-2 [&_.time]:row-start-1 [&_.time]:justify-self-end',
-  '[&_.time]:whitespace-nowrap [&_.time]:text-right [&_.time]:text-[13px] [&_.time]:text-fg-muted',
-  // Recipient
-  '[&_.recipient]:col-start-1 [&_.recipient]:overflow-hidden [&_.recipient]:text-ellipsis [&_.recipient]:whitespace-nowrap',
-  '[&_.recipient]:text-[13px] [&_.recipient]:text-fg-muted',
-  // Category pill
-  '[&_.category]:col-start-2 [&_.category]:row-start-2 [&_.category]:self-center [&_.category]:justify-self-end',
-  '[&_.category]:inline-block [&_.category]:max-w-[140px] [&_.category]:overflow-hidden [&_.category]:text-ellipsis [&_.category]:whitespace-nowrap',
-  '[&_.category]:rounded-full [&_.category]:bg-accent-medium [&_.category]:px-2 [&_.category]:py-0.5',
-  '[&_.category]:text-[11px] [&_.category]:font-semibold [&_.category]:leading-[1.4] [&_.category]:text-accent',
-  '[&_a[data-active=true]_.category]:bg-white/20 [&_a[data-active=true]_.category]:text-fg',
-  // Active row — must win over read-state colours. The read-state and
-  // active-state arbitrary variants have identical specificity, and
-  // Tailwind v4 emits them in attribute-name alphabetical order, so
-  // [data-active] gets emitted BEFORE [data-read] and would otherwise
-  // lose the source-order tiebreak. The `!` modifier promotes these
-  // utilities to !important to settle the conflict.
-  '[&_a[data-active=true]]:!bg-accent',
-  '[&_a[data-active=true]:hover]:!bg-accent',
-  '[&_a[data-active=true]_.subject]:!font-semibold [&_a[data-active=true]_.subject]:!text-fg',
-  '[&_a[data-active=true]_.recipient]:!font-semibold [&_a[data-active=true]_.recipient]:!text-fg',
-  '[&_a[data-active=true]_.time]:!font-semibold [&_a[data-active=true]_.time]:!text-fg',
+  'data-[read=true]:bg-surface-base data-[read=true]:hover:bg-surface-hover',
+  // Active state — must beat the read state.
+  'data-[active=true]:!bg-accent data-[active=true]:hover:!bg-accent',
 ].join(' ')
 
-const emptyState = [
-  'px-4 py-6 text-center text-[13px] leading-[1.6] text-fg-muted',
-  '[&_code]:rounded [&_code]:bg-accent/10 [&_code]:text-accent [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-xs',
+const listSubjectCss = [
+  'col-start-1 overflow-hidden text-ellipsis whitespace-nowrap',
+  'font-semibold text-fg',
+  'group-data-[read=true]:font-normal group-data-[read=true]:text-fg-muted',
+  'group-data-[active=true]:!font-semibold group-data-[active=true]:!text-fg',
 ].join(' ')
+
+const listTimeCss = [
+  'col-start-2 row-start-1 justify-self-end',
+  'whitespace-nowrap text-right text-[13px] text-fg-muted',
+  'group-data-[active=true]:!font-semibold group-data-[active=true]:!text-fg',
+].join(' ')
+
+const listRecipientCss = [
+  'col-start-1 overflow-hidden text-ellipsis whitespace-nowrap',
+  'text-[13px] text-fg-muted',
+  'group-data-[active=true]:!font-semibold group-data-[active=true]:!text-fg',
+].join(' ')
+
+const listCategoryCss = [
+  'col-start-2 row-start-2 self-center justify-self-end',
+  'inline-block max-w-[140px] overflow-hidden text-ellipsis whitespace-nowrap',
+  'rounded-full bg-accent-medium px-2 py-0.5',
+  'text-[11px] font-semibold leading-[1.4] text-accent',
+  'group-data-[active=true]:bg-white/20 group-data-[active=true]:text-fg',
+].join(' ')
+
+const emptyStateCss =
+  'px-4 py-6 text-center text-[13px] leading-[1.6] text-fg-muted'
+
+const emptyStateCodeCss =
+  'rounded bg-accent/10 text-accent px-1.5 py-0.5 text-xs'
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()
@@ -331,19 +352,20 @@ export default function Sidebar() {
   return (
     <aside className={sidebar}>
       <div className={toolbar}>
-        <div className={searchWrap} data-expanded={searchExpanded}>
-          <SearchIcon className="icon" size={14} />
+        <div className={searchWrapCss} data-expanded={searchExpanded}>
+          <SearchIcon className={searchIconCss} size={14} />
           <input
             ref={searchInputRef}
             type="text"
             placeholder="Search…"
+            className={searchInputCss}
             value={query}
             onFocus={() => setSearchExpanded(true)}
             onChange={(e) => setQuery(e.target.value)}
           />
           {searchExpanded && (
             <button
-              className="clear"
+              className={searchClearCss}
               type="button"
               title="Close search"
               onClick={() => {
@@ -410,8 +432,10 @@ export default function Sidebar() {
       <RelayConnectDialog open={relayOpen} onOpenChange={setRelayOpen} />
 
       {confirmDeleteAll && (
-        <div className={promptBar}>
-          <span>Delete all {messages?.length ?? 0} messages?</span>
+        <div className={promptBarCss}>
+          <span className={promptBarTextCss}>
+            Delete all {messages?.length ?? 0} messages?
+          </span>
           <button
             type="button"
             className={promptBtnDanger}
@@ -432,8 +456,8 @@ export default function Sidebar() {
       )}
 
       {actionError && (
-        <div className={errorBar} role="alert">
-          <span>{actionError}</span>
+        <div className={errorBarCss} role="alert">
+          <span className={errorBarTextCss}>{actionError}</span>
           <button
             type="button"
             className={errorDismissBtn}
@@ -446,13 +470,14 @@ export default function Sidebar() {
       )}
 
       <div className={scroll}>
-        {error && <div className={emptyState}>Error: {error}</div>}
+        {error && <div className={emptyStateCss}>Error: {error}</div>}
 
         {!error && messages && messages.length === 0 && (
-          <div className={emptyState}>
+          <div className={emptyStateCss}>
             <p>No messages yet.</p>
             <p>
-              Send to <code>127.0.0.1:3535</code>.
+              Send to <code className={emptyStateCodeCss}>127.0.0.1:3535</code>
+              .
             </p>
           </div>
         )}
@@ -461,28 +486,29 @@ export default function Sidebar() {
           searchResults !== null &&
           searchResults.length === 0 &&
           !searching && (
-            <div className={emptyState}>No matches for "{query.trim()}".</div>
+            <div className={emptyStateCss}>No matches for "{query.trim()}".</div>
           )}
 
         {displayedMessages && displayedMessages.length > 0 && (
-          <ul className={list}>
+          <ul className={listCss}>
             {displayedMessages.map((m) => (
-              <li key={m.id}>
+              <li key={m.id} className={listItemCss}>
                 <Link
                   to={`/message/${m.id}`}
+                  className={listRowCss}
                   data-active={m.id === activeId}
                   data-read={m.read}
                 >
-                  <span className="subject">
+                  <span className={listSubjectCss}>
                     {m.subject || '(no subject)'}
                   </span>
-                  <span className="time">{relativeTime(m.created)}</span>
-                  <span className="recipient">
+                  <span className={listTimeCss}>{relativeTime(m.created)}</span>
+                  <span className={listRecipientCss}>
                     to: &lt;{primaryRecipient(m)}&gt;
                   </span>
                   {m.tags[0] && (
                     <span
-                      className="category"
+                      className={listCategoryCss}
                       title={`Category: ${m.tags[0]}`}
                     >
                       {m.tags[0]}
@@ -495,14 +521,14 @@ export default function Sidebar() {
         )}
       </div>
 
-      <div className={footer}>
+      <div className={footerCss}>
         <Link
           to="/"
-          className="brand"
+          className={footerBrandCss}
           title="Back to sandbox"
           aria-label="Back to sandbox"
         >
-          <img src={mailtrapLogo} alt="Mailtrap" />
+          <img src={mailtrapLogo} alt="Mailtrap" className={footerBrandImgCss} />
         </Link>
         <SettingsMenu webhookActive={webhookActive} />
       </div>

@@ -11,7 +11,7 @@ import { IconButton } from './IconButton'
 import WebhookConnectDialog from './WebhookConnectDialog'
 import AboutDialog from './AboutDialog'
 
-const menu = [
+const menuCss = [
   // Sit above Radix Dialog overlays only when nothing else is open. The
   // dialogs themselves portal to the same layer (z-50/51), so the menu
   // closes on item click before the dialog mounts — no stacking
@@ -20,20 +20,26 @@ const menu = [
   'shadow-[0_12px_32px_rgba(0,0,0,0.45)]',
 ].join(' ')
 
-// Each menu item: descendant selectors style the inline icon, the label
-// span (.grow), the activity badge (.badge), and the external-link
-// glyph (.ext) without forcing every consumer to repeat utilities.
-const item = [
-  'flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-fg select-none outline-none',
-  '[&_.icon]:shrink-0 [&_.icon]:text-fg-muted',
-  '[&_.grow]:flex-1',
-  '[&_.badge]:inline-block [&_.badge]:h-1.5 [&_.badge]:w-1.5 [&_.badge]:rounded-full',
-  '[&_.badge[data-on=true]]:bg-success',
-  '[&_.ext]:shrink-0 [&_.ext]:text-fg-muted',
-  // Radix highlights the focused item via [data-highlighted].
+// Each menu item is a `group` carrying Radix's `data-highlighted`
+// attribute when focused; children pick up highlighted-state styling
+// via `group-data-[highlighted]:` variants.
+const itemCss = [
+  'group flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2',
+  'text-[13px] text-fg select-none outline-none',
   'data-[highlighted]:bg-surface-hover',
-  '[&[data-highlighted]_.icon]:text-accent',
 ].join(' ')
+
+const itemIconCss =
+  'shrink-0 text-fg-muted group-data-[highlighted]:text-accent'
+
+const itemGrowCss = 'flex-1'
+
+const itemBadgeCss = [
+  'inline-block h-1.5 w-1.5 rounded-full',
+  'data-[on=true]:bg-success',
+].join(' ')
+
+const itemExtCss = 'shrink-0 text-fg-muted'
 
 interface Props {
   /**
@@ -64,37 +70,37 @@ export default function SettingsMenu({ webhookActive }: Props) {
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content
-            className={menu}
+            className={menuCss}
             side="top"
             align="end"
             sideOffset={6}
             collisionPadding={8}
           >
             <DropdownMenu.Item
-              className={item}
+              className={itemCss}
               onSelect={() => setWebhookOpen(true)}
             >
-              <WebhookIcon size={14} className="icon" />
-              <span className="grow">Webhooks</span>
-              <span className="badge" data-on={webhookActive} />
+              <WebhookIcon size={14} className={itemIconCss} />
+              <span className={itemGrowCss}>Webhooks</span>
+              <span className={itemBadgeCss} data-on={webhookActive} />
             </DropdownMenu.Item>
-            <DropdownMenu.Item className={item} asChild>
+            <DropdownMenu.Item className={itemCss} asChild>
               <a
                 href="https://docs.mailtrap.io/"
                 target="_blank"
                 rel="noreferrer"
               >
-                <HelpIcon size={14} className="icon" />
-                <span className="grow">Documentation</span>
-                <ExternalLinkIcon size={11} className="ext" />
+                <HelpIcon size={14} className={itemIconCss} />
+                <span className={itemGrowCss}>Documentation</span>
+                <ExternalLinkIcon size={11} className={itemExtCss} />
               </a>
             </DropdownMenu.Item>
             <DropdownMenu.Item
-              className={item}
+              className={itemCss}
               onSelect={() => setAboutOpen(true)}
             >
-              <InfoIcon size={14} className="icon" />
-              <span className="grow">About</span>
+              <InfoIcon size={14} className={itemIconCss} />
+              <span className={itemGrowCss}>About</span>
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>

@@ -1,16 +1,19 @@
 import '../../lib/prism-langs'
 import { Highlight, themes } from 'prism-react-renderer'
 
-const wrapper = [
+const wrapperCss = [
   'm-0 px-3.5 py-2.5 text-left tab-size-2',
   '!bg-transparent',
   "font-['Fira_Code','JetBrains_Mono',ui-monospace,SFMono-Regular,Menlo,monospace] text-[12.5px] leading-[1.55]",
   'whitespace-pre-wrap [overflow-wrap:anywhere]',
-  // Per-line decorations applied via descendant selectors.
-  '[&_.row]:flex',
-  '[&_.ln]:w-9 [&_.ln]:flex-none [&_.ln]:pr-3 [&_.ln]:text-right [&_.ln]:text-[#4a5a6f] [&_.ln]:select-none',
-  '[&_.code]:min-w-0 [&_.code]:flex-1',
 ].join(' ')
+
+const rowCss = 'flex'
+
+const lineNumCss =
+  'w-9 flex-none pr-3 text-right text-[#4a5a6f] select-none'
+
+const codeCss = 'min-w-0 flex-1'
 
 interface CodeBlockProps {
   code: string
@@ -27,7 +30,7 @@ export function CodeBlock({
     <Highlight theme={themes.vsDark} code={code} language={language}>
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <pre
-          className={`${wrapper} ${className}`}
+          className={`${wrapperCss} ${className}`}
           style={{ ...style, background: 'transparent' }}
         >
           {tokens.map((line, i) => {
@@ -39,11 +42,11 @@ export function CodeBlock({
             return (
               <div
                 key={i}
-                className={`row ${lineClass ?? ''}`}
+                className={`${rowCss} ${lineClass ?? ''}`}
                 {...lineProps}
               >
-                {showLineNumbers && <span className="ln">{i + 1}</span>}
-                <span className="code">
+                {showLineNumbers && <span className={lineNumCss}>{i + 1}</span>}
+                <span className={codeCss}>
                   {line.map((token, ti) => {
                     const { key: _tk, ...tokenProps } = getTokenProps({ token })
                     return <span key={ti} {...tokenProps} />

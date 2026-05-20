@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import * as Tabs from '@radix-ui/react-tabs'
 import { Highlight, themes } from 'prism-react-renderer'
@@ -44,60 +44,96 @@ import { extractApiError } from '../api/client'
 
 const wrap = 'm-0'
 
-// Header is a 2-col / 3-row grid: subject + actions, meta + time/category,
-// "Show Headers" link spanning row 3. Descendant utilities decorate the
-// nested children so the JSX below stays clean.
-const header = [
-  'grid grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 items-start pb-4',
-  'border-b border-border-base',
-  '[&_h2]:col-start-1 [&_h2]:row-start-1 [&_h2]:m-0 [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:leading-[1.21]',
-  '[&_.actions]:col-start-2 [&_.actions]:row-start-1 [&_.actions]:justify-self-end',
-  '[&_.actions]:flex [&_.actions]:items-center [&_.actions]:justify-end [&_.actions]:gap-1',
-  '[&_.meta]:col-start-1 [&_.meta]:row-start-2 [&_.meta]:text-[13px] [&_.meta]:leading-[1.7] [&_.meta]:text-fg-muted',
-  '[&_.meta_.label]:mr-1.5 [&_.meta_.label]:text-fg-muted',
-  '[&_.meta_.val]:text-fg',
-  '[&_.timesize]:col-start-2 [&_.timesize]:row-start-2 [&_.timesize]:self-start',
-  '[&_.timesize]:flex [&_.timesize]:flex-col [&_.timesize]:items-end [&_.timesize]:gap-1.5',
-  '[&_.timesize]:whitespace-nowrap [&_.timesize]:text-right [&_.timesize]:text-[13px] [&_.timesize]:text-fg-muted',
-  '[&_.timesize_.category]:inline-block [&_.timesize_.category]:max-w-[200px] [&_.timesize_.category]:overflow-hidden [&_.timesize_.category]:text-ellipsis',
-  '[&_.timesize_.category]:rounded-full [&_.timesize_.category]:bg-accent-medium [&_.timesize_.category]:px-2.5 [&_.timesize_.category]:py-0.5',
-  '[&_.timesize_.category]:text-[11px] [&_.timesize_.category]:font-semibold [&_.timesize_.category]:leading-[1.6] [&_.timesize_.category]:text-accent',
-  '[&_.headersLink]:col-start-1 [&_.headersLink]:row-start-3 [&_.headersLink]:justify-self-start',
-  '[&_.headersLink]:cursor-pointer [&_.headersLink]:pt-0.5 [&_.headersLink]:text-[13px] [&_.headersLink]:text-accent',
-  '[&_.headersLink:hover]:underline',
+// Header is a 2-col / 3-row grid:
+//   row 1: subject (col 1)            | actions (col 2)
+//   row 2: meta (col 1)               | time + size + category (col 2)
+//   row 3: "Show Headers" link (col 1)
+const headerCss =
+  'grid grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 items-start pb-4 border-b border-border-base'
+
+const headerSubjectCss =
+  'col-start-1 row-start-1 m-0 text-[22px] font-semibold leading-[1.21]'
+
+const headerActionsCss = [
+  'col-start-2 row-start-1 justify-self-end',
+  'flex items-center justify-end gap-1',
 ].join(' ')
+
+const headerMetaCss =
+  'col-start-1 row-start-2 text-[13px] leading-[1.7] text-fg-muted'
+
+const headerMetaLabelCss = 'mr-1.5 text-fg-muted'
+const headerMetaValCss = 'text-fg'
+
+const headerTimesizeCss = [
+  'col-start-2 row-start-2 self-start',
+  'flex flex-col items-end gap-1.5',
+  'whitespace-nowrap text-right text-[13px] text-fg-muted',
+].join(' ')
+
+const headerCategoryCss = [
+  'inline-block max-w-[200px] overflow-hidden text-ellipsis',
+  'rounded-full bg-accent-medium px-2.5 py-0.5',
+  'text-[11px] font-semibold leading-[1.6] text-accent',
+].join(' ')
+
+const headerHeadersLinkCss = [
+  'col-start-1 row-start-3 justify-self-start',
+  'cursor-pointer pt-0.5 text-[13px] text-accent hover:underline',
+].join(' ')
+
+function MetaRow({
+  label,
+  children,
+}: {
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <div>
+      <span className={headerMetaLabelCss}>{label}:</span>
+      <span className={headerMetaValCss}>{children}</span>
+    </div>
+  )
+}
 
 // Positioning override for the pop-out icon overlaying each tab content.
 const popoutPosition = 'absolute top-0 right-0'
 
-// Inline success / error strips (action feedback below the header).
-const successStrip = [
+// Inline success strip (action feedback below the header).
+const successStripCss = [
   'mt-2.5 flex items-center gap-2 rounded-md border border-success/30 bg-success/[0.08]',
   'px-3 py-2 text-xs leading-[1.4] text-success',
-  '[&_span]:flex-1 [&_span]:min-w-0',
-  '[&_button]:inline-flex [&_button]:h-[18px] [&_button]:w-[18px] [&_button]:cursor-pointer',
-  '[&_button]:items-center [&_button]:justify-center [&_button]:rounded [&_button]:text-success',
-  '[&_button:hover]:bg-success/20',
 ].join(' ')
 
-const errorStrip = [
+const successStripTextCss = 'flex-1 min-w-0'
+
+const successStripDismissCss = [
+  'inline-flex h-[18px] w-[18px] cursor-pointer items-center justify-center',
+  'rounded text-success hover:bg-success/20',
+].join(' ')
+
+const errorStripCss = [
   'mt-2.5 flex items-center gap-2 rounded-md border border-danger-border bg-danger-soft',
   'px-3 py-2 text-xs leading-[1.4] text-danger',
-  '[&_span]:flex-1 [&_span]:min-w-0',
-  '[&_button]:inline-flex [&_button]:h-[18px] [&_button]:w-[18px] [&_button]:cursor-pointer',
-  '[&_button]:items-center [&_button]:justify-center [&_button]:rounded [&_button]:text-danger',
-  '[&_button:hover]:bg-danger-border',
+].join(' ')
+
+const errorStripTextCss = 'flex-1 min-w-0'
+
+const errorStripDismissCss = [
+  'inline-flex h-[18px] w-[18px] cursor-pointer items-center justify-center',
+  'rounded text-danger hover:bg-danger-border',
 ].join(' ')
 
 // Inline action bars (delete-confirm + forward-form) live inside the
-// header's `.actions` slot.
-const inlineBar = [
-  'flex items-center gap-2.5 text-[13px] text-fg',
-  '[&_input]:rounded-[7px] [&_input]:border [&_input]:border-border-base [&_input]:bg-surface-base',
-  '[&_input]:px-3 [&_input]:py-[7px] [&_input]:text-[13px] [&_input]:text-fg [&_input]:outline-none',
-  '[&_input]:min-w-[220px]',
-  '[&_input::placeholder]:text-fg-muted',
-  '[&_input:focus]:border-accent',
+// header's `.actions` slot. Layout only; the forward-form's input
+// carries its own shape via inlineBarInputCss.
+const inlineBarCss = 'flex items-center gap-2.5 text-[13px] text-fg'
+
+const inlineBarInputCss = [
+  'min-w-[220px] rounded-[7px] border border-border-base bg-surface-base',
+  'px-3 py-[7px] text-[13px] text-fg outline-none',
+  'placeholder:text-fg-muted focus:border-accent',
 ].join(' ')
 
 // Variant-driven pill button — same shape as dialogStyles.btn but slightly
@@ -118,18 +154,18 @@ const deviceBar = 'relative flex justify-center gap-1 pt-2 pb-3'
 
 const previewWrap = 'relative'
 
-// Device-frame chrome around the HTML preview iframe. Frame stays
-// inline-block in every mode so switching devices animates in place.
-const iframeFrame = [
-  'flex justify-center',
-  '[&_.frame]:inline-block [&_.frame]:[box-sizing:content-box]',
-  '[&_.frame]:rounded-none [&_.frame]:border-2 [&_.frame]:border-transparent [&_.frame]:bg-transparent [&_.frame]:p-0',
-  '[&_.frame]:transition-[width,height,padding,border-radius,border-color,background-color] [&_.frame]:duration-[250ms] [&_.frame]:ease-out',
+// Device-frame chrome around the HTML preview iframe. The frame
+// reads its own `data-device` so device-driven styling lives on the
+// element it actually styles.
+const iframeFrameWrapCss = 'flex justify-center'
+
+const iframeFrameCss = [
+  'inline-block [box-sizing:content-box]',
+  'rounded-none border-2 border-transparent bg-transparent p-0',
+  'transition-[width,height,padding,border-radius,border-color,background-color] duration-[250ms] ease-out',
   // Mobile + tablet share the accent border + base background.
-  '[&[data-device=mobile]_.frame]:border-accent [&[data-device=mobile]_.frame]:bg-surface-base',
-  '[&[data-device=mobile]_.frame]:rounded-[32px] [&[data-device=mobile]_.frame]:px-2.5 [&[data-device=mobile]_.frame]:py-3.5',
-  '[&[data-device=tablet]_.frame]:border-accent [&[data-device=tablet]_.frame]:bg-surface-base',
-  '[&[data-device=tablet]_.frame]:rounded-[18px] [&[data-device=tablet]_.frame]:p-3.5',
+  'data-[device=mobile]:rounded-[32px] data-[device=mobile]:border-accent data-[device=mobile]:bg-surface-base data-[device=mobile]:px-2.5 data-[device=mobile]:py-3.5',
+  'data-[device=tablet]:rounded-[18px] data-[device=tablet]:border-accent data-[device=tablet]:bg-surface-base data-[device=tablet]:p-3.5',
 ].join(' ')
 
 const tabList = 'mt-4 flex gap-[18px] border-b border-border-base p-0'
@@ -162,39 +198,65 @@ const preCss = [
   'min-h-[max(500px,calc(100vh-260px))] [box-sizing:border-box]',
 ].join(' ')
 
-const codeViewer = [
+const codeViewerCss = [
   'm-0 rounded-[7px] border border-border-base bg-black/25 p-0',
   "font-['SF_Mono',Menlo,Consolas,monospace] text-xs leading-[1.55]",
   'min-h-[max(500px,calc(100vh-260px))] [box-sizing:border-box]',
-  '[&_.row]:grid [&_.row]:grid-cols-[48px_1fr]',
-  '[&_.ln]:select-none [&_.ln]:px-2.5 [&_.ln]:pr-3 [&_.ln]:text-right [&_.ln]:text-[#4d5a6a]',
-  '[&_.ln]:border-r [&_.ln]:border-border-base',
-  '[&_.code]:px-3.5 [&_.code]:whitespace-pre-wrap [&_.code]:break-words',
 ].join(' ')
+
+const codeViewerRowCss = 'grid grid-cols-[48px_1fr]'
+
+const codeViewerLineNumCss = [
+  'select-none px-2.5 pr-3 text-right text-[#4d5a6a]',
+  'border-r border-border-base',
+].join(' ')
+
+const codeViewerCodeCss = 'px-3.5 whitespace-pre-wrap break-words'
 
 const techSection =
   'mb-4 rounded-lg border border-border-base bg-surface-raised px-6 py-5'
 
 // Two-column key/value table with zebra striping. Same shell wherever
-// it's used.
-const techTable = [
+// it's used; per-cell classes live alongside the cell elements below.
+const techTableCss = [
   'w-full text-[13px] [border-collapse:separate] [border-spacing:0]',
   'overflow-hidden rounded-lg border border-border-base',
-  '[&_th]:p-3 [&_th]:px-4 [&_th]:text-left [&_th]:align-middle [&_th]:border-b [&_th]:border-border-base',
-  '[&_td]:p-3 [&_td]:px-4 [&_td]:text-left [&_td]:align-middle [&_td]:border-b [&_td]:border-border-base',
-  '[&_tbody_tr:last-child_td]:border-b-0',
-  '[&_thead_th]:bg-surface-base [&_thead_th]:text-[13px] [&_thead_th]:font-bold [&_thead_th]:text-fg',
-  '[&_td.name]:w-[180px] [&_td.name]:whitespace-nowrap [&_td.name]:text-fg',
-  '[&_td.val]:text-fg [&_td.val]:break-all',
-  '[&_tbody_tr]:bg-surface-raised',
-  '[&_tbody_tr:nth-child(even)]:bg-surface-base',
-  '[&_td.copy]:w-[72px] [&_td.copy]:text-right',
 ].join(' ')
 
-const techHeading = [
-  'mb-1.5 m-0 inline-flex items-center gap-1.5 text-[15px] font-semibold text-fg',
-  '[&_.q]:cursor-help [&_.q]:text-fg-muted',
+const techTableCellCss =
+  'p-3 px-4 text-left align-middle border-b border-border-base'
+
+const techTableHeadCss = [
+  techTableCellCss,
+  'bg-surface-base text-[13px] font-bold text-fg',
 ].join(' ')
+
+// The one legitimate descendant rule: removing the bottom border on the
+// last row's cells. `:last-child` is structural and can only be detected
+// in CSS, so a narrow `[&>tr:last-child>td]:` on the <tbody> is right —
+// it's not a selector-hook, it's a position-driven rule.
+const techTableBodyCss = '[&>tr:last-child>td]:border-b-0'
+
+// Zebra striping via Tailwind's native `even:` variant on each <tr>.
+const techTableRowCss = 'bg-surface-raised even:bg-surface-base'
+
+const techTableNameCellCss = [
+  techTableCellCss,
+  'w-[180px] whitespace-nowrap text-fg',
+].join(' ')
+
+const techTableValCellCss = [techTableCellCss, 'text-fg break-all'].join(' ')
+
+const techTableCopyCellCss = [
+  techTableCellCss,
+  'w-[72px] text-right',
+].join(' ')
+
+const techHeadingCss =
+  'mb-1.5 m-0 inline-flex items-center gap-1.5 text-[15px] font-semibold text-fg'
+
+// HelpIcon next to tech-section headings — muted color + help cursor.
+const techHelpIconCss = 'cursor-help text-fg-muted'
 
 const techBlurb = 'mb-3.5 m-0 text-[13px] leading-[1.6] text-fg'
 
@@ -204,10 +266,9 @@ const copyBtn = [
   'hover:bg-accent/10',
 ].join(' ')
 
-const infoRow = [
+const infoRowCss = [
   'flex items-center justify-center gap-1.5 border-b border-border-base',
   'px-3 py-2.5 text-[13px] text-fg',
-  '[&_.check]:text-success',
 ].join(' ')
 
 function formatAddr(a: Address | undefined): string {
@@ -233,7 +294,7 @@ function HtmlSource({ code }: { code: string }) {
     <Highlight theme={themes.vsDark} code={code} language="markup">
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <pre
-          className={`${codeViewer} ${className}`}
+          className={`${codeViewerCss} ${className}`}
           style={{ ...style, background: 'transparent' }}
         >
           {tokens.map((line, i) => {
@@ -245,9 +306,9 @@ function HtmlSource({ code }: { code: string }) {
               line,
             })
             return (
-              <div key={i} className="row" {...lineProps}>
-                <span className="ln">{i + 1}</span>
-                <span className="code">
+              <div key={i} className={codeViewerRowCss} {...lineProps}>
+                <span className={codeViewerLineNumCss}>{i + 1}</span>
+                <span className={codeViewerCodeCss}>
                   {line.map((token, ti) => {
                     const { key: _tk, ...tokenProps } = getTokenProps({
                       token,
@@ -289,74 +350,107 @@ const htmlCheckTop = [
   'rounded-none bg-surface-base px-6 pt-5 pb-6',
 ].join(' ')
 
-const donutCss = [
-  'relative h-[180px] w-[180px]',
-  '[&_.center]:pointer-events-none [&_.center]:absolute [&_.center]:inset-0',
-  '[&_.center]:flex [&_.center]:flex-col [&_.center]:items-center [&_.center]:justify-center',
-  '[&_.pct]:text-[30px] [&_.pct]:font-bold [&_.pct]:leading-none [&_.pct]:text-success',
-  '[&_.label]:mt-1.5 [&_.label]:text-[10px] [&_.label]:font-bold [&_.label]:tracking-[0.18em] [&_.label]:text-fg [&_.label]:uppercase',
+const donutCss = 'relative h-[180px] w-[180px]'
+
+const donutCenterCss = [
+  'pointer-events-none absolute inset-0',
+  'flex flex-col items-center justify-center',
 ].join(' ')
+
+const donutPctCss = 'text-[30px] font-bold leading-none text-success'
+
+const donutLabelCss =
+  'mt-1.5 text-[10px] font-bold tracking-[0.18em] text-fg uppercase'
 
 // Per-family support breakdown table. Hover reveals the partial/no
-// percentages and the Only/All toggle.
-const familyTable = [
-  'flex max-w-[520px] flex-col text-[13px]',
-  '[&_.row]:grid [&_.row]:grid-cols-[160px_56px_56px_56px_64px] [&_.row]:items-center',
-  '[&_.row]:gap-x-3.5 [&_.row]:rounded-md [&_.row]:px-1 [&_.row]:py-2',
-  '[&_.row:hover]:bg-surface-base',
-  '[&_.name]:inline-flex [&_.name]:items-center [&_.name]:gap-2.5 [&_.name]:text-fg',
-  '[&_.pct]:text-right [&_.pct]:font-bold',
-  '[&_.pct[data-kind=supported]]:text-success',
-  '[&_.pct[data-kind=partial]]:text-[#f5a524]',
-  '[&_.pct[data-kind=no]]:text-danger',
-  '[&_.row_.pct[data-kind=partial]]:invisible',
-  '[&_.row_.pct[data-kind=no]]:invisible',
-  '[&_.row_.only]:invisible',
-  '[&_.row:hover_.pct[data-kind=partial]]:visible',
-  '[&_.row:hover_.pct[data-kind=no]]:visible',
-  '[&_.row:hover_.only]:visible',
-  '[&_.checkbox]:h-3.5 [&_.checkbox]:w-3.5 [&_.checkbox]:[accent-color:var(--color-accent)]',
-  '[&_.only]:cursor-pointer [&_.only]:rounded-full [&_.only]:border [&_.only]:border-accent',
-  '[&_.only]:px-3.5 [&_.only]:py-1 [&_.only]:text-center [&_.only]:text-xs [&_.only]:font-semibold [&_.only]:text-accent',
-  '[&_.only:hover]:bg-accent-soft',
+// percentages and the Only/All toggle — implemented via `group` on the
+// row + `group-hover:visible` on the revealable children.
+const familyTableCss = 'flex max-w-[520px] flex-col text-[13px]'
+
+const familyRowCss = [
+  'group grid grid-cols-[160px_56px_56px_56px_64px] items-center',
+  'gap-x-3.5 rounded-md px-1 py-2',
+  'hover:bg-surface-base',
 ].join(' ')
 
-const filterStrip = [
-  'mb-3.5 flex items-center gap-[22px] text-[13px] text-fg',
-  '[&_label]:inline-flex [&_label]:cursor-pointer [&_label]:items-center [&_label]:gap-1.5',
-  '[&_input]:[accent-color:var(--color-accent)]',
-  '[&_.count]:text-fg-icon',
+const familyNameCss = 'inline-flex items-center gap-2.5 text-fg'
+
+const familyCheckboxCss = 'h-3.5 w-3.5 [accent-color:var(--color-accent)]'
+
+const familyPctBaseCss = 'text-right font-bold'
+
+const familyPctSupportedCss = `${familyPctBaseCss} text-success`
+
+const familyPctPartialCss = `${familyPctBaseCss} invisible text-[#f5a524] group-hover:visible`
+
+const familyPctNoCss = `${familyPctBaseCss} invisible text-danger group-hover:visible`
+
+const familyOnlyCss = [
+  'invisible cursor-pointer rounded-full border border-accent',
+  'px-3.5 py-1 text-center text-xs font-semibold text-accent',
+  'hover:bg-accent-soft group-hover:visible',
 ].join(' ')
+
+const filterStripCss =
+  'mb-3.5 flex items-center gap-[22px] text-[13px] text-fg'
+
+const filterStripLabelCss = 'inline-flex cursor-pointer items-center gap-1.5'
+
+const filterStripCheckboxCss = '[accent-color:var(--color-accent)]'
+
+const filterStripCountCss = 'text-fg-icon'
 
 // Per-rule issue card. The chip rows visualize per-client support, with
-// support dots colored by `data-support`.
-const htmlCheckIssueCss = [
-  'mb-3 rounded-lg border border-border-base bg-surface-raised p-5 px-5 py-4',
-  "[&_h3]:mt-0 [&_h3]:mb-2.5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-fg [&_h3]:font-['SF_Mono',Menlo,Consolas,monospace]",
-  '[&_.clients-row]:mb-3 [&_.clients-row]:grid [&_.clients-row]:grid-cols-[64px_1fr] [&_.clients-row]:gap-3',
-  '[&_.clients-row_.label]:pt-1 [&_.clients-row_.label]:text-[13px] [&_.clients-row_.label]:font-semibold [&_.clients-row_.label]:text-fg',
-  '[&_.chips]:flex [&_.chips]:flex-wrap [&_.chips]:items-center [&_.chips]:gap-x-3.5 [&_.chips]:gap-y-1.5',
-  '[&_.chip]:inline-flex [&_.chip]:items-center [&_.chip]:gap-1.5 [&_.chip]:text-[13px] [&_.chip]:text-fg',
-  '[&_.chip_.dot]:inline-block [&_.chip_.dot]:h-[9px] [&_.chip_.dot]:w-[9px] [&_.chip_.dot]:rounded-full',
-  '[&_.chip_.dot[data-support=no]]:bg-danger',
-  '[&_.chip_.dot[data-support=partial]]:bg-[#f5a524]',
-  '[&_.chip_.dot[data-support=yes]]:bg-success',
-  '[&_.chip_.ver]:inline-flex [&_.chip_.ver]:h-[18px] [&_.chip_.ver]:min-w-[18px] [&_.chip_.ver]:items-center [&_.chip_.ver]:justify-center',
-  '[&_.chip_.ver]:rounded [&_.chip_.ver]:bg-surface-hover [&_.chip_.ver]:px-[5px]',
-  "[&_.chip_.ver]:font-['SF_Mono',Menlo,Consolas,monospace] [&_.chip_.ver]:text-[11px] [&_.chip_.ver]:font-semibold [&_.chip_.ver]:text-fg",
-  '[&_.chip_.ver[data-noted=true]]:bg-accent [&_.chip_.ver[data-noted=true]]:text-fg',
-  '[&_.lines]:mb-2 [&_.lines]:text-[13px] [&_.lines]:text-fg-icon',
-  "[&_.lines_code]:font-['SF_Mono',Menlo,Consolas,monospace] [&_.lines_code]:text-accent",
-  '[&_.toggle]:mb-2 [&_.toggle]:inline-block [&_.toggle]:cursor-pointer [&_.toggle]:text-xs [&_.toggle]:text-accent',
-  '[&_.toggle:hover]:underline',
-  '[&_.notes]:mt-1 [&_.notes]:text-[13px] [&_.notes]:leading-[1.55] [&_.notes]:text-fg',
-  '[&_.notes_h4]:m-0 [&_.notes_h4]:mb-1.5 [&_.notes_h4]:text-[13px] [&_.notes_h4]:font-semibold',
-  '[&_.notes_ol]:m-0 [&_.notes_ol]:pl-[22px]',
-  '[&_.notes_li]:mb-1.5',
-  '[&_.reflink]:mt-3 [&_.reflink]:text-xs',
-  '[&_.reflink_a]:text-accent [&_.reflink_a]:no-underline',
-  '[&_.reflink_a:hover]:underline',
+// support dots colored by `data-support` and noted versions highlighted
+// by `data-noted` — both rendered as Tailwind data-attribute variants
+// on the element they describe.
+const htmlCheckIssueCss =
+  'mb-3 rounded-lg border border-border-base bg-surface-raised p-5 px-5 py-4'
+
+const htmlCheckIssueTitleCss = [
+  'mt-0 mb-2.5 text-base font-semibold text-fg',
+  "font-['SF_Mono',Menlo,Consolas,monospace]",
 ].join(' ')
+
+const htmlCheckClientsRowCss = 'mb-3 grid grid-cols-[64px_1fr] gap-3'
+
+const htmlCheckClientsLabelCss = 'pt-1 text-[13px] font-semibold text-fg'
+
+const htmlCheckChipsCss = 'flex flex-wrap items-center gap-x-3.5 gap-y-1.5'
+
+const htmlCheckChipCss = 'inline-flex items-center gap-1.5 text-[13px] text-fg'
+
+const htmlCheckDotCss = [
+  'inline-block h-[9px] w-[9px] rounded-full',
+  'data-[support=no]:bg-danger',
+  'data-[support=partial]:bg-[#f5a524]',
+  'data-[support=yes]:bg-success',
+].join(' ')
+
+const htmlCheckVerCss = [
+  'inline-flex h-[18px] min-w-[18px] items-center justify-center',
+  'rounded bg-surface-hover px-[5px]',
+  "font-['SF_Mono',Menlo,Consolas,monospace] text-[11px] font-semibold text-fg",
+  'data-[noted=true]:bg-accent data-[noted=true]:text-fg',
+].join(' ')
+
+const htmlCheckLinesCss = 'mb-2 text-[13px] text-fg-icon'
+
+const htmlCheckLinesCodeCss =
+  "font-['SF_Mono',Menlo,Consolas,monospace] text-accent"
+
+const htmlCheckToggleCss = [
+  'mb-2 inline-block cursor-pointer text-xs text-accent',
+  'hover:underline',
+].join(' ')
+
+const htmlCheckNotesCss = 'mt-1 text-[13px] leading-[1.55] text-fg'
+const htmlCheckNotesHeadingCss = 'm-0 mb-1.5 text-[13px] font-semibold'
+const htmlCheckNotesListCss = 'm-0 pl-[22px]'
+const htmlCheckNotesItemCss = 'mb-1.5'
+
+const htmlCheckReflinkCss = 'mt-3 text-xs'
+const htmlCheckReflinkLinkCss = 'text-accent no-underline hover:underline'
 
 const htmlCheckEmpty = [
   'rounded-lg border border-border-base bg-surface-raised p-6',
@@ -422,9 +516,9 @@ function MarketSupportDonut({
           )
         })}
       </svg>
-      <div className="center">
-        <span className="pct">{supported.toFixed(1)}%</span>
-        <span className="label">Market support</span>
+      <div className={donutCenterCss}>
+        <span className={donutPctCss}>{supported.toFixed(1)}%</span>
+        <span className={donutLabelCss}>Market support</span>
       </div>
     </div>
   )
@@ -449,13 +543,13 @@ function ClientChips({
   const affected = [...(versions?.no ?? []), ...(versions?.partial ?? [])]
   const noteSet = new Set((notes ?? []).map((n) => String(n)))
   return (
-    <span className="chip" key={`${family}-${platform}`}>
-      <span className="dot" data-support={support} />
+    <span className={htmlCheckChipCss} key={`${family}-${platform}`}>
+      <span className={htmlCheckDotCss} data-support={support} />
       {name}
       {affected.map((v) => (
         <span
           key={v}
-          className="ver"
+          className={htmlCheckVerCss}
           data-noted={noteSet.has(v) || undefined}
         >
           {v}
@@ -570,11 +664,12 @@ function HtmlCheck({
           no={market.no}
         />
         <div>
-          <div className={filterStrip}>
+          <div className={filterStripCss}>
             {(['desktop', 'mobile', 'web'] as const).map((cat) => (
-              <label key={cat}>
+              <label key={cat} className={filterStripLabelCss}>
                 <input
                   type="checkbox"
+                  className={filterStripCheckboxCss}
                   checked={enabledCategories[cat]}
                   onChange={(e) =>
                     setEnabledCategories({
@@ -584,11 +679,13 @@ function HtmlCheck({
                   }
                 />
                 <span className="capitalize">{cat}</span>{' '}
-                <span className="count">({totalsByCategory[cat]})</span>
+                <span className={filterStripCountCss}>
+                  ({totalsByCategory[cat]})
+                </span>
               </label>
             ))}
           </div>
-          <div className={familyTable}>
+          <div className={familyTableCss}>
             {report.families.map((f) => {
               const stats = familyStats[f.family] ?? {
                 supported: 100,
@@ -616,11 +713,11 @@ function HtmlCheck({
                 setEnabledFamilies(next)
               }
               return (
-                <div key={f.family} className="row">
-                  <label className="name">
+                <div key={f.family} className={familyRowCss}>
+                  <label className={familyNameCss}>
                     <input
                       type="checkbox"
-                      className="checkbox"
+                      className={familyCheckboxCss}
                       checked={enabledFamilies[f.family] ?? true}
                       onChange={(e) =>
                         setEnabledFamilies({
@@ -631,18 +728,14 @@ function HtmlCheck({
                     />
                     {f.label}
                   </label>
-                  <span className="pct" data-kind="supported">
+                  <span className={familyPctSupportedCss}>
                     {stats.supported}%
                   </span>
-                  <span className="pct" data-kind="partial">
-                    {stats.partial}%
-                  </span>
-                  <span className="pct" data-kind="no">
-                    {stats.no}%
-                  </span>
+                  <span className={familyPctPartialCss}>{stats.partial}%</span>
+                  <span className={familyPctNoCss}>{stats.no}%</span>
                   <button
                     type="button"
-                    className="only"
+                    className={familyOnlyCss}
                     data-active={isSoleEnabled || undefined}
                     onClick={onClickAction}
                   >
@@ -674,22 +767,22 @@ function HtmlCheck({
         )
         return (
           <section key={idx} className={htmlCheckIssueCss}>
-            <h3>{issue.rule_name}</h3>
+            <h3 className={htmlCheckIssueTitleCss}>{issue.rule_name}</h3>
 
-            <div className="clients-row">
-              <div className="label">Clients:</div>
-              <div className="chips">
+            <div className={htmlCheckClientsRowCss}>
+              <div className={htmlCheckClientsLabelCss}>Clients:</div>
+              <div className={htmlCheckChipsCss}>
                 {issue.clients.map((c) => (
                   <ClientChips key={`${c.family}-${c.platform}`} {...c} />
                 ))}
               </div>
             </div>
 
-            <div className="lines">
+            <div className={htmlCheckLinesCss}>
               Found on lines:{' '}
               {visibleLines.map((l, i) => (
                 <span key={l}>
-                  <code>{l}</code>
+                  <code className={htmlCheckLinesCodeCss}>{l}</code>
                   {i < visibleLines.length - 1 ? ', ' : ''}
                 </span>
               ))}
@@ -697,7 +790,7 @@ function HtmlCheck({
             {issue.error_lines.length > lineLimit && (
               <button
                 type="button"
-                className="toggle"
+                className={htmlCheckToggleCss}
                 onClick={() =>
                   setShowAllLines({ ...showAllLines, [idx]: !showAll })
                 }
@@ -709,20 +802,27 @@ function HtmlCheck({
             )}
 
             {noteEntries.length > 0 && (
-              <div className="notes">
-                <h4>Notes:</h4>
-                <ol>
+              <div className={htmlCheckNotesCss}>
+                <h4 className={htmlCheckNotesHeadingCss}>Notes:</h4>
+                <ol className={htmlCheckNotesListCss}>
                   {noteEntries.map(([n, text]) => (
-                    <li key={n}>{text}</li>
+                    <li key={n} className={htmlCheckNotesItemCss}>
+                      {text}
+                    </li>
                   ))}
                 </ol>
               </div>
             )}
 
             {issue.url && (
-              <div className="reflink">
+              <div className={htmlCheckReflinkCss}>
                 See full reference on{' '}
-                <a href={issue.url} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={issue.url}
+                  className={htmlCheckReflinkLinkCss}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   caniemail.com
                 </a>
               </div>
@@ -749,29 +849,33 @@ function TechInfo({ msg, headers }: { msg: Message; headers: HeadersMap }) {
   return (
     <>
       <section className={techSection}>
-        <h3 className={techHeading}>
+        <h3 className={techHeadingCss}>
           SMTP Transaction Info
-          <HelpIcon className="q" size={14} title="What is this?" />
+          <HelpIcon
+            className={techHelpIconCss}
+            size={14}
+            title="What is this?"
+          />
         </h3>
         <p className={techBlurb}>
           This information is sent with the SMTP transaction itself and is not
           included in the email headers or body. It can be crucial for SMTP
           debugging but can't be found in common email tools.
         </p>
-        <table className={techTable}>
+        <table className={techTableCss}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Value</th>
-              <th />
+              <th className={techTableHeadCss}>Name</th>
+              <th className={techTableHeadCss}>Value</th>
+              <th className={techTableHeadCss} />
             </tr>
           </thead>
-          <tbody>
+          <tbody className={techTableBodyCss}>
             {smtpRows.map(([k, v], i) => (
-              <tr key={`${k}-${i}`}>
-                <td className="name">{k}</td>
-                <td className="val">{v}</td>
-                <td className="copy">
+              <tr key={`${k}-${i}`} className={techTableRowCss}>
+                <td className={techTableNameCellCss}>{k}</td>
+                <td className={techTableValCellCss}>{v}</td>
+                <td className={techTableCopyCellCss}>
                   <CopyButton text={v} />
                 </td>
               </tr>
@@ -781,36 +885,43 @@ function TechInfo({ msg, headers }: { msg: Message; headers: HeadersMap }) {
       </section>
 
       <section className={techSection}>
-        <h3 className={techHeading}>
+        <h3 className={techHeadingCss}>
           Email Headers
-          <HelpIcon className="q" size={14} title="What is this?" />
+          <HelpIcon
+            className={techHelpIconCss}
+            size={14}
+            title="What is this?"
+          />
         </h3>
         <p className={techBlurb}>
           Original values of the headers. When sending a real email, headers
           can be altered by an email service provider or a mail transfer
           agent.
         </p>
-        <table className={techTable}>
+        <table className={techTableCss}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Value</th>
-              <th />
+              <th className={techTableHeadCss}>Name</th>
+              <th className={techTableHeadCss}>Value</th>
+              <th className={techTableHeadCss} />
             </tr>
           </thead>
-          <tbody>
+          <tbody className={techTableBodyCss}>
             {headerRows.length === 0 && (
               <tr>
-                <td colSpan={3} className="text-fg-muted">
+                <td
+                  colSpan={3}
+                  className={`${techTableCellCss} text-fg-muted`}
+                >
                   (no headers)
                 </td>
               </tr>
             )}
             {headerRows.map(([k, v], i) => (
-              <tr key={`${k}-${i}`}>
-                <td className="name">{k}</td>
-                <td className="val">{v}</td>
-                <td className="copy">
+              <tr key={`${k}-${i}`} className={techTableRowCss}>
+                <td className={techTableNameCellCss}>{k}</td>
+                <td className={techTableValCellCss}>{v}</td>
+                <td className={techTableCopyCellCss}>
                   <CopyButton text={v} />
                 </td>
               </tr>
@@ -818,8 +929,8 @@ function TechInfo({ msg, headers }: { msg: Message; headers: HeadersMap }) {
           </tbody>
         </table>
         {!hasBcc && headerRows.length > 0 && (
-          <div className={infoRow}>
-            <SuccessFilledIcon className="check" size={14} />
+          <div className={infoRowCss}>
+            <SuccessFilledIcon className="text-success" size={14} />
             There is no Bcc information in this email message
           </div>
         )}
@@ -1036,9 +1147,9 @@ export default function MessageView() {
 
   return (
     <section className={wrap}>
-      <header className={header}>
-        <h2>{msg.subject || '(no subject)'}</h2>
-        <div className="actions">
+      <header className={headerCss}>
+        <h2 className={headerSubjectCss}>{msg.subject || '(no subject)'}</h2>
+        <div className={headerActionsCss}>
           {mode === 'default' && (
             <>
               <IconButton
@@ -1080,7 +1191,7 @@ export default function MessageView() {
             </>
           )}
           {mode === 'delete' && (
-            <div className={inlineBar}>
+            <div className={inlineBarCss}>
               <span>Delete this email?</span>
               <button
                 className={pillBtn}
@@ -1104,7 +1215,7 @@ export default function MessageView() {
           )}
           {mode === 'forward' && (
             <form
-              className={inlineBar}
+              className={inlineBarCss}
               onSubmit={(e) => {
                 e.preventDefault()
                 onSendForward()
@@ -1115,6 +1226,7 @@ export default function MessageView() {
                 required
                 autoFocus
                 placeholder="Forward to email"
+                className={inlineBarInputCss}
                 value={forwardEmail}
                 onChange={(e) => setForwardEmail(e.target.value)}
                 disabled={busy}
@@ -1142,38 +1254,32 @@ export default function MessageView() {
             </form>
           )}
         </div>
-        <div className="meta">
-          <div>
-            <span className="label">From:</span>
-            <span className="val">{formatAddr(msg.from)}</span>
-          </div>
-          <div>
-            <span className="label">To:</span>
-            <span className="val">
-              {msg.to.map((a) => formatAddr(a)).join(', ')}
-            </span>
-          </div>
+        <div className={headerMetaCss}>
+          <MetaRow label="From">{formatAddr(msg.from)}</MetaRow>
+          <MetaRow label="To">
+            {msg.to.map((a) => formatAddr(a)).join(', ')}
+          </MetaRow>
           {msg.cc.length > 0 && (
-            <div>
-              <span className="label">Cc:</span>
-              <span className="val">
-                {msg.cc.map((a) => formatAddr(a)).join(', ')}
-              </span>
-            </div>
+            <MetaRow label="Cc">
+              {msg.cc.map((a) => formatAddr(a)).join(', ')}
+            </MetaRow>
           )}
         </div>
-        <div className="timesize">
+        <div className={headerTimesizeCss}>
           <div>
             {formatDate(msg.date)}, {formatSize(msg.size)}
           </div>
           {msg.tags[0] && (
-            <div className="category" title={`Category: ${msg.tags[0]}`}>
+            <div
+              className={headerCategoryCss}
+              title={`Category: ${msg.tags[0]}`}
+            >
               {msg.tags[0]}
             </div>
           )}
         </div>
         <button
-          className="headersLink"
+          className={headerHeadersLinkCss}
           type="button"
           onClick={() => setActiveTab('tech')}
         >
@@ -1182,11 +1288,12 @@ export default function MessageView() {
       </header>
 
       {actionError && (
-        <div className={errorStrip} role="alert">
-          <span>{actionError}</span>
+        <div className={errorStripCss} role="alert">
+          <span className={errorStripTextCss}>{actionError}</span>
           <button
             type="button"
             aria-label="Dismiss"
+            className={errorStripDismissCss}
             onClick={() => setActionError(null)}
           >
             <CloseIcon size={10} />
@@ -1195,12 +1302,13 @@ export default function MessageView() {
       )}
 
       {actionSuccess && (
-        <div className={successStrip} role="status">
+        <div className={successStripCss} role="status">
           <SuccessFilledIcon size={14} />
-          <span>{actionSuccess}</span>
+          <span className={successStripTextCss}>{actionSuccess}</span>
           <button
             type="button"
             aria-label="Dismiss"
+            className={successStripDismissCss}
             onClick={() => setActionSuccess(null)}
           >
             <CloseIcon size={10} />
@@ -1293,9 +1401,10 @@ export default function MessageView() {
                 <ExternalLinkIcon size={14} />
               </IconButton>
             </div>
-            <div className={iframeFrame} data-device={device}>
+            <div className={iframeFrameWrapCss}>
               <div
-                className="frame"
+                className={iframeFrameCss}
+                data-device={device}
                 style={{
                   width: DEVICE_SIZE[device].width,
                   height: DEVICE_SIZE[device].height,
