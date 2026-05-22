@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
-import { ExternalLinkIcon } from './icons'
-import { IconButton } from './IconButton'
-import { codeBlockBase } from '../lib/styles'
+import { ExternalLinkIcon } from '../ui/icons'
+import { IconButton } from '../ui/IconButton'
+import { codeBlockBase } from '../../lib/styles'
 
 // Plain-text + raw bodies. Min-height tracks the desktop iframe so short
 // payloads still fill the viewport.

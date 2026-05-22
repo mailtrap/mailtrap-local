@@ -10,10 +10,7 @@ import {
   dialogTitle,
   field,
   fieldHint,
-  fieldInput,
   fieldLabel,
-  fieldSelect,
-  lockedInput,
   overlay,
 } from './dialogStyles'
 import { LockedFieldHint } from './LockedFieldHint'
@@ -188,6 +185,3 @@ export function DialogButton({
   )
 }
 
-// Re-export the per-element classes the dialogs still need to apply
-// directly (input, select, lockedInput composition).
-export { fieldInput, fieldSelect, lockedInput }

@@ -1,5 +1,5 @@
 import { Highlight, themes } from 'prism-react-renderer'
-import { codeBlockBase } from '../lib/styles'
+import { codeBlockBase } from '../../lib/styles'
 
 const wrapper = `${codeBlockBase} m-0 bg-black/25 p-0 leading-[1.55]`
 

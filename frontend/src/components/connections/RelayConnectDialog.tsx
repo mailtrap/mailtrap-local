@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useRelayConnection } from '../hooks/useRelayConnection'
-import { Toggle } from './Toggle'
-import { extractApiError } from '../api/client'
-import { testRelayConnection } from '../api/relay'
-import type { RelayConfigKey, RelayConnection } from '../api/relay'
+import { useRelayConnection } from '../../hooks/useRelayConnection'
+import { Toggle } from '../ui/Toggle'
+import { extractApiError } from '../../api/client'
+import { testRelayConnection } from '../../api/relay'
+import type { RelayConfigKey, RelayConnection } from '../../api/relay'
 import { LockedFieldHint } from './LockedFieldHint'
 import {
   ConnectionDialogShell,
@@ -12,9 +12,6 @@ import {
   DialogConfigBanner,
   DialogField,
   DialogStatusRow,
-  fieldInput,
-  fieldSelect,
-  lockedInput,
   type DialogStatus,
 } from './dialogAtoms'
 import {
@@ -23,6 +20,7 @@ import {
   toggleDesc,
   toggleRow,
 } from './dialogStyles'
+import { lockedFields } from './lockedFields'
 
 interface Props {
   open: boolean
@@ -81,7 +79,8 @@ export default function RelayConnectDialog({ open, onOpenChange }: Props) {
 function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   const { state, update, disconnect } = useRelayConnection()
   const isConfigured = state?.connected === true
-  const lockedKeys: Record<RelayConfigKey, boolean> = state?.locked ?? {
+  const { isLocked, allLocked, anyLocked, inputClass, selectClass } =
+    lockedFields<RelayConfigKey>(state?.locked, {
     host: false,
     port: false,
     username: false,
@@ -91,14 +90,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
     auto_relay_enabled: false,
     override_from: false,
     return_path: false,
-  }
-  const isLocked = (k: RelayConfigKey) => Boolean(lockedKeys[k])
-  const allLocked = (Object.keys(lockedKeys) as RelayConfigKey[]).every(
-    (k) => lockedKeys[k],
-  )
-  const anyLocked = (Object.keys(lockedKeys) as RelayConfigKey[]).some(
-    (k) => lockedKeys[k],
-  )
+  })
 
   const [host, setHost] = useState(state?.host ?? '')
   const [port, setPort] = useState(state?.port ? String(state.port) : '587')
@@ -204,7 +196,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
       await disconnect()
       onOpenChange(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(extractApiError(e))
     } finally {
       setBusy(false)
     }
@@ -238,7 +230,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             disabled={busy || isLocked('host')}
             readOnly={isLocked('host')}
             className={
-              isLocked('host') ? `${fieldInput} ${lockedInput}` : fieldInput
+              inputClass('host')
             }
           />
         </DialogField>
@@ -258,7 +250,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             disabled={busy || isLocked('port')}
             readOnly={isLocked('port')}
             className={
-              isLocked('port') ? `${fieldInput} ${lockedInput}` : fieldInput
+              inputClass('port')
             }
           />
         </DialogField>
@@ -280,7 +272,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           disabled={busy || isLocked('username')}
           readOnly={isLocked('username')}
           className={
-            isLocked('username') ? `${fieldInput} ${lockedInput}` : fieldInput
+            inputClass('username')
           }
         />
       </DialogField>
@@ -307,7 +299,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           disabled={busy || isLocked('password')}
           readOnly={isLocked('password')}
           className={
-            isLocked('password') ? `${fieldInput} ${lockedInput}` : fieldInput
+            inputClass('password')
           }
         />
       </DialogField>
@@ -325,7 +317,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             onChange={(e) => setTls(e.target.value as RelayConnection['tls'])}
             disabled={busy || isLocked('tls')}
             className={
-              isLocked('tls') ? `${fieldSelect} ${lockedInput}` : fieldSelect
+              selectClass('tls')
             }
           >
             {TLS_OPTIONS.map((o) => (
@@ -347,7 +339,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
             onChange={(e) => setAuth(e.target.value as RelayConnection['auth'])}
             disabled={busy || isLocked('auth')}
             className={
-              isLocked('auth') ? `${fieldSelect} ${lockedInput}` : fieldSelect
+              selectClass('auth')
             }
           >
             {AUTH_OPTIONS.map((o) => (
@@ -411,11 +403,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
               onChange={(e) => setOverrideFrom(e.target.value)}
               disabled={busy || isLocked('override_from')}
               readOnly={isLocked('override_from')}
-              className={
-                isLocked('override_from')
-                  ? `${fieldInput} ${lockedInput}`
-                  : fieldInput
-              }
+              className={inputClass('override_from')}
             />
           </DialogField>
 
@@ -440,11 +428,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
               onChange={(e) => setReturnPath(e.target.value)}
               disabled={busy || isLocked('return_path')}
               readOnly={isLocked('return_path')}
-              className={
-                isLocked('return_path')
-                  ? `${fieldInput} ${lockedInput}`
-                  : fieldInput
-              }
+              className={inputClass('return_path')}
             />
           </DialogField>
         </div>

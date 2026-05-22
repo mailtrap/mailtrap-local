@@ -7,11 +7,11 @@ import {
   ReloadIcon,
   RelayIcon,
   SearchIcon,
-} from './icons'
-import { IconButton } from './IconButton'
-import { inputBase } from '../lib/styles'
-import type { CloudConnection } from '../api/cloud'
-import type { RelayConnection } from '../api/relay'
+} from '../ui/icons'
+import { IconButton } from '../ui/IconButton'
+import { inputBase } from '../../lib/styles'
+import type { CloudConnection } from '../../api/cloud'
+import type { RelayConnection } from '../../api/relay'
 
 // data-on drives the colour: green if connected, muted if not.
 const statusBadge = [

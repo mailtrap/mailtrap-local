@@ -1,19 +1,19 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { IconButton } from './IconButton'
-import { Button } from './Button'
-import { inputBase } from '../lib/styles'
+import { IconButton } from '../ui/IconButton'
+import { Button } from '../ui/Button'
+import { inputBase } from '../../lib/styles'
 import {
   CloudUploadIcon,
   DeleteIcon,
   DownloadIcon,
   ForwardIcon,
   SuccessFilledIcon,
-} from './icons'
-import { formatAddr, formatDate, formatSize } from '../lib/messageFormatters'
-import type { Message } from '../api/messages'
-import type { CloudConnection } from '../api/cloud'
-import type { RelayConnection } from '../api/relay'
-import CategoryBadge from './CategoryBadge'
+} from '../ui/icons'
+import { formatAddr, formatDate, formatSize } from '../../lib/messageFormatters'
+import type { Message } from '../../api/messages'
+import type { CloudConnection } from '../../api/cloud'
+import type { RelayConnection } from '../../api/relay'
+import CategoryBadge from '../ui/CategoryBadge'
 
 // 2-col / 3-row grid:
 //   row 1: subject  |  actions

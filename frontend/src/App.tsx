@@ -1,10 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
-import Sidebar from './components/Sidebar'
+import Sidebar from './components/sidebar/Sidebar'
 import Sandbox from './pages/Sandbox'
 import MessageView from './pages/MessageView'
-import { CloudConnectionProvider } from './hooks/useCloudConnection'
-import { RelayConnectionProvider } from './hooks/useRelayConnection'
-import { WebhookConnectionProvider } from './hooks/useWebhookConnection'
+import { ConnectionProviders } from './hooks/ConnectionProviders'
 import { useUnreadFaviconBadge } from './hooks/useUnreadFaviconBadge'
 import { useResizableSidebar } from './hooks/useResizableSidebar'
 
@@ -30,31 +28,27 @@ export default function App() {
   const { width, dragging, onPointerDown } = useResizableSidebar()
 
   return (
-    <CloudConnectionProvider>
-      <RelayConnectionProvider>
-        <WebhookConnectionProvider>
-          <div
-            className={shell}
-            style={{ gridTemplateColumns: `${width}px 4px 1fr` }}
-          >
-            <Sidebar />
-            <div
-              className={resizer}
-              data-dragging={dragging}
-              onPointerDown={onPointerDown}
-              role="separator"
-              aria-orientation="vertical"
-              aria-label="Resize sidebar"
-            />
-            <main className={main}>
-              <Routes>
-                <Route path="/" element={<Sandbox />} />
-                <Route path="/message/:id" element={<MessageView />} />
-              </Routes>
-            </main>
-          </div>
-        </WebhookConnectionProvider>
-      </RelayConnectionProvider>
-    </CloudConnectionProvider>
+    <ConnectionProviders>
+      <div
+        className={shell}
+        style={{ gridTemplateColumns: `${width}px 4px 1fr` }}
+      >
+        <Sidebar />
+        <div
+          className={resizer}
+          data-dragging={dragging}
+          onPointerDown={onPointerDown}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+        />
+        <main className={main}>
+          <Routes>
+            <Route path="/" element={<Sandbox />} />
+            <Route path="/message/:id" element={<MessageView />} />
+          </Routes>
+        </main>
+      </div>
+    </ConnectionProviders>
   )
 }

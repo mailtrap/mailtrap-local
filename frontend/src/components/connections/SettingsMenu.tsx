@@ -6,8 +6,8 @@ import {
   HelpIcon,
   InfoIcon,
   ExternalLinkIcon,
-} from './icons'
-import { IconButton } from './IconButton'
+} from '../ui/icons'
+import { IconButton } from '../ui/IconButton'
 import WebhookConnectDialog from './WebhookConnectDialog'
 import AboutDialog from './AboutDialog'
 

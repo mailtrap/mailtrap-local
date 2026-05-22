@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderWithProviders } from '../test/render'
+import { renderWithProviders } from '../../test/render'
 
 // ---------------------------------------------------------------------
 // Per-API mocks. vi.mock is hoisted above imports, so the spy objects
@@ -42,16 +42,16 @@ const { cloud, relay, webhook } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('../api/cloud', async () => ({
-  ...(await vi.importActual<typeof import('../api/cloud')>('../api/cloud')),
+vi.mock('../../api/cloud', async () => ({
+  ...(await vi.importActual<typeof import('../../api/cloud')>('../../api/cloud')),
   ...cloud,
 }))
-vi.mock('../api/relay', async () => ({
-  ...(await vi.importActual<typeof import('../api/relay')>('../api/relay')),
+vi.mock('../../api/relay', async () => ({
+  ...(await vi.importActual<typeof import('../../api/relay')>('../../api/relay')),
   ...relay,
 }))
-vi.mock('../api/webhook', async () => ({
-  ...(await vi.importActual<typeof import('../api/webhook')>('../api/webhook')),
+vi.mock('../../api/webhook', async () => ({
+  ...(await vi.importActual<typeof import('../../api/webhook')>('../../api/webhook')),
   ...webhook,
 }))
 

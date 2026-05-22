@@ -38,7 +38,6 @@ export function useResizableSidebar() {
     }
     const onUp = () => {
       setDragging(false)
-      try { localStorage.setItem(STORAGE_KEY, String(startWidthRef.current)) } catch { /* ignore */ }
     }
     // Capture so we keep tracking even if the cursor leaves the handle
     window.addEventListener('pointermove', onMove)
@@ -57,8 +56,9 @@ export function useResizableSidebar() {
     }
   }, [dragging])
 
-  // Persist the latest width whenever a drag ends — startWidthRef captured the
-  // pre-drag value, so save the live width here too in case of unexpected exits.
+  // Persist the latest width when a drag ends (dragging flips to false).
+  // We don't save inside the pointer-move handler so the disk write happens
+  // once per drag instead of once per mouse-move tick.
   useEffect(() => {
     if (dragging) return
     try { localStorage.setItem(STORAGE_KEY, String(width)) } catch { /* ignore */ }

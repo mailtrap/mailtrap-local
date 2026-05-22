@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useCloudConnection } from '../hooks/useCloudConnection'
-import { parseSandboxId } from '../api/cloud'
-import type { CloudConfigKey } from '../api/cloud'
-import { ExternalLinkIcon } from './icons'
-import { Toggle } from './Toggle'
-import { extractApiError } from '../api/client'
+import { useCloudConnection } from '../../hooks/useCloudConnection'
+import { parseSandboxId } from '../../api/cloud'
+import type { CloudConfigKey } from '../../api/cloud'
+import { ExternalLinkIcon } from '../ui/icons'
+import { Toggle } from '../ui/Toggle'
+import { extractApiError } from '../../api/client'
 import { LockedFieldHint } from './LockedFieldHint'
 import {
   ConnectionDialogShell,
@@ -12,8 +12,6 @@ import {
   DialogButton,
   DialogConfigBanner,
   DialogField,
-  fieldInput,
-  lockedInput,
 } from './dialogAtoms'
 import {
   errorBox,
@@ -22,6 +20,7 @@ import {
   toggleDesc,
   toggleRow,
 } from './dialogStyles'
+import { lockedFields } from './lockedFields'
 
 interface Props {
   open: boolean
@@ -44,18 +43,13 @@ export default function CloudConnectDialog({ open, onOpenChange }: Props) {
 function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   const { state, update, disconnect } = useCloudConnection()
   const isConnected = state?.connected === true
-  const lockedKeys: Record<CloudConfigKey, boolean> = state?.locked ?? {
+  const { isLocked, allLocked, anyLocked, inputClass } = lockedFields<
+    CloudConfigKey
+  >(state?.locked, {
     api_token: false,
     sandbox_id: false,
     mirror_enabled: false,
-  }
-  const isLocked = (k: CloudConfigKey) => Boolean(lockedKeys[k])
-  const allLocked = (Object.keys(lockedKeys) as CloudConfigKey[]).every(
-    (k) => lockedKeys[k],
-  )
-  const anyLocked = (Object.keys(lockedKeys) as CloudConfigKey[]).some(
-    (k) => lockedKeys[k],
-  )
+  })
 
   const [apiToken, setApiToken] = useState('')
   const [sandboxInput, setSandboxInput] = useState(
@@ -99,7 +93,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
       await disconnect()
       onOpenChange(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(extractApiError(e))
     } finally {
       setBusy(false)
     }
@@ -156,7 +150,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           disabled={busy || isLocked('api_token')}
           readOnly={isLocked('api_token')}
           className={
-            isLocked('api_token') ? `${fieldInput} ${lockedInput}` : fieldInput
+            inputClass('api_token')
           }
         />
       </DialogField>
@@ -182,7 +176,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           disabled={busy || isLocked('sandbox_id')}
           readOnly={isLocked('sandbox_id')}
           className={
-            isLocked('sandbox_id') ? `${fieldInput} ${lockedInput}` : fieldInput
+            inputClass('sandbox_id')
           }
         />
         {!isLocked('sandbox_id') &&

@@ -12,7 +12,7 @@
  * anonymous descendant class hooks.
  */
 
-import { inputBase } from '../lib/styles'
+import { inputBase } from '../../lib/styles'
 
 export const overlay = 'fixed inset-0 z-50 bg-black/60'
 

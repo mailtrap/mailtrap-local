@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useCloudConnection } from '../hooks/useCloudConnection'
-import { useRelayConnection } from '../hooks/useRelayConnection'
-import { useWebhookConnection } from '../hooks/useWebhookConnection'
+import { useCloudConnection } from '../../hooks/useCloudConnection'
+import { useRelayConnection } from '../../hooks/useRelayConnection'
+import { useWebhookConnection } from '../../hooks/useWebhookConnection'
 
 const bannerCss = [
   'mx-3 mt-3 mb-2 flex items-center gap-2',

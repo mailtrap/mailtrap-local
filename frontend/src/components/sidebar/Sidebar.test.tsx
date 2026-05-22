@@ -16,9 +16,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, waitFor, within, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderWithProviders } from '../test/render'
-import { makeSummary } from '../test/fixtures'
-import type { CableMessage } from '../lib/cable'
+import { renderWithProviders } from '../../test/render'
+import { makeSummary } from '../../test/fixtures'
+import type { CableMessage } from '../../lib/cable'
 
 // ---------------------------------------------------------------------
 // Mocks. The Sidebar reaches for:
@@ -32,8 +32,8 @@ const searchMessages = vi.fn()
 const deleteAllMessages = vi.fn()
 const markAllRead = vi.fn()
 
-vi.mock('../api/messages', async () => {
-  const actual = await vi.importActual<typeof import('../api/messages')>(
+vi.mock('../../api/messages', async () => {
+  const actual = await vi.importActual<typeof import('../../api/messages')>(
     '../api/messages',
   )
   return {
@@ -47,21 +47,21 @@ vi.mock('../api/messages', async () => {
 
 // Connection providers ping the API on mount. Stub the three readers
 // with empty/defaults so the providers settle without network errors.
-vi.mock('../api/cloud', async () => ({
-  ...(await vi.importActual<typeof import('../api/cloud')>('../api/cloud')),
+vi.mock('../../api/cloud', async () => ({
+  ...(await vi.importActual<typeof import('../../api/cloud')>('../../api/cloud')),
   getCloudConnection: vi.fn().mockResolvedValue({ connected: false }),
   updateCloudConnection: vi.fn(),
   disconnectCloud: vi.fn(),
 }))
-vi.mock('../api/relay', async () => ({
-  ...(await vi.importActual<typeof import('../api/relay')>('../api/relay')),
+vi.mock('../../api/relay', async () => ({
+  ...(await vi.importActual<typeof import('../../api/relay')>('../../api/relay')),
   getRelayConnection: vi.fn().mockResolvedValue({ connected: false }),
   updateRelayConnection: vi.fn(),
   disconnectRelay: vi.fn(),
   testRelayConnection: vi.fn(),
 }))
-vi.mock('../api/webhook', async () => ({
-  ...(await vi.importActual<typeof import('../api/webhook')>('../api/webhook')),
+vi.mock('../../api/webhook', async () => ({
+  ...(await vi.importActual<typeof import('../../api/webhook')>('../../api/webhook')),
   getWebhookConnection: vi.fn().mockResolvedValue({ connected: false }),
   updateWebhookConnection: vi.fn(),
   disconnectWebhook: vi.fn(),
@@ -70,7 +70,7 @@ vi.mock('../api/webhook', async () => ({
 
 // cable: capture the subscriber so tests can drive live updates.
 let cableSub: ((msg: CableMessage) => void) | null = null
-vi.mock('../lib/cable', () => {
+vi.mock('../../lib/cable', () => {
   return {
     subscribe: (cb: (msg: CableMessage) => void) => {
       cableSub = cb

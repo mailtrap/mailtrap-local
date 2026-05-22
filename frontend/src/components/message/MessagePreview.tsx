@@ -4,9 +4,9 @@ import {
   ExternalLinkIcon,
   MobileIcon,
   TabletIcon,
-} from './icons'
-import { IconButton } from './IconButton'
-import { openInNewTab } from '../lib/openInNewTab'
+} from '../ui/icons'
+import { IconButton } from '../ui/IconButton'
+import { openInNewTab } from '../../lib/openInNewTab'
 
 type Device = 'mobile' | 'tablet' | 'desktop'
 

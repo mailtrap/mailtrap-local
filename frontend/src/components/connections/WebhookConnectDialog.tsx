@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
-import { useWebhookConnection } from '../hooks/useWebhookConnection'
-import { Toggle } from './Toggle'
-import { extractApiError } from '../api/client'
-import { testWebhookConnection } from '../api/webhook'
-import type { WebhookConfigKey } from '../api/webhook'
+import { useWebhookConnection } from '../../hooks/useWebhookConnection'
+import { Toggle } from '../ui/Toggle'
+import { extractApiError } from '../../api/client'
+import { testWebhookConnection } from '../../api/webhook'
+import type { WebhookConfigKey } from '../../api/webhook'
 import {
   ConnectionDialogShell,
   DialogActions,
@@ -11,12 +11,11 @@ import {
   DialogConfigBanner,
   DialogField,
   DialogStatusRow,
-  fieldInput,
-  lockedInput,
   type DialogStatus,
 } from './dialogAtoms'
 import { LockedFieldHint } from './LockedFieldHint'
 import { errorBox, toggleDesc, toggleRow } from './dialogStyles'
+import { lockedFields } from './lockedFields'
 
 interface Props {
   open: boolean
@@ -39,18 +38,13 @@ export default function WebhookConnectDialog({ open, onOpenChange }: Props) {
 function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   const { state, update, disconnect } = useWebhookConnection()
   const isConfigured = state?.connected === true
-  const lockedKeys: Record<WebhookConfigKey, boolean> = state?.locked ?? {
+  const { isLocked, allLocked, anyLocked, inputClass } = lockedFields<
+    WebhookConfigKey
+  >(state?.locked, {
     url: false,
     secret: false,
     enabled: false,
-  }
-  const isLocked = (k: WebhookConfigKey) => Boolean(lockedKeys[k])
-  const allLocked = (Object.keys(lockedKeys) as WebhookConfigKey[]).every(
-    (k) => lockedKeys[k],
-  )
-  const anyLocked = (Object.keys(lockedKeys) as WebhookConfigKey[]).some(
-    (k) => lockedKeys[k],
-  )
+  })
 
   const [url, setUrl] = useState(state?.url ?? '')
   const [secret, setSecret] = useState('') // never echo
@@ -115,7 +109,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
       await disconnect()
       onOpenChange(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(extractApiError(e))
     } finally {
       setBusy(false)
     }
@@ -143,7 +137,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           disabled={busy || isLocked('url')}
           readOnly={isLocked('url')}
           className={
-            isLocked('url') ? `${fieldInput} ${lockedInput}` : fieldInput
+            inputClass('url')
           }
         />
       </DialogField>
@@ -177,7 +171,7 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
           disabled={busy || isLocked('secret')}
           readOnly={isLocked('secret')}
           className={
-            isLocked('secret') ? `${fieldInput} ${lockedInput}` : fieldInput
+            inputClass('secret')
           }
         />
       </DialogField>

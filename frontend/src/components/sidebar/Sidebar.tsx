@@ -1,26 +1,26 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useMatch, useNavigate } from 'react-router-dom'
-import mailtrapLogo from '../assets/mailtrap-logo.svg'
+import mailtrapLogo from '../../assets/mailtrap-logo.svg'
 import {
   deleteAllMessages,
   getMessages,
   markAllRead,
   searchMessages,
   type MessageSummary,
-} from '../api/messages'
-import CloudConnectDialog from './CloudConnectDialog'
+} from '../../api/messages'
+import CloudConnectDialog from '../connections/CloudConnectDialog'
 import { ConnectionErrorBanner } from './ConnectionErrorBanner'
-import RelayConnectDialog from './RelayConnectDialog'
-import SettingsMenu from './SettingsMenu'
-import { useCloudConnection } from '../hooks/useCloudConnection'
-import { useRelayConnection } from '../hooks/useRelayConnection'
-import { useWebhookConnection } from '../hooks/useWebhookConnection'
-import { useMessagesChannel } from '../hooks/useMessagesChannel'
-import { Strip } from './Strip'
+import RelayConnectDialog from '../connections/RelayConnectDialog'
+import SettingsMenu from '../connections/SettingsMenu'
+import { useCloudConnection } from '../../hooks/useCloudConnection'
+import { useRelayConnection } from '../../hooks/useRelayConnection'
+import { useWebhookConnection } from '../../hooks/useWebhookConnection'
+import { useMessagesChannel } from '../../hooks/useMessagesChannel'
+import { Strip } from '../ui/Strip'
 import SidebarToolbar from './SidebarToolbar'
 import MessageList from './MessageList'
 import DeleteAllPrompt from './DeleteAllPrompt'
-import { extractApiError, isAbortError } from '../api/client'
+import { extractApiError, isAbortError } from '../../api/client'
 
 export default function Sidebar() {
   const navigate = useNavigate()
