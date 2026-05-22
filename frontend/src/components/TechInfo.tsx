@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { HelpIcon, SuccessFilledIcon } from './icons'
 import type { HeadersMap, Message } from '../api/messages'
-
-const techSection =
-  'mb-4 rounded-lg border border-border-base bg-surface-raised px-6 py-5'
+import Panel from './Panel'
 
 // Two-column key/value table with zebra striping. Same shell wherever
 // it's used; per-cell classes live alongside the cell elements below.
@@ -97,7 +95,7 @@ export default function TechInfo({
 
   return (
     <>
-      <section className={techSection}>
+      <Panel className="mb-4 px-6 py-5">
         <h3 className={techHeadingCss}>
           SMTP Transaction Info
           <HelpIcon
@@ -131,9 +129,9 @@ export default function TechInfo({
             ))}
           </tbody>
         </table>
-      </section>
+      </Panel>
 
-      <section className={techSection}>
+      <Panel className="mb-4 px-6 py-5">
         <h3 className={techHeadingCss}>
           Email Headers
           <HelpIcon
@@ -183,7 +181,7 @@ export default function TechInfo({
             There is no Bcc information in this email message
           </div>
         )}
-      </section>
+      </Panel>
     </>
   )
 }

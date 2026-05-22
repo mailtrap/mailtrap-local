@@ -9,6 +9,7 @@ import {
   SearchIcon,
 } from './icons'
 import { IconButton } from './IconButton'
+import { inputBase } from '../lib/styles'
 import type { CloudConnection } from '../api/cloud'
 import type { RelayConnection } from '../api/relay'
 
@@ -28,9 +29,8 @@ const searchWrap = [
 ].join(' ')
 
 const searchInput = [
-  'w-full rounded-[7px] border border-border-base bg-surface-base',
-  'py-1.5 pl-2.5 pr-8 text-sm text-fg outline-none',
-  'placeholder:text-fg-muted focus:border-accent',
+  inputBase,
+  'w-full py-1.5 pl-2.5 pr-8 text-sm',
   'group-data-[expanded=true]:pr-9',
 ].join(' ')
 

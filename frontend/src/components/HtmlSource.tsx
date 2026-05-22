@@ -1,10 +1,7 @@
 import { Highlight, themes } from 'prism-react-renderer'
+import { codeBlockBase } from '../lib/styles'
 
-const wrapper = [
-  'm-0 rounded-[7px] border border-border-base bg-black/25 p-0',
-  'font-mono text-xs leading-[1.55]',
-  'min-h-[max(500px,calc(100vh-260px))] [box-sizing:border-box]',
-].join(' ')
+const wrapper = `${codeBlockBase} m-0 bg-black/25 p-0 leading-[1.55]`
 
 const lineNumber = [
   'select-none px-2.5 pr-3 text-right text-[#4d5a6a]',

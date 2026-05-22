@@ -1,5 +1,4 @@
-const btnBase =
-  'cursor-pointer rounded-md border border-transparent px-3 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50'
+import { Button } from './Button'
 
 export default function DeleteAllPrompt({
   count,
@@ -17,22 +16,12 @@ export default function DeleteAllPrompt({
       <span className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
         Delete all {count} messages?
       </span>
-      <button
-        type="button"
-        className={`${btnBase} border-danger text-danger hover:bg-danger-soft`}
-        onClick={onConfirm}
-        disabled={busy}
-      >
+      <Button variant="danger-text" size="sm" onClick={onConfirm} disabled={busy}>
         Confirm
-      </button>
-      <button
-        type="button"
-        className={`${btnBase} border-accent text-accent hover:bg-accent-soft`}
-        onClick={onCancel}
-        disabled={busy}
-      >
+      </Button>
+      <Button variant="outline" size="sm" onClick={onCancel} disabled={busy}>
         Cancel
-      </button>
+      </Button>
     </div>
   )
 }

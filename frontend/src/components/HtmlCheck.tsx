@@ -10,6 +10,7 @@ import {
   clientPassesFilters,
 } from '../lib/htmlCheckStats'
 import { EmptyCard } from './EmptyCard'
+import Panel from './Panel'
 
 const htmlCheckTop = [
   'mb-4 grid grid-cols-[auto_1fr] items-center gap-7',
@@ -66,12 +67,10 @@ const filterStripCheckboxCss = '[accent-color:var(--color-accent)]'
 
 const filterStripCountCss = 'text-fg-icon'
 
-// Per-rule issue card. The chip rows visualize per-client support, with
-// support dots colored by `data-support` and noted versions highlighted
-// by `data-noted` — both rendered as Tailwind data-attribute variants
-// on the element they describe.
-const htmlCheckIssueCss =
-  'mb-3 rounded-lg border border-border-base bg-surface-raised p-5 px-5 py-4'
+// Per-rule issue card lives inside a <Panel>. The chip rows visualize
+// per-client support, with support dots colored by `data-support` and
+// noted versions highlighted by `data-noted` — both rendered as Tailwind
+// data-attribute variants on the element they describe.
 
 const htmlCheckIssueTitleCss = [
   'mt-0 mb-2.5 text-base font-semibold text-fg',
@@ -424,7 +423,7 @@ export default function HtmlCheck({
           ([a], [b]) => Number(a) - Number(b),
         )
         return (
-          <section key={idx} className={htmlCheckIssueCss}>
+          <Panel key={idx} className="mb-3 p-5">
             <h3 className={htmlCheckIssueTitleCss}>{issue.rule_name}</h3>
 
             <div className={htmlCheckClientsRowCss}>
@@ -485,7 +484,7 @@ export default function HtmlCheck({
                 </a>
               </div>
             )}
-          </section>
+          </Panel>
         )
       })}
     </>

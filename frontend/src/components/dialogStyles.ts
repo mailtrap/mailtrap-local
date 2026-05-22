@@ -12,6 +12,8 @@
  * anonymous descendant class hooks.
  */
 
+import { inputBase } from '../lib/styles'
+
 export const overlay = 'fixed inset-0 z-50 bg-black/60'
 
 // Dialog shell — positioning + chrome only. Title/lead get their own
@@ -39,19 +41,14 @@ export const fieldHint = 'text-xs leading-[1.5] text-fg-muted'
 
 export const fieldHintLink = 'text-accent no-underline hover:underline'
 
-export const fieldInput = [
-  'rounded-[7px] border border-border-base bg-surface-base',
-  'px-3 py-2 text-[13px] text-fg outline-none',
-  'placeholder:text-fg-muted focus:border-accent',
-].join(' ')
+export const fieldInput = `${inputBase} px-3 py-2 text-[13px]`
 
 // Select reuses the input shell + dialog-select-chevron (from
 // index.css) for the inline drop-down arrow.
 export const fieldSelect = [
-  'rounded-[7px] border border-border-base bg-surface-base',
-  'px-3 py-2 pr-8 text-[13px] text-fg outline-none',
+  inputBase,
+  'px-3 py-2 pr-8 text-[13px]',
   'appearance-none cursor-pointer dialog-select-chevron',
-  'focus:border-accent',
 ].join(' ')
 
 export const fieldRow = 'grid grid-cols-[2fr_1fr] gap-2.5'

@@ -1,15 +1,11 @@
 import { type ReactNode } from 'react'
 import { ExternalLinkIcon } from './icons'
 import { IconButton } from './IconButton'
+import { codeBlockBase } from '../lib/styles'
 
 // Plain-text + raw bodies. Min-height tracks the desktop iframe so short
 // payloads still fill the viewport.
-const preStyle = [
-  'rounded-[7px] border border-border-base bg-black/20 p-3 text-fg',
-  'font-mono text-xs leading-[1.5]',
-  'whitespace-pre-wrap break-words',
-  'min-h-[max(500px,calc(100vh-260px))] [box-sizing:border-box]',
-].join(' ')
+const preStyle = `${codeBlockBase} bg-black/20 p-3 text-fg leading-[1.5] whitespace-pre-wrap break-words`
 
 interface Props {
   content: string

@@ -44,16 +44,24 @@ export default function MessageView() {
   const [enabledFamilies, setEnabledFamilies] = useState<
     Record<string, boolean>
   >({})
-  // Initialize family filters from the report once it lands.
-  useEffect(() => {
-    if (htmlCheck?.status === 'success') {
-      const init: Record<string, boolean> = {}
-      htmlCheck.families.forEach((f) => {
-        init[f.family] = true
-      })
-      setEnabledFamilies(init)
-    }
-  }, [htmlCheck])
+  // Initialize family filters from the report once it lands. Tracked via a
+  // seed so we only reset on a new report — user toggles after that stick.
+  // Done during render (not in an effect) per React docs' "adjusting state
+  // during render" pattern.
+  const [familiesSeed, setFamiliesSeed] = useState<HtmlCheckReport | null>(
+    null,
+  )
+  if (
+    htmlCheck?.status === 'success' &&
+    htmlCheck !== familiesSeed
+  ) {
+    setFamiliesSeed(htmlCheck)
+    const init: Record<string, boolean> = {}
+    htmlCheck.families.forEach((f) => {
+      init[f.family] = true
+    })
+    setEnabledFamilies(init)
+  }
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string | undefined>(undefined)
   const [busy, setBusy] = useState(false)
@@ -63,8 +71,12 @@ export default function MessageView() {
   const { state: cloudState } = useCloudConnection()
   const { state: relayState } = useRelayConnection()
 
-  useEffect(() => {
-    if (!id) return
+  // Reset per-message state during render when `id` changes (React docs'
+  // "adjusting state when a prop changes" pattern — avoids the effect
+  // cascade we'd get from setState-inside-useEffect).
+  const [lastId, setLastId] = useState(id)
+  if (id !== lastId) {
+    setLastId(id)
     setMsg(null)
     setError(null)
     setActiveTab(undefined)
@@ -73,7 +85,10 @@ export default function MessageView() {
     setActionSuccess(null)
     setHtmlCheck(null)
     setHtmlCheckErr(null)
+  }
 
+  useEffect(() => {
+    if (!id) return
     // Cancellable fetch: if the user clicks a different message before
     // these resolve, the cleanup aborts the in-flight requests so a stale
     // response can't overwrite the new message's state.

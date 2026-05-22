@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { IconButton } from './IconButton'
+import { Button } from './Button'
+import { inputBase } from '../lib/styles'
 import {
   CloudUploadIcon,
   DeleteIcon,
@@ -39,23 +41,7 @@ const showHeadersLink =
 
 const inlineBar = 'flex items-center gap-2.5 text-[13px] text-fg'
 
-const inlineBarInput = [
-  'min-w-[220px] rounded-[7px] border border-border-base bg-surface-base',
-  'px-3 py-[7px] text-[13px] text-fg outline-none',
-  'placeholder:text-fg-muted focus:border-accent',
-].join(' ')
-
-const pillBtn = [
-  'inline-flex cursor-pointer items-center justify-center rounded-[7px] border border-transparent',
-  'px-4 py-1.5 text-[13px] font-semibold',
-  'data-[variant=primary]:bg-accent data-[variant=primary]:text-fg',
-  'data-[variant=primary]:hover:bg-accent-hover',
-  'data-[variant=danger-text]:border-danger data-[variant=danger-text]:text-danger',
-  'data-[variant=danger-text]:hover:bg-danger-soft',
-  'data-[variant=outline]:border-accent data-[variant=outline]:text-accent',
-  'data-[variant=outline]:hover:bg-accent-soft',
-  'disabled:cursor-not-allowed disabled:opacity-50',
-].join(' ')
+const inlineBarInput = `${inputBase} min-w-[220px] px-3 py-[7px] text-[13px]`
 
 function MetaRow({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -195,24 +181,20 @@ export default function MessageHeader({
         {mode === 'delete' && (
           <div className={inlineBar}>
             <span>Delete this email?</span>
-            <button
-              className={pillBtn}
-              data-variant="danger-text"
-              type="button"
+            <Button
+              variant="danger-text"
               onClick={onConfirmDelete}
               disabled={busy}
             >
               Confirm
-            </button>
-            <button
-              className={pillBtn}
-              data-variant="outline"
-              type="button"
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setMode('default')}
               disabled={busy}
             >
               Cancel
-            </button>
+            </Button>
           </div>
         )}
         {mode === 'forward' && (
@@ -233,18 +215,15 @@ export default function MessageHeader({
               onChange={(e) => setForwardEmail(e.target.value)}
               disabled={busy}
             />
-            <button
-              className={pillBtn}
-              data-variant="primary"
+            <Button
+              variant="primary"
               type="submit"
               disabled={busy || !forwardEmail.trim()}
             >
               Send
-            </button>
-            <button
-              className={pillBtn}
-              data-variant="outline"
-              type="button"
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => {
                 setMode('default')
                 setForwardEmail('')
@@ -252,7 +231,7 @@ export default function MessageHeader({
               disabled={busy}
             >
               Cancel
-            </button>
+            </Button>
           </form>
         )}
       </div>

@@ -85,17 +85,21 @@ export default function Sidebar() {
   })
 
   // Server marks a message read on GET /api/v1/message/:id. Mirror that
-  // locally so the row updates immediately without a refetch.
-  useEffect(() => {
-    if (!activeId) return
-    setMessages((prev) =>
-      prev
-        ? prev.map((m) =>
-            m.id === activeId && !m.read ? { ...m, read: true } : m,
-          )
-        : prev,
-    )
-  }, [activeId])
+  // locally so the row updates immediately without a refetch. Done during
+  // render via the "adjusting state when a prop changes" pattern.
+  const [lastActiveId, setLastActiveId] = useState(activeId)
+  if (activeId !== lastActiveId) {
+    setLastActiveId(activeId)
+    if (activeId) {
+      setMessages((prev) =>
+        prev
+          ? prev.map((m) =>
+              m.id === activeId && !m.read ? { ...m, read: true } : m,
+            )
+          : prev,
+      )
+    }
+  }
 
   const onCleanAllClick = () => {
     if (!messages || messages.length === 0) return
@@ -129,17 +133,27 @@ export default function Sidebar() {
     }
   }
 
+  // Sync the spinner + clear stale results during render when the query
+  // changes. The actual API call still runs in an effect (it's a true side
+  // effect with cleanup), but the immediate UI state changes go here.
+  const [lastQuery, setLastQuery] = useState(query)
+  if (query !== lastQuery) {
+    setLastQuery(query)
+    const trimmed = query.trim()
+    if (trimmed.length === 0) {
+      setSearchResults(null)
+      setSearching(false)
+    } else {
+      setSearching(true)
+    }
+  }
+
   // Debounced server-side search. While search is active we do NOT merge
   // channel creates/destroys into searchResults — re-running the server
   // search on every inbound message would cause flicker.
   useEffect(() => {
     const trimmed = query.trim()
-    if (trimmed.length === 0) {
-      setSearchResults(null)
-      setSearching(false)
-      return
-    }
-    setSearching(true)
+    if (trimmed.length === 0) return
     const controller = new AbortController()
     const handle = setTimeout(() => {
       searchMessages({ query: trimmed, limit: 100 }, controller.signal)
