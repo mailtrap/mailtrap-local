@@ -32,6 +32,7 @@
   --color-danger: #ff5757;
   --color-danger-soft: rgba(255, 87, 87, 0.08);
   --color-danger-border: rgba(255, 87, 87, 0.3);
+  --color-warning: #f5a524;
 
   /* Type scale + family — Inter is the system-fonts-with-Inter-fallback default */
   --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;

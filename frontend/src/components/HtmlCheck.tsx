@@ -9,6 +9,7 @@ import {
   filteredMarketShareInfo,
   clientPassesFilters,
 } from '../lib/htmlCheckStats'
+import { EmptyCard } from './EmptyCard'
 
 const htmlCheckTop = [
   'mb-4 grid grid-cols-[auto_1fr] items-center gap-7',
@@ -46,7 +47,7 @@ const familyPctBaseCss = 'text-right font-bold'
 
 const familyPctSupportedCss = `${familyPctBaseCss} text-success`
 
-const familyPctPartialCss = `${familyPctBaseCss} invisible text-[#f5a524] group-hover:visible`
+const familyPctPartialCss = `${familyPctBaseCss} invisible text-warning group-hover:visible`
 
 const familyPctNoCss = `${familyPctBaseCss} invisible text-danger group-hover:visible`
 
@@ -88,7 +89,7 @@ const htmlCheckChipCss = 'inline-flex items-center gap-1.5 text-[13px] text-fg'
 const htmlCheckDotCss = [
   'inline-block h-[9px] w-[9px] rounded-full',
   'data-[support=no]:bg-danger',
-  'data-[support=partial]:bg-[#f5a524]',
+  'data-[support=partial]:bg-warning',
   'data-[support=yes]:bg-success',
 ].join(' ')
 
@@ -116,11 +117,6 @@ const htmlCheckNotesItemCss = 'mb-1.5'
 const htmlCheckReflinkCss = 'mt-3 text-xs'
 const htmlCheckReflinkLinkCss = 'text-accent no-underline hover:underline'
 
-const htmlCheckEmpty = [
-  'rounded-lg border border-border-base bg-surface-raised p-6',
-  'text-center text-[13px] text-fg-icon',
-].join(' ')
-
 /**
  * Multi-segment donut: green for supported, orange for partial, red for no.
  * Each segment is a separate <circle> rotated to start where the previous
@@ -143,7 +139,7 @@ function MarketSupportDonut({
   // theme change picks them up.
   const segs: Array<[number, string]> = [
     [supported, 'var(--color-success)'],
-    [partial, '#f5a524'],
+    [partial, 'var(--color-warning)'],
     [no, 'var(--color-danger)'],
   ]
   let elapsedPct = 0
@@ -254,29 +250,27 @@ export default function HtmlCheck({
   } = filters
 
   if (!hasHtml) {
-    return <div className={htmlCheckEmpty}>This message has no HTML body.</div>
+    return <EmptyCard>This message has no HTML body.</EmptyCard>
   }
   if (err) {
-    return (
-      <div className={htmlCheckEmpty}>Couldn't run HTML Check: {err}</div>
-    )
+    return <EmptyCard>Couldn't run HTML Check: {err}</EmptyCard>
   }
   if (!report) {
-    return <div className={htmlCheckEmpty}>Analyzing…</div>
+    return <EmptyCard>Analyzing…</EmptyCard>
   }
   if (report.status === 'no_html') {
-    return <div className={htmlCheckEmpty}>This message has no HTML body.</div>
+    return <EmptyCard>This message has no HTML body.</EmptyCard>
   }
   if (report.status === 'size_limit_exceeded') {
     const mb = (report.limit / 1024 / 1024).toFixed(0)
     return (
-      <div className={htmlCheckEmpty}>
+      <EmptyCard>
         HTML body is larger than {mb}MB — analysis skipped.
-      </div>
+      </EmptyCard>
     )
   }
   if (report.status === 'error') {
-    return <div className={htmlCheckEmpty}>{report.msg}</div>
+    return <EmptyCard>{report.msg}</EmptyCard>
   }
 
   const enabledCats = (
@@ -413,10 +407,10 @@ export default function HtmlCheck({
       </div>
 
       {visibleIssues.length === 0 && (
-        <div className={htmlCheckEmpty}>
+        <EmptyCard>
           No issues for the current filters. Tick more clients above to widen
           the check.
-        </div>
+        </EmptyCard>
       )}
 
       {visibleIssues.map((issue, idx) => {
