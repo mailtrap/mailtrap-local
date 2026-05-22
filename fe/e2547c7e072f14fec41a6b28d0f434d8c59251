@@ -1,0 +1,93 @@
+frontend/src/components/connections/dialogStyles.ts
+  s_8269b0b2ffe5b9::t_2273c507b033e6 15
+frontend/src/components/sidebar/SidebarToolbar.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 10-14
+frontend/src/components/message/CodePane.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 2-4
+frontend/src/components/connections/WebhookConnectDialog.tsx
+  s_8269b0b2ffe5b9::t_4af085f43beef0 112
+  s_8269b0b2ffe5b9::t_09d99660fbb601 140,174
+  s_8269b0b2ffe5b9::t_2273c507b033e6 2-6
+  s_8269b0b2ffe5b9::t_4c5ce120f7ae35 18
+  s_8269b0b2ffe5b9::t_707bc6ec1622e2 41-43,47
+frontend/src/components/sidebar/ConnectionErrorBanner.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 2-4
+.claude/skills/frontend-code-style/SKILL.md
+  s_8269b0b2ffe5b9::t_135bf4b022d6b5 1-195
+frontend/src/components/sidebar/MessageList.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 2-3
+frontend/src/components/sidebar/DeleteAllPrompt.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 1
+frontend/src/components/connections/lockedFields.ts
+  s_8269b0b2ffe5b9::t_f28abcd5328f77 31-32
+  s_8269b0b2ffe5b9::t_0dac3549d2773a 1
+  s_8269b0b2ffe5b9::t_2bda88c8701b57 2-30,33-34
+frontend/src/components/sidebar/Sidebar.test.tsx
+  s_8269b0b2ffe5b9::t_586fbbc304facf 35-36,50,56,63,73
+  s_8269b0b2ffe5b9::t_2273c507b033e6 19-21
+  s_8269b0b2ffe5b9::t_e6786886f5d1fe 51,57,64
+frontend/src/components/connections/CloudConnectDialog.test.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 17
+  s_8269b0b2ffe5b9::t_586fbbc304facf 45,49,53
+  s_8269b0b2ffe5b9::t_e6786886f5d1fe 46,50,54
+frontend/src/components/sidebar/Sidebar.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 3,10-11,13-19,23
+frontend/src/components/message/TechInfo.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 2-4
+frontend/src/hooks/ConnectionProviders.tsx
+  s_8269b0b2ffe5b9::t_7706c8df77b2f7 1-21
+frontend/src/components/message/HtmlCheck/index.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 6
+  s_8269b0b2ffe5b9::t_28dd3521742fd7 4-5
+frontend/src/components/message/MessageHeader.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 2-4,11-16
+frontend/src/components/connections/CloudConnectDialog.tsx
+  s_8269b0b2ffe5b9::t_59a9fca098ae45 96
+  s_8269b0b2ffe5b9::t_9952614ee1ecb1 46-48,52
+  s_8269b0b2ffe5b9::t_5609d0aabf226e 179
+  s_8269b0b2ffe5b9::t_2273c507b033e6 2-7
+  s_8269b0b2ffe5b9::t_58d5a45534c80d 153
+  s_8269b0b2ffe5b9::t_2db027a38ba173 23
+frontend/src/components/message/MessagePreview.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 7-9
+frontend/src/components/connections/RelayConnectDialog.tsx
+  s_8269b0b2ffe5b9::t_72d82c0ff19986 23
+  s_8269b0b2ffe5b9::t_dd308c0d9d7c76 431
+  s_8269b0b2ffe5b9::t_ff5c3bfa2e7dfe 199
+  s_8269b0b2ffe5b9::t_b19efee6171df4 233,253,275,302
+  s_8269b0b2ffe5b9::t_202ec4c51510b4 82-83
+  s_8269b0b2ffe5b9::t_f52f18907a3998 93
+  s_8269b0b2ffe5b9::t_2273c507b033e6 2-6
+  s_8269b0b2ffe5b9::t_8c0c1293ff4d36 320,342
+  s_8269b0b2ffe5b9::t_e4bae505cba92d 406
+frontend/src/App.tsx
+  s_8269b0b2ffe5b9::t_207a39928f9b39 5
+  s_8269b0b2ffe5b9::t_7de54d5ff6b738 31-52
+frontend/src/hooks/useResizableSidebar.ts
+  s_8269b0b2ffe5b9::t_ecab777d6edf19 59-61
+frontend/src/components/message/HtmlSource.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 2
+frontend/src/components/message/HtmlCheck/IssueCard.tsx
+  s_8269b0b2ffe5b9::t_28dd3521742fd7 2
+  s_8269b0b2ffe5b9::t_2273c507b033e6 3
+frontend/src/components/connections/SettingsMenu.tsx
+  s_8269b0b2ffe5b9::t_2273c507b033e6 9-10
+frontend/src/components/message/HtmlCheck/HtmlCheckSummary.tsx
+  s_8269b0b2ffe5b9::t_28dd3521742fd7 4,8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "fee2547c7e072f14fec41a6b28d0f434d8c59251",
+  "prompts": {},
+  "sessions": {
+    "s_8269b0b2ffe5b9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84e81c80-4b2c-496c-af7c-9ad3aa1b5920",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
