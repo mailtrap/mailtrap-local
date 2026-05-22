@@ -1,0 +1,57 @@
+frontend/src/components/SidebarToolbar.tsx
+  s_8269b0b2ffe5b9::t_b84334f2f5b601 32-33
+  s_8269b0b2ffe5b9::t_60cd8fe12010c6 12
+frontend/src/components/DeleteAllPrompt.tsx
+  s_8269b0b2ffe5b9::t_74e14c8ef9c193 1,19,21-22,24
+frontend/src/components/EmptyCard.tsx
+  s_8269b0b2ffe5b9::t_de4922deedc45b 2,5,10,12
+frontend/src/components/HtmlSource.tsx
+  s_8269b0b2ffe5b9::t_997b6ff79fd8f5 2,4
+frontend/src/components/MessageHeader.tsx
+  s_8269b0b2ffe5b9::t_38d287c2c620be 3
+  s_8269b0b2ffe5b9::t_805edb06a57068 184-185,190-192,197,218-219,224-226,234
+  s_8269b0b2ffe5b9::t_5c4de21ab85000 4
+  s_8269b0b2ffe5b9::t_402c97e1d2e1af 44
+frontend/src/components/HtmlCheck.tsx
+  s_8269b0b2ffe5b9::t_3c4d4fa8246c8a 487
+  s_8269b0b2ffe5b9::t_2c342afa6059a1 13
+  s_8269b0b2ffe5b9::t_1775d2f9f4d901 70-73
+  s_8269b0b2ffe5b9::t_177752f32e6a76 426
+frontend/src/components/Button.tsx
+  s_8269b0b2ffe5b9::t_21ff261ab597cf 1-42
+frontend/src/components/Panel.tsx
+  s_8269b0b2ffe5b9::t_f4838893b7bcb8 1-21
+frontend/src/pages/MessageView.tsx
+  s_8269b0b2ffe5b9::t_2c13f0c7812b6e 74-79,88,90-91
+  s_8269b0b2ffe5b9::t_3ae3527617df91 47-64
+frontend/src/components/TechInfo.tsx
+  s_8269b0b2ffe5b9::t_69bec8095b25db 98,134
+  s_8269b0b2ffe5b9::t_fc36a548f22e11 4
+  s_8269b0b2ffe5b9::t_7c5a895d3ba075 132,184
+frontend/src/components/dialogStyles.ts
+  s_8269b0b2ffe5b9::t_283afbb7793251 15-16
+  s_8269b0b2ffe5b9::t_9794ffb7d7ab8f 44,49-50
+frontend/src/components/CodePane.tsx
+  s_8269b0b2ffe5b9::t_4fdc78958dc43c 4,8
+frontend/src/components/Sidebar.tsx
+  s_8269b0b2ffe5b9::t_901d35321c7276 88-102
+  s_8269b0b2ffe5b9::t_71b190f6d1bf81 136-141,146-147,149-156
+frontend/src/lib/styles.ts
+  s_8269b0b2ffe5b9::t_2f030eba9070a2 1-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "e9489608980a80e2545cbd58c43c523833e41e10",
+  "prompts": {},
+  "sessions": {
+    "s_8269b0b2ffe5b9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84e81c80-4b2c-496c-af7c-9ad3aa1b5920",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
