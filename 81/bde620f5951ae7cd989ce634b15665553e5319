@@ -1,0 +1,65 @@
+frontend/src/components/MessageHeader.tsx
+  s_8269b0b2ffe5b9::t_f085d029b729ca 274
+  s_8269b0b2ffe5b9::t_c1ca18875e3a47 1-13,15-273,275-285
+  s_8269b0b2ffe5b9::t_1cf30cf6a483ae 14
+frontend/src/components/EmptyCard.tsx
+  s_8269b0b2ffe5b9::t_de4c6791637a37 1-13
+frontend/src/components/MessageList.tsx
+  s_8269b0b2ffe5b9::t_08ee006ab400e8 66-70
+  s_8269b0b2ffe5b9::t_f68c71dbf83071 1-2,4-65,71-126
+  s_8269b0b2ffe5b9::t_fa7e4b38927f05 3
+frontend/src/components/DeleteAllPrompt.tsx
+  s_8269b0b2ffe5b9::t_1fa53ff50b7082 1-38
+frontend/src/components/CategoryBadge.tsx
+  s_8269b0b2ffe5b9::t_550becf57f5fe7 1-16,18-21,23-25,28-30
+  s_8269b0b2ffe5b9::t_95cec4a5cdcf45 17,22,26-27
+frontend/src/components/Sidebar.tsx
+  s_8269b0b2ffe5b9::t_fe8996de1d647c 1,20-22,27,30,32-33,45,60,67-68,82-83,87-88,132-134,161,163-173,178-183,197-205,208,211,215-219
+  s_8269b0b2ffe5b9::t_4de28fb3a5f98c 19
+  s_8269b0b2ffe5b9::t_692876cfb6caa8 187-194
+frontend/src/components/SidebarToolbar.tsx
+  s_8269b0b2ffe5b9::t_d69e6af43e9c0e 40
+  s_8269b0b2ffe5b9::t_df6ec9ca560787 12-13
+  s_8269b0b2ffe5b9::t_be3af428c1a4da 41
+  s_8269b0b2ffe5b9::t_3ed9ba2ccb5d79 1-11,14-39,42-143
+frontend/src/components/HtmlCheck.tsx
+  s_8269b0b2ffe5b9::t_622fcb6c87491b 253,256,259,262,269,273
+  s_8269b0b2ffe5b9::t_95a6415cee4279 12
+  s_8269b0b2ffe5b9::t_87355bd486b493 50
+  s_8269b0b2ffe5b9::t_2d6900cbb21402 92
+  s_8269b0b2ffe5b9::t_df26c95f34fd8c 267,410
+  s_8269b0b2ffe5b9::t_7f01621afe6309 413
+  s_8269b0b2ffe5b9::t_9c1d357efe9579 142
+frontend/src/components/CodePane.tsx
+  s_8269b0b2ffe5b9::t_1eca4d710e8739 1-44
+frontend/src/components/HtmlSource.tsx
+  s_8269b0b2ffe5b9::t_e67920451b6a01 1-48
+frontend/src/components/Strip.tsx
+  s_8269b0b2ffe5b9::t_15532d112518bc 1-84
+frontend/src/index.css
+  s_8269b0b2ffe5b9::t_d4c3e6afc0a938 35
+frontend/src/components/MessageTabs.tsx
+  s_8269b0b2ffe5b9::t_81244c6439cb66 1-60
+frontend/src/pages/MessageView.tsx
+  s_8269b0b2ffe5b9::t_afd686cd79bd6d 1,26-27,39-40,78-79,94,112,132,146,172-184,187-201,204-208,223,227-231,233-235,237-238,241,243,247,249,252-277,280,292,295,297-298
+  s_8269b0b2ffe5b9::t_35d38efa95a7ba 209-210,214-220
+  s_8269b0b2ffe5b9::t_b9cbc887baf214 25
+  s_8269b0b2ffe5b9::t_9175f755db21a1 23
+  s_8269b0b2ffe5b9::t_41d229e11d65e3 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "81bde620f5951ae7cd989ce634b15665553e5319",
+  "prompts": {},
+  "sessions": {
+    "s_8269b0b2ffe5b9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84e81c80-4b2c-496c-af7c-9ad3aa1b5920",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
