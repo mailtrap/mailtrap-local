@@ -1,0 +1,38 @@
+frontend/src/components/MessagePreview.tsx
+  s_8269b0b2ffe5b9::t_7ac054c27730c2 1-101
+frontend/src/index.css
+  s_8269b0b2ffe5b9::t_87a96103776bbf 38
+frontend/src/components/TechInfo.tsx
+  s_8269b0b2ffe5b9::t_7884b4132b7efd 1-189
+frontend/src/lib/messageFormatters.ts
+  s_8269b0b2ffe5b9::t_57964ed302b192 1-19
+frontend/src/pages/MessageView.tsx
+  s_8269b0b2ffe5b9::t_68d00c6e831c41 171,178
+  s_8269b0b2ffe5b9::t_8330cdd49c0d9a 656
+  s_8269b0b2ffe5b9::t_8afe94ac5d3ffe 35-36
+  s_8269b0b2ffe5b9::t_bc9161d6204abc 33
+  s_8269b0b2ffe5b9::t_bf309fc4107603 27,34
+  s_8269b0b2ffe5b9::t_f97ce15352ab4d 26
+frontend/src/lib/openInNewTab.ts
+  s_8269b0b2ffe5b9::t_1b102b5f8c49ba 1-10
+frontend/src/components/HtmlCheck.tsx
+  s_8269b0b2ffe5b9::t_31b7352703f716 1-499
+frontend/src/pages/Sandbox.tsx
+  s_8269b0b2ffe5b9::t_cdb7b591d1f239 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "c41c85c17d4212200b60e7ca78b77327a3405c54",
+  "prompts": {},
+  "sessions": {
+    "s_8269b0b2ffe5b9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84e81c80-4b2c-496c-af7c-9ad3aa1b5920",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
