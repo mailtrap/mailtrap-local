@@ -9,7 +9,7 @@ const emptyBrandImgCss = 'block h-9 w-auto'
 
 const emptyCodeCss = [
   'rounded bg-accent/10 text-accent px-2 py-1 text-[13px]',
-  "font-['SF_Mono',Menlo,Consolas,monospace]",
+  'font-mono',
 ].join(' ')
 
 const emptyHintCss = 'mx-auto mb-7 max-w-[520px] text-center leading-[1.7]'

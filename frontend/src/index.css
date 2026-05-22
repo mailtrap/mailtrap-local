@@ -35,6 +35,7 @@
 
   /* Type scale + family — Inter is the system-fonts-with-Inter-fallback default */
   --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'SF Mono', Menlo, Consolas, monospace;
 }
 
 * {

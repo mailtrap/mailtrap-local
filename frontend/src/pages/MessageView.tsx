@@ -5,13 +5,9 @@ import { Highlight, themes } from 'prism-react-renderer'
 import {
   DeleteIcon,
   ForwardIcon,
-  HelpIcon,
   SuccessFilledIcon,
   DownloadIcon,
   ExternalLinkIcon,
-  MobileIcon,
-  TabletIcon,
-  DesktopIcon,
   CloudUploadIcon,
   CloseIcon,
 } from '../components/icons'
@@ -22,24 +18,22 @@ import {
   getHtmlCheck,
   deleteMessage,
   rawMessageUrl,
-  type Address,
   type ClientCategory,
   type HeadersMap,
-  type HtmlCheckClient,
   type HtmlCheckReport,
   type Message,
 } from '../api/messages'
-import {
-  filteredFamilySupportStats,
-  filteredMarketShareInfo,
-  clientPassesFilters,
-  noSupportIssueCount,
-} from '../lib/htmlCheckStats'
+import { formatAddr, formatDate, formatSize } from '../lib/messageFormatters'
+import { noSupportIssueCount } from '../lib/htmlCheckStats'
 import { sendMessageToCloud } from '../api/cloud'
 import { releaseMessage } from '../api/relay'
 import { useCloudConnection } from '../hooks/useCloudConnection'
 import { useRelayConnection } from '../hooks/useRelayConnection'
 import { IconButton } from '../components/IconButton'
+import TechInfo from '../components/TechInfo'
+import HtmlCheck from '../components/HtmlCheck'
+import MessagePreview from '../components/MessagePreview'
+import { openInNewTab } from '../lib/openInNewTab'
 import { extractApiError, isAbortError } from '../api/client'
 
 const wrap = 'm-0'
@@ -150,23 +144,7 @@ const pillBtn = [
   'disabled:cursor-not-allowed disabled:opacity-50',
 ].join(' ')
 
-const deviceBar = 'relative flex justify-center gap-1 pt-2 pb-3'
-
 const previewWrap = 'relative'
-
-// Device-frame chrome around the HTML preview iframe. The frame
-// reads its own `data-device` so device-driven styling lives on the
-// element it actually styles.
-const iframeFrameWrapCss = 'flex justify-center'
-
-const iframeFrameCss = [
-  'inline-block [box-sizing:content-box]',
-  'rounded-none border-2 border-transparent bg-transparent p-0',
-  'transition-[width,height,padding,border-radius,border-color,background-color] duration-[250ms] ease-out',
-  // Mobile + tablet share the accent border + base background.
-  'data-[device=mobile]:rounded-[32px] data-[device=mobile]:border-accent data-[device=mobile]:bg-surface-base data-[device=mobile]:px-2.5 data-[device=mobile]:py-3.5',
-  'data-[device=tablet]:rounded-[18px] data-[device=tablet]:border-accent data-[device=tablet]:bg-surface-base data-[device=tablet]:p-3.5',
-].join(' ')
 
 const tabList = 'mt-4 flex gap-[18px] border-b border-border-base p-0'
 
@@ -186,21 +164,18 @@ const tabTrigger = [
 
 const tabContent = 'pt-4'
 
-const iframeCss =
-  'block h-full w-full rounded-[7px] border border-border-base bg-white'
-
 // Plain-text + raw bodies. Match the desktop iframe min-height so short
 // payloads still fill the viewport.
 const preCss = [
   'rounded-[7px] border border-border-base bg-black/20 p-3 text-fg',
-  "font-['SF_Mono',Menlo,Consolas,monospace] text-xs leading-[1.5]",
+  'font-mono text-xs leading-[1.5]',
   'whitespace-pre-wrap break-words',
   'min-h-[max(500px,calc(100vh-260px))] [box-sizing:border-box]',
 ].join(' ')
 
 const codeViewerCss = [
   'm-0 rounded-[7px] border border-border-base bg-black/25 p-0',
-  "font-['SF_Mono',Menlo,Consolas,monospace] text-xs leading-[1.55]",
+  'font-mono text-xs leading-[1.55]',
   'min-h-[max(500px,calc(100vh-260px))] [box-sizing:border-box]',
 ].join(' ')
 
@@ -212,82 +187,6 @@ const codeViewerLineNumCss = [
 ].join(' ')
 
 const codeViewerCodeCss = 'px-3.5 whitespace-pre-wrap break-words'
-
-const techSection =
-  'mb-4 rounded-lg border border-border-base bg-surface-raised px-6 py-5'
-
-// Two-column key/value table with zebra striping. Same shell wherever
-// it's used; per-cell classes live alongside the cell elements below.
-const techTableCss = [
-  'w-full text-[13px] [border-collapse:separate] [border-spacing:0]',
-  'overflow-hidden rounded-lg border border-border-base',
-].join(' ')
-
-const techTableCellCss =
-  'p-3 px-4 text-left align-middle border-b border-border-base'
-
-const techTableHeadCss = [
-  techTableCellCss,
-  'bg-surface-base text-[13px] font-bold text-fg',
-].join(' ')
-
-// The one legitimate descendant rule: removing the bottom border on the
-// last row's cells. `:last-child` is structural and can only be detected
-// in CSS, so a narrow `[&>tr:last-child>td]:` on the <tbody> is right —
-// it's not a selector-hook, it's a position-driven rule.
-const techTableBodyCss = '[&>tr:last-child>td]:border-b-0'
-
-// Zebra striping via Tailwind's native `even:` variant on each <tr>.
-const techTableRowCss = 'bg-surface-raised even:bg-surface-base'
-
-const techTableNameCellCss = [
-  techTableCellCss,
-  'w-[180px] whitespace-nowrap text-fg',
-].join(' ')
-
-const techTableValCellCss = [techTableCellCss, 'text-fg break-all'].join(' ')
-
-const techTableCopyCellCss = [
-  techTableCellCss,
-  'w-[72px] text-right',
-].join(' ')
-
-const techHeadingCss =
-  'mb-1.5 m-0 inline-flex items-center gap-1.5 text-[15px] font-semibold text-fg'
-
-// HelpIcon next to tech-section headings — muted color + help cursor.
-const techHelpIconCss = 'cursor-help text-fg-muted'
-
-const techBlurb = 'mb-3.5 m-0 text-[13px] leading-[1.6] text-fg'
-
-const copyBtn = [
-  'inline-flex cursor-pointer items-center justify-center rounded-md border border-accent',
-  'px-3 py-[3px] text-xs font-medium text-accent',
-  'hover:bg-accent/10',
-].join(' ')
-
-const infoRowCss = [
-  'flex items-center justify-center gap-1.5 border-b border-border-base',
-  'px-3 py-2.5 text-[13px] text-fg',
-].join(' ')
-
-function formatAddr(a: Address | undefined): string {
-  if (!a) return ''
-  return a.name ? `${a.name} <${a.address}>` : `<${a.address}>`
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
-
-function formatDate(iso: string): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return iso
-  return d.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC')
-}
 
 function HtmlSource({ code }: { code: string }) {
   return (
@@ -325,639 +224,8 @@ function HtmlSource({ code }: { code: string }) {
   )
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-  const onClick = async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1200)
-    } catch {
-      // clipboard unavailable; swallow
-    }
-  }
-  return (
-    <button className={copyBtn} type="button" onClick={onClick}>
-      {copied ? '✓' : 'Copy'}
-    </button>
-  )
-}
-
-/* ─── HTML Check (rule-engine results) ───────────────────────────────── */
-
-const htmlCheckTop = [
-  'mb-4 grid grid-cols-[auto_1fr] items-center gap-7',
-  'rounded-none bg-surface-base px-6 pt-5 pb-6',
-].join(' ')
-
-const donutCss = 'relative h-[180px] w-[180px]'
-
-const donutCenterCss = [
-  'pointer-events-none absolute inset-0',
-  'flex flex-col items-center justify-center',
-].join(' ')
-
-const donutPctCss = 'text-[30px] font-bold leading-none text-success'
-
-const donutLabelCss =
-  'mt-1.5 text-[10px] font-bold tracking-[0.18em] text-fg uppercase'
-
-// Per-family support breakdown table. Hover reveals the partial/no
-// percentages and the Only/All toggle — implemented via `group` on the
-// row + `group-hover:visible` on the revealable children.
-const familyTableCss = 'flex max-w-[520px] flex-col text-[13px]'
-
-const familyRowCss = [
-  'group grid grid-cols-[160px_56px_56px_56px_64px] items-center',
-  'gap-x-3.5 rounded-md px-1 py-2',
-  'hover:bg-surface-base',
-].join(' ')
-
-const familyNameCss = 'inline-flex items-center gap-2.5 text-fg'
-
-const familyCheckboxCss = 'h-3.5 w-3.5 [accent-color:var(--color-accent)]'
-
-const familyPctBaseCss = 'text-right font-bold'
-
-const familyPctSupportedCss = `${familyPctBaseCss} text-success`
-
-const familyPctPartialCss = `${familyPctBaseCss} invisible text-[#f5a524] group-hover:visible`
-
-const familyPctNoCss = `${familyPctBaseCss} invisible text-danger group-hover:visible`
-
-const familyOnlyCss = [
-  'invisible cursor-pointer rounded-full border border-accent',
-  'px-3.5 py-1 text-center text-xs font-semibold text-accent',
-  'hover:bg-accent-soft group-hover:visible',
-].join(' ')
-
-const filterStripCss =
-  'mb-3.5 flex items-center gap-[22px] text-[13px] text-fg'
-
-const filterStripLabelCss = 'inline-flex cursor-pointer items-center gap-1.5'
-
-const filterStripCheckboxCss = '[accent-color:var(--color-accent)]'
-
-const filterStripCountCss = 'text-fg-icon'
-
-// Per-rule issue card. The chip rows visualize per-client support, with
-// support dots colored by `data-support` and noted versions highlighted
-// by `data-noted` — both rendered as Tailwind data-attribute variants
-// on the element they describe.
-const htmlCheckIssueCss =
-  'mb-3 rounded-lg border border-border-base bg-surface-raised p-5 px-5 py-4'
-
-const htmlCheckIssueTitleCss = [
-  'mt-0 mb-2.5 text-base font-semibold text-fg',
-  "font-['SF_Mono',Menlo,Consolas,monospace]",
-].join(' ')
-
-const htmlCheckClientsRowCss = 'mb-3 grid grid-cols-[64px_1fr] gap-3'
-
-const htmlCheckClientsLabelCss = 'pt-1 text-[13px] font-semibold text-fg'
-
-const htmlCheckChipsCss = 'flex flex-wrap items-center gap-x-3.5 gap-y-1.5'
-
-const htmlCheckChipCss = 'inline-flex items-center gap-1.5 text-[13px] text-fg'
-
-const htmlCheckDotCss = [
-  'inline-block h-[9px] w-[9px] rounded-full',
-  'data-[support=no]:bg-danger',
-  'data-[support=partial]:bg-[#f5a524]',
-  'data-[support=yes]:bg-success',
-].join(' ')
-
-const htmlCheckVerCss = [
-  'inline-flex h-[18px] min-w-[18px] items-center justify-center',
-  'rounded bg-surface-hover px-[5px]',
-  "font-['SF_Mono',Menlo,Consolas,monospace] text-[11px] font-semibold text-fg",
-  'data-[noted=true]:bg-accent data-[noted=true]:text-fg',
-].join(' ')
-
-const htmlCheckLinesCss = 'mb-2 text-[13px] text-fg-icon'
-
-const htmlCheckLinesCodeCss =
-  "font-['SF_Mono',Menlo,Consolas,monospace] text-accent"
-
-const htmlCheckToggleCss = [
-  'mb-2 inline-block cursor-pointer text-xs text-accent',
-  'hover:underline',
-].join(' ')
-
-const htmlCheckNotesCss = 'mt-1 text-[13px] leading-[1.55] text-fg'
-const htmlCheckNotesHeadingCss = 'm-0 mb-1.5 text-[13px] font-semibold'
-const htmlCheckNotesListCss = 'm-0 pl-[22px]'
-const htmlCheckNotesItemCss = 'mb-1.5'
-
-const htmlCheckReflinkCss = 'mt-3 text-xs'
-const htmlCheckReflinkLinkCss = 'text-accent no-underline hover:underline'
-
-const htmlCheckEmpty = [
-  'rounded-lg border border-border-base bg-surface-raised p-6',
-  'text-center text-[13px] text-fg-icon',
-].join(' ')
-
-/**
- * Multi-segment donut: green for supported, orange for partial, red for no.
- * Each segment is a separate <circle> rotated to start where the previous
- * one ended — avoids the dashoffset/linecap quirks of a single shared
- * dasharray pattern when segments are tiny.
- */
-function MarketSupportDonut({
-  supported,
-  partial,
-  no,
-}: {
-  supported: number
-  partial: number
-  no: number
-}) {
-  const radius = 78
-  const stroke = 14
-  const C = 2 * Math.PI * radius
-  // Use the design tokens directly for the segment colours so a future
-  // theme change picks them up.
-  const segs: Array<[number, string]> = [
-    [supported, 'var(--color-success)'],
-    [partial, '#f5a524'],
-    [no, 'var(--color-danger)'],
-  ]
-  let elapsedPct = 0
-  return (
-    <div className={donutCss}>
-      <svg viewBox="0 0 180 180" width="180" height="180">
-        <circle
-          cx="90"
-          cy="90"
-          r={radius}
-          fill="none"
-          stroke="#212d3c"
-          strokeWidth={stroke}
-        />
-        {segs.map(([pct, color], i) => {
-          if (pct <= 0) return null
-          const length = (pct / 100) * C
-          // Position the start of this segment at 12 o'clock + however far
-          // the previous segments have advanced (in degrees).
-          const rotation = -90 + (elapsedPct / 100) * 360
-          elapsedPct += pct
-          return (
-            <circle
-              key={i}
-              cx="90"
-              cy="90"
-              r={radius}
-              fill="none"
-              stroke={color}
-              strokeWidth={stroke}
-              strokeDasharray={`${length} ${C}`}
-              transform={`rotate(${rotation} 90 90)`}
-            />
-          )
-        })}
-      </svg>
-      <div className={donutCenterCss}>
-        <span className={donutPctCss}>{supported.toFixed(1)}%</span>
-        <span className={donutLabelCss}>Market support</span>
-      </div>
-    </div>
-  )
-}
-
-/**
- * Aggregates a single client's affected versions into colored chips. Each
- * chip is a "support dot + version pill" matching Mailtrap's UI: red for
- * "no", amber for "partial", with note-number badges highlighted in accent
- * blue when that version had a note attached.
- */
-function ClientChips({
-  family,
-  platform,
-  display_name: name,
-  support,
-  versions,
-  note_numbers: notes,
-}: HtmlCheckClient) {
-  // Pull the affected versions from {no:[], partial:[]} - "yes" versions
-  // aren't worth surfacing inside an issue (they're already supported).
-  const affected = [...(versions?.no ?? []), ...(versions?.partial ?? [])]
-  const noteSet = new Set((notes ?? []).map((n) => String(n)))
-  return (
-    <span className={htmlCheckChipCss} key={`${family}-${platform}`}>
-      <span className={htmlCheckDotCss} data-support={support} />
-      {name}
-      {affected.map((v) => (
-        <span
-          key={v}
-          className={htmlCheckVerCss}
-          data-noted={noteSet.has(v) || undefined}
-        >
-          {v}
-        </span>
-      ))}
-    </span>
-  )
-}
-
-interface HtmlCheckFilterState {
-  enabledCategories: Record<ClientCategory, boolean>
-  setEnabledCategories: React.Dispatch<
-    React.SetStateAction<Record<ClientCategory, boolean>>
-  >
-  enabledFamilies: Record<string, boolean>
-  setEnabledFamilies: React.Dispatch<
-    React.SetStateAction<Record<string, boolean>>
-  >
-}
-
-function HtmlCheck({
-  hasHtml,
-  report,
-  err,
-  filters,
-}: {
-  hasHtml: boolean
-  report: HtmlCheckReport | null
-  err: string | null
-  filters: HtmlCheckFilterState
-}) {
-  const [showAllLines, setShowAllLines] = useState<Record<number, boolean>>({})
-  const {
-    enabledCategories,
-    setEnabledCategories,
-    enabledFamilies,
-    setEnabledFamilies,
-  } = filters
-
-  if (!hasHtml) {
-    return <div className={htmlCheckEmpty}>This message has no HTML body.</div>
-  }
-  if (err) {
-    return (
-      <div className={htmlCheckEmpty}>Couldn't run HTML Check: {err}</div>
-    )
-  }
-  if (!report) {
-    return <div className={htmlCheckEmpty}>Analyzing…</div>
-  }
-  if (report.status === 'no_html') {
-    return <div className={htmlCheckEmpty}>This message has no HTML body.</div>
-  }
-  if (report.status === 'size_limit_exceeded') {
-    const mb = (report.limit / 1024 / 1024).toFixed(0)
-    return (
-      <div className={htmlCheckEmpty}>
-        HTML body is larger than {mb}MB — analysis skipped.
-      </div>
-    )
-  }
-  if (report.status === 'error') {
-    return <div className={htmlCheckEmpty}>{report.msg}</div>
-  }
-
-  const enabledCats = (
-    Object.keys(enabledCategories) as ClientCategory[]
-  ).filter((c) => enabledCategories[c])
-
-  // Filter visible issues by category + family checkboxes. An issue with
-  // zero remaining clients after filtering gets dropped from the list.
-  const visibleIssues = report.issues
-    .map((issue) => ({
-      ...issue,
-      clients: issue.clients.filter((c) =>
-        clientPassesFilters(c, enabledCats, enabledFamilies),
-      ),
-    }))
-    .filter((issue) => issue.clients.length > 0)
-
-  const totalsByCategory = report.families.reduce(
-    (acc, f) => {
-      acc.desktop += f.version_counts.desktop
-      acc.mobile += f.version_counts.mobile
-      acc.web += f.version_counts.web
-      return acc
-    },
-    { desktop: 0, mobile: 0, web: 0 },
-  )
-
-  // Per-family support stats: counts UNIQUE affected versions
-  // per (family, enabled categories), divides by total versions in those
-  // categories. A version that's hit by 5 rules counts once, not 5x. A
-  // version flagged both "no" and "partial" only counts as "no".
-  const familyStats = filteredFamilySupportStats(
-    report.issues,
-    report.families,
-    enabledCats,
-  )
-  const market = filteredMarketShareInfo(
-    familyStats,
-    report.families,
-    enabledFamilies,
-  )
-
-  return (
-    <>
-      <div className={htmlCheckTop}>
-        <MarketSupportDonut
-          supported={market.supported}
-          partial={market.partial}
-          no={market.no}
-        />
-        <div>
-          <div className={filterStripCss}>
-            {(['desktop', 'mobile', 'web'] as const).map((cat) => (
-              <label key={cat} className={filterStripLabelCss}>
-                <input
-                  type="checkbox"
-                  className={filterStripCheckboxCss}
-                  checked={enabledCategories[cat]}
-                  onChange={(e) =>
-                    setEnabledCategories({
-                      ...enabledCategories,
-                      [cat]: e.target.checked,
-                    })
-                  }
-                />
-                <span className="capitalize">{cat}</span>{' '}
-                <span className={filterStripCountCss}>
-                  ({totalsByCategory[cat]})
-                </span>
-              </label>
-            ))}
-          </div>
-          <div className={familyTableCss}>
-            {report.families.map((f) => {
-              const stats = familyStats[f.family] ?? {
-                supported: 100,
-                partial: 0,
-                no: 0,
-              }
-              // The button toggles between "Only" (solo-select this family)
-              // and "All" (re-enable every family). It shows "All" iff this
-              // row is currently the *sole* enabled family — clicking again
-              // is the natural way to undo an "Only" pick.
-              const enabledCount = report.families.reduce(
-                (n, row) =>
-                  enabledFamilies[row.family] !== false ? n + 1 : n,
-                0,
-              )
-              const isSoleEnabled =
-                enabledCount === 1 && enabledFamilies[f.family] !== false
-              const onClickAction = () => {
-                const next: Record<string, boolean> = {}
-                report.families.forEach((row) => {
-                  next[row.family] = isSoleEnabled
-                    ? true
-                    : row.family === f.family
-                })
-                setEnabledFamilies(next)
-              }
-              return (
-                <div key={f.family} className={familyRowCss}>
-                  <label className={familyNameCss}>
-                    <input
-                      type="checkbox"
-                      className={familyCheckboxCss}
-                      checked={enabledFamilies[f.family] ?? true}
-                      onChange={(e) =>
-                        setEnabledFamilies({
-                          ...enabledFamilies,
-                          [f.family]: e.target.checked,
-                        })
-                      }
-                    />
-                    {f.label}
-                  </label>
-                  <span className={familyPctSupportedCss}>
-                    {stats.supported}%
-                  </span>
-                  <span className={familyPctPartialCss}>{stats.partial}%</span>
-                  <span className={familyPctNoCss}>{stats.no}%</span>
-                  <button
-                    type="button"
-                    className={familyOnlyCss}
-                    data-active={isSoleEnabled || undefined}
-                    onClick={onClickAction}
-                  >
-                    {isSoleEnabled ? 'All' : 'Only'}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {visibleIssues.length === 0 && (
-        <div className={htmlCheckEmpty}>
-          No issues for the current filters. Tick more clients above to widen
-          the check.
-        </div>
-      )}
-
-      {visibleIssues.map((issue, idx) => {
-        const lineLimit = 6
-        const showAll = showAllLines[idx] ?? false
-        const visibleLines =
-          showAll || issue.error_lines.length <= lineLimit
-            ? issue.error_lines
-            : issue.error_lines.slice(0, lineLimit)
-        const noteEntries = Object.entries(issue.numbered_notes).sort(
-          ([a], [b]) => Number(a) - Number(b),
-        )
-        return (
-          <section key={idx} className={htmlCheckIssueCss}>
-            <h3 className={htmlCheckIssueTitleCss}>{issue.rule_name}</h3>
-
-            <div className={htmlCheckClientsRowCss}>
-              <div className={htmlCheckClientsLabelCss}>Clients:</div>
-              <div className={htmlCheckChipsCss}>
-                {issue.clients.map((c) => (
-                  <ClientChips key={`${c.family}-${c.platform}`} {...c} />
-                ))}
-              </div>
-            </div>
-
-            <div className={htmlCheckLinesCss}>
-              Found on lines:{' '}
-              {visibleLines.map((l, i) => (
-                <span key={l}>
-                  <code className={htmlCheckLinesCodeCss}>{l}</code>
-                  {i < visibleLines.length - 1 ? ', ' : ''}
-                </span>
-              ))}
-            </div>
-            {issue.error_lines.length > lineLimit && (
-              <button
-                type="button"
-                className={htmlCheckToggleCss}
-                onClick={() =>
-                  setShowAllLines({ ...showAllLines, [idx]: !showAll })
-                }
-              >
-                {showAll
-                  ? 'Show less'
-                  : `Show all ${issue.error_lines.length} lines`}
-              </button>
-            )}
-
-            {noteEntries.length > 0 && (
-              <div className={htmlCheckNotesCss}>
-                <h4 className={htmlCheckNotesHeadingCss}>Notes:</h4>
-                <ol className={htmlCheckNotesListCss}>
-                  {noteEntries.map(([n, text]) => (
-                    <li key={n} className={htmlCheckNotesItemCss}>
-                      {text}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
-
-            {issue.url && (
-              <div className={htmlCheckReflinkCss}>
-                See full reference on{' '}
-                <a
-                  href={issue.url}
-                  className={htmlCheckReflinkLinkCss}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  caniemail.com
-                </a>
-              </div>
-            )}
-          </section>
-        )
-      })}
-    </>
-  )
-}
-
-function TechInfo({ msg, headers }: { msg: Message; headers: HeadersMap }) {
-  const smtpRows: [string, string][] = [
-    ['MAIL FROM', msg.envelope_from || '(unknown)'],
-    ...msg.envelope_to.map((to): [string, string] => ['RCPT TO', to]),
-  ]
-
-  const headerRows: [string, string][] = Object.entries(headers).flatMap(
-    ([name, values]) => values.map((v): [string, string] => [name, v]),
-  )
-
-  const hasBcc = headerRows.some(([k]) => k.toLowerCase() === 'bcc')
-
-  return (
-    <>
-      <section className={techSection}>
-        <h3 className={techHeadingCss}>
-          SMTP Transaction Info
-          <HelpIcon
-            className={techHelpIconCss}
-            size={14}
-            title="What is this?"
-          />
-        </h3>
-        <p className={techBlurb}>
-          This information is sent with the SMTP transaction itself and is not
-          included in the email headers or body. It can be crucial for SMTP
-          debugging but can't be found in common email tools.
-        </p>
-        <table className={techTableCss}>
-          <thead>
-            <tr>
-              <th className={techTableHeadCss}>Name</th>
-              <th className={techTableHeadCss}>Value</th>
-              <th className={techTableHeadCss} />
-            </tr>
-          </thead>
-          <tbody className={techTableBodyCss}>
-            {smtpRows.map(([k, v], i) => (
-              <tr key={`${k}-${i}`} className={techTableRowCss}>
-                <td className={techTableNameCellCss}>{k}</td>
-                <td className={techTableValCellCss}>{v}</td>
-                <td className={techTableCopyCellCss}>
-                  <CopyButton text={v} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
-      <section className={techSection}>
-        <h3 className={techHeadingCss}>
-          Email Headers
-          <HelpIcon
-            className={techHelpIconCss}
-            size={14}
-            title="What is this?"
-          />
-        </h3>
-        <p className={techBlurb}>
-          Original values of the headers. When sending a real email, headers
-          can be altered by an email service provider or a mail transfer
-          agent.
-        </p>
-        <table className={techTableCss}>
-          <thead>
-            <tr>
-              <th className={techTableHeadCss}>Name</th>
-              <th className={techTableHeadCss}>Value</th>
-              <th className={techTableHeadCss} />
-            </tr>
-          </thead>
-          <tbody className={techTableBodyCss}>
-            {headerRows.length === 0 && (
-              <tr>
-                <td
-                  colSpan={3}
-                  className={`${techTableCellCss} text-fg-muted`}
-                >
-                  (no headers)
-                </td>
-              </tr>
-            )}
-            {headerRows.map(([k, v], i) => (
-              <tr key={`${k}-${i}`} className={techTableRowCss}>
-                <td className={techTableNameCellCss}>{k}</td>
-                <td className={techTableValCellCss}>{v}</td>
-                <td className={techTableCopyCellCss}>
-                  <CopyButton text={v} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!hasBcc && headerRows.length > 0 && (
-          <div className={infoRowCss}>
-            <SuccessFilledIcon className="text-success" size={14} />
-            There is no Bcc information in this email message
-          </div>
-        )}
-      </section>
-    </>
-  )
-}
 
 type ActionMode = 'default' | 'delete' | 'forward'
-type Device = 'mobile' | 'tablet' | 'desktop'
-
-/* Match Mailtrap's preview viewports: iPhone (375×667) and iPad (768×1024)
-   in portrait. Desktop fills the remaining viewport height below tabs/toolbar
-   so the rendered email gets as much vertical space as the screen offers. */
-const DEVICE_SIZE: Record<Device, { width: string; height: string }> = {
-  mobile: { width: '375px', height: '667px' },
-  tablet: { width: '768px', height: '1024px' },
-  desktop: { width: '100%', height: 'max(500px, calc(100vh - 260px))' },
-}
-
-function openInNewTab(content: string, mime: 'text/html' | 'text/plain') {
-  const blob = new Blob([content], { type: `${mime};charset=utf-8` })
-  const url = URL.createObjectURL(blob)
-  window.open(url, '_blank', 'noopener,noreferrer')
-  // Revoke after the new tab has had a chance to navigate.
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
-}
 
 export default function MessageView() {
   const { id } = useParams<{ id: string }>()
@@ -989,7 +257,6 @@ export default function MessageView() {
   const [activeTab, setActiveTab] = useState<string | undefined>(undefined)
   const [mode, setMode] = useState<ActionMode>('default')
   const [busy, setBusy] = useState(false)
-  const [device, setDevice] = useState<Device>('desktop')
   const [cloudSent, setCloudSent] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionSuccess, setActionSuccess] = useState<string | null>(null)
@@ -1023,7 +290,6 @@ export default function MessageView() {
     setError(null)
     setActiveTab(undefined)
     setMode('default')
-    setDevice('desktop')
     setCloudSent(false)
     setActionError(null)
     setActionSuccess(null)
@@ -1387,58 +653,7 @@ export default function MessageView() {
 
         {msg.html && (
           <Tabs.Content className={tabContent} value="html">
-            <div className={deviceBar}>
-              <IconButton
-                variant="device"
-                active={device === 'mobile'}
-                title="Mobile preview"
-                onClick={() => setDevice('mobile')}
-              >
-                <MobileIcon size={18} />
-              </IconButton>
-              <IconButton
-                variant="device"
-                active={device === 'tablet'}
-                title="Tablet preview"
-                onClick={() => setDevice('tablet')}
-              >
-                <TabletIcon size={18} />
-              </IconButton>
-              <IconButton
-                variant="device"
-                active={device === 'desktop'}
-                title="Desktop preview"
-                onClick={() => setDevice('desktop')}
-              >
-                <DesktopIcon size={18} />
-              </IconButton>
-              <IconButton
-                variant="toolbar"
-                className={popoutPosition}
-                title="Open HTML in new tab"
-                onClick={() => openInNewTab(msg.html, 'text/html')}
-              >
-                <ExternalLinkIcon size={14} />
-              </IconButton>
-            </div>
-            <div className={iframeFrameWrapCss}>
-              <div
-                className={iframeFrameCss}
-                data-device={device}
-                style={{
-                  width: DEVICE_SIZE[device].width,
-                  height: DEVICE_SIZE[device].height,
-                  maxWidth: '100%',
-                }}
-              >
-                <iframe
-                  className={iframeCss}
-                  sandbox=""
-                  srcDoc={msg.html}
-                  title="Message HTML"
-                />
-              </div>
-            </div>
+            <MessagePreview html={msg.html} />
           </Tabs.Content>
         )}
 
