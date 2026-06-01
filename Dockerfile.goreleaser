@@ -13,6 +13,17 @@ COPY mailtrap-local /usr/local/bin/mailtrap-local
 # `docker run` even though the directory is initially absent.
 VOLUME ["/var/lib/mailtrap-local"]
 
+# Keep the at-rest encryption key on the persisted volume. By default the
+# binary writes it under $XDG_CONFIG_HOME (~/.config), which is the
+# container's ephemeral filesystem — so recreating the container (e.g. a
+# `docker pull` upgrade) would generate a fresh key that can't decrypt the
+# relay/cloud/webhook credentials already stored in the DB on the volume,
+# silently breaking every saved connection. Pinning the key onto the same
+# volume as the DB keeps them in lockstep across container recreation.
+# (This co-locates key + DB, which the secrets package already documents
+# as acceptable for this localhost tool.)
+ENV MAILTRAP_LOCAL_SECRET_KEY_FILE=/var/lib/mailtrap-local/secret.key
+
 EXPOSE 3550 3535
 USER nonroot:nonroot
 
