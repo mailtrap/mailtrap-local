@@ -132,6 +132,33 @@ func TestProbeFailsOnClosedPort(t *testing.T) {
 	}
 }
 
+// Explicit tls=starttls must fail closed when the server doesn't
+// advertise STARTTLS, rather than silently continuing in cleartext.
+// The test server has no TLS configured, so it advertises no STARTTLS.
+func TestProbeStartTLSRequiredFailsWhenUnsupported(t *testing.T) {
+	t.Parallel()
+	host, port, _ := startServer(t)
+	c := &Client{}
+	err := c.Probe(context.Background(), host, port, "", "", "", "starttls")
+	if err == nil {
+		t.Fatal("expected error when STARTTLS is required but unsupported, got nil")
+	}
+	if !strings.Contains(err.Error(), "STARTTLS") {
+		t.Errorf("error should mention STARTTLS; got %v", err)
+	}
+}
+
+// tls=auto stays best-effort: no STARTTLS advertised → continue (and the
+// probe with no auth succeeds).
+func TestProbeAutoFallsBackWhenStartTLSUnsupported(t *testing.T) {
+	t.Parallel()
+	host, port, _ := startServer(t)
+	c := &Client{}
+	if err := c.Probe(context.Background(), host, port, "", "", "", "auto"); err != nil {
+		t.Errorf("auto mode should fall back to cleartext, got %v", err)
+	}
+}
+
 // ---------------------------------------------------------------------
 // Forward — happy path + envelope plumbing
 // ---------------------------------------------------------------------
@@ -482,7 +509,8 @@ func TestRewriteToHeaderLeavesBodyToLineAlone(t *testing.T) {
 func TestLoginAuthStartReturnsLOGIN(t *testing.T) {
 	t.Parallel()
 	a := loginAuth{"u", "p"}
-	mech, init, err := a.Start(nil)
+	// Over TLS, LOGIN is allowed to any host.
+	mech, init, err := a.Start(&stdsmtp.ServerInfo{Name: "smtp.example.com", TLS: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -491,6 +519,32 @@ func TestLoginAuthStartReturnsLOGIN(t *testing.T) {
 	}
 	if init != nil {
 		t.Errorf("initial response should be nil for LOGIN; got %q", init)
+	}
+}
+
+// LOGIN must not base64 credentials onto a cleartext connection to a
+// remote server (STARTTLS-stripped / tls=off downgrade).
+func TestLoginAuthRefusesCleartextToRemote(t *testing.T) {
+	t.Parallel()
+	a := loginAuth{"u", "p"}
+	_, _, err := a.Start(&stdsmtp.ServerInfo{Name: "smtp.example.com", TLS: false})
+	if err == nil {
+		t.Fatal("expected refusal of cleartext LOGIN to a remote server, got nil")
+	}
+}
+
+// Cleartext to loopback is fine — the credentials never leave the box.
+func TestLoginAuthAllowsCleartextToLoopback(t *testing.T) {
+	t.Parallel()
+	for _, host := range []string{"localhost", "127.0.0.1", "::1"} {
+		a := loginAuth{"u", "p"}
+		mech, _, err := a.Start(&stdsmtp.ServerInfo{Name: host, TLS: false})
+		if err != nil {
+			t.Errorf("cleartext LOGIN to %s should be allowed, got %v", host, err)
+		}
+		if mech != "LOGIN" {
+			t.Errorf("%s: mechanism = %q, want LOGIN", host, mech)
+		}
 	}
 }
 

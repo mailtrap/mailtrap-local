@@ -153,9 +153,21 @@ func dial(ctx context.Context, host string, port int, tlsMode string) (net.Conn,
 
 func maybeStartTLS(c *smtp.Client, host, tlsMode string) error {
 	switch strings.ToLower(tlsMode) {
-	case "auto", "starttls", "":
+	case "starttls":
+		// Explicit STARTTLS: require it. Failing closed stops a network
+		// attacker from stripping the STARTTLS advertisement to force a
+		// cleartext session (the classic STARTTLS-stripping downgrade).
 		if ok, _ := c.Extension("STARTTLS"); !ok {
-			return nil // server doesn't advertise it; auto = best-effort
+			return errors.New("relay: tls=starttls requested but server does not advertise STARTTLS")
+		}
+		return c.StartTLS(&tls.Config{ServerName: host})
+	case "auto", "":
+		// Opportunistic: encrypt if offered, else continue. Credentials
+		// are still safe on the cleartext fallback — the auth mechanisms
+		// (stdlib PLAIN, our loginAuth) refuse to send secrets in the
+		// clear to a non-loopback server.
+		if ok, _ := c.Extension("STARTTLS"); !ok {
+			return nil
 		}
 		return c.StartTLS(&tls.Config{ServerName: host})
 	case "off", "never", "none":
@@ -188,7 +200,15 @@ func authenticate(c *smtp.Client, host, user, pass, mode string) error {
 // not part of the Go stdlib).
 type loginAuth struct{ user, pass string }
 
-func (a loginAuth) Start(_ *smtp.ServerInfo) (string, []byte, error) {
+// Start refuses to begin LOGIN auth over an unencrypted connection to a
+// non-loopback server. The stdlib PlainAuth has this guard; the custom
+// LOGIN mechanism didn't, so on a cleartext (STARTTLS-stripped or
+// tls=off) session it would happily base64 the username/password onto
+// the wire. Mirror PlainAuth: allow cleartext only to loopback hosts.
+func (a loginAuth) Start(s *smtp.ServerInfo) (string, []byte, error) {
+	if !s.TLS && !isLoopbackHost(s.Name) {
+		return "", nil, errors.New("relay: refusing to send LOGIN credentials over an unencrypted connection")
+	}
 	return "LOGIN", nil, nil
 }
 func (a loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
@@ -202,6 +222,17 @@ func (a loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 		return []byte(a.pass), nil
 	}
 	return nil, fmt.Errorf("unexpected challenge: %q", fromServer)
+}
+
+// isLoopbackHost reports whether name is a loopback host. Cleartext auth
+// to a loopback target is acceptable because the credentials never leave
+// the machine.
+func isLoopbackHost(name string) bool {
+	if name == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(name)
+	return ip != nil && ip.IsLoopback()
 }
 
 // rewriteFromHeader replaces the first `From:` header value with the
