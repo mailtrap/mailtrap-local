@@ -478,6 +478,97 @@ func TestIngestFiresOnIngestHook(t *testing.T) {
 	}
 }
 
+func TestSecurityHeadersNosniff(t *testing.T) {
+	t.Parallel()
+	_, ts := newTestServer(t)
+	resp, err := http.Get(ts.URL + "/api/v1/messages")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if got := resp.Header.Get("X-Content-Type-Options"); got != "nosniff" {
+		t.Errorf("X-Content-Type-Options = %q, want nosniff", got)
+	}
+}
+
+func TestCORSEchoesOnlyLoopbackOrigins(t *testing.T) {
+	t.Parallel()
+	_, ts := newTestServer(t)
+
+	do := func(origin string) string {
+		req, _ := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/messages", nil)
+		req.Header.Set("Origin", origin)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		return resp.Header.Get("Access-Control-Allow-Origin")
+	}
+
+	if got := do("http://127.0.0.1:3540"); got != "http://127.0.0.1:3540" {
+		t.Errorf("loopback origin ACAO = %q, want it echoed", got)
+	}
+	if got := do("http://localhost:3540"); got != "http://localhost:3540" {
+		t.Errorf("localhost origin ACAO = %q, want it echoed", got)
+	}
+	// A public origin must NOT be allowed — the old wildcard let any site
+	// read the inbox cross-origin.
+	if got := do("https://evil.example"); got != "" {
+		t.Errorf("non-loopback origin ACAO = %q, want empty", got)
+	}
+}
+
+func TestPartServedAsSanitizedAttachmentWithCSP(t *testing.T) {
+	t.Parallel()
+	_, ts := newTestServer(t)
+
+	payload, _ := json.Marshal(store.IngestPayload{
+		SMTPFrom: "a@x", SMTPTo: []string{"b@y"},
+		From:    &store.Address{Address: "a@x"},
+		To:      []store.Address{{Address: "b@y"}},
+		Subject: "with attachment",
+		Raw:     []byte("From: a@x\r\nSubject: with attachment\r\n\r\nbody\r\n"),
+		Attachments: []store.PartIn{{
+			PartID:      "1",
+			Filename:    `evil".html`, // embedded quote must be stripped
+			ContentType: "text/html",
+			Content:     []byte("<script>alert(1)</script>"),
+			Size:        25,
+		}},
+	})
+	resp, err := http.Post(ts.URL+"/api/v1/ingest", "application/json", bytes.NewReader(payload))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var created struct{ ID string }
+	_ = json.NewDecoder(resp.Body).Decode(&created)
+	resp.Body.Close()
+
+	r, err := http.Get(ts.URL + "/api/v1/message/" + created.ID + "/part/1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Body.Close()
+
+	cd := r.Header.Get("Content-Disposition")
+	if !strings.HasPrefix(cd, "attachment;") {
+		t.Errorf("part Content-Disposition = %q, want attachment (never inline)", cd)
+	}
+	if strings.Contains(cd, `evil".html`) {
+		t.Errorf("filename quote not sanitized: %q", cd)
+	}
+	if !strings.Contains(cd, "evil.html") {
+		t.Errorf("sanitized filename should keep evil.html: %q", cd)
+	}
+	if csp := r.Header.Get("Content-Security-Policy"); !strings.Contains(csp, "default-src 'none'") {
+		t.Errorf("CSP = %q, want default-src 'none'", csp)
+	}
+	if got := r.Header.Get("X-Content-Type-Options"); got != "nosniff" {
+		t.Errorf("nosniff missing on part response: %q", got)
+	}
+}
+
 // ---------------------------------------------------------------------
 
 func equalSliceStr(a, b []string) bool {

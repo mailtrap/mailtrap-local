@@ -3,7 +3,9 @@ package api
 import (
 	"encoding/json"
 	"io/fs"
+	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -38,10 +40,15 @@ type Server struct {
 func (s *Server) Router() http.Handler {
 	r := chi.NewRouter()
 
-	// CORS-permissive preflight for the SPA (Vite dev runs on a
-	// different port and proxies most calls; this just makes raw
-	// fetches from the browser console work too).
-	r.Use(corsAll)
+	// nosniff on every response — the app serves attacker-controlled
+	// content (caught email bodies + attachments), so browsers must not
+	// be allowed to MIME-sniff a part's bytes into an executable type.
+	r.Use(securityHeaders)
+
+	// CORS, scoped to loopback origins only. The SPA is same-origin so it
+	// needs no CORS; this exists only so raw fetches from a developer's
+	// own machine (browser console, Vite dev on :3540) work.
+	r.Use(corsLoopback)
 
 	// WebSocket lives outside /api/v1 because frontends often hardcode
 	// "/cable" (matching the historical mount path).
@@ -167,19 +174,52 @@ func clamp(n, lo, hi int) int {
 	return n
 }
 
-// corsAll allows any origin — fine for a local-only dev tool; saves
-// the SPA + curl users from CORS friction during dev.
-func corsAll(next http.Handler) http.Handler {
+// securityHeaders sets headers applied to every response. nosniff is the
+// important one: the API serves attacker-controlled bytes (email parts),
+// and without it a browser could sniff a part declared text/plain into
+// text/html and execute it in the app origin.
+func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// corsLoopback reflects CORS headers only when the request Origin is a
+// loopback address. A wildcard Access-Control-Allow-Origin (the previous
+// behaviour) let *any* website a developer happened to visit read and
+// mutate the local inbox cross-origin — read every caught email, wipe
+// the mailbox, repoint the webhook. Echoing only loopback origins keeps
+// the dev-console / Vite-proxy convenience without that exposure.
+func corsLoopback(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if origin := r.Header.Get("Origin"); origin != "" && isLoopbackOrigin(origin) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Add("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		}
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// isLoopbackOrigin reports whether an Origin header value
+// (e.g. "http://127.0.0.1:3540") points at a loopback host.
+func isLoopbackOrigin(origin string) bool {
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	host := u.Hostname()
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // spaHandler serves the SPA dist with a single-page fallback: any path
