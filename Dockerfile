@@ -61,6 +61,11 @@ EXPOSE 3550 3535
 USER nonroot:nonroot
 
 ENTRYPOINT ["/usr/local/bin/mailtrap-local"]
-CMD ["--http-listen", "0.0.0.0:3550", \
+# --unsafe-non-loopback is required because we bind 0.0.0.0 inside the
+# container: the binary refuses non-loopback binds without it. Safe here —
+# the container's network namespace is isolated, and host exposure is
+# governed by the operator's `docker run -p` mapping, not by this bind.
+CMD ["--unsafe-non-loopback", \
+     "--http-listen", "0.0.0.0:3550", \
      "--smtp-listen", "0.0.0.0:3535", \
      "--db", "/var/lib/mailtrap-local/db.sqlite3"]
