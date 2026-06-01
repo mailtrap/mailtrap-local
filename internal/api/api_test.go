@@ -408,6 +408,60 @@ func TestConnectionsCRUD(t *testing.T) {
 	}
 }
 
+// QA caught a bug: once a cloud token was saved, toggling mirror_enabled
+// via the dialog (which omits the token field) errored with "api_token
+// and sandbox_id are required". The handler must preserve existing
+// credentials on partial updates.
+func TestCloudUpdatePreservesCredentialsOnPartialUpdate(t *testing.T) {
+	t.Parallel()
+	_, ts := newTestServer(t)
+
+	put := func(payload map[string]any) *http.Response {
+		body, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/cloud_connection", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp, _ := http.DefaultClient.Do(req)
+		return resp
+	}
+
+	// Initial connect with full credentials.
+	resp := put(map[string]any{"api_token": "tok", "sandbox_id": 9001, "mirror_enabled": false})
+	resp.Body.Close()
+
+	// Partial update: only mirror_enabled — token and sandbox omitted.
+	resp = put(map[string]any{"mirror_enabled": true})
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("partial update status = %d, want 200", resp.StatusCode)
+	}
+
+	var cloud map[string]any
+	getJSON(t, ts.URL+"/api/v1/cloud_connection", &cloud)
+	if cloud["mirror_enabled"] != true {
+		t.Errorf("mirror_enabled not flipped: %+v", cloud)
+	}
+	if cloud["sandbox_id"].(float64) != 9001 {
+		t.Errorf("sandbox_id changed: %+v", cloud)
+	}
+
+	// Sanity: updating with no existing connection still requires both.
+	if err := func() error {
+		req, _ := http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/cloud_connection", nil)
+		r, err := http.DefaultClient.Do(req)
+		if r != nil {
+			r.Body.Close()
+		}
+		return err
+	}(); err != nil {
+		t.Fatalf("disconnect: %v", err)
+	}
+	resp = put(map[string]any{"mirror_enabled": true})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Errorf("partial update with no existing conn status = %d, want 422", resp.StatusCode)
+	}
+}
+
 // OnIngest fires after a successful POST /api/v1/ingest.
 func TestIngestFiresOnIngestHook(t *testing.T) {
 	t.Parallel()

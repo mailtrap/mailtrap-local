@@ -55,7 +55,9 @@ export const fieldRow = 'grid grid-cols-[2fr_1fr] gap-2.5'
 
 export const toggleRow = 'flex items-center gap-2.5 pt-2.5 pb-1 text-[13px]'
 
-export const toggleDesc = 'ml-[26px] text-xs leading-[1.5] text-fg-muted'
+// The Toggle's 32px track + 10px inner gap == 42px to the label text;
+// description should sit under the label, not under the track.
+export const toggleDesc = 'ml-[42px] text-xs leading-[1.5] text-fg-muted'
 
 // Applied to inputs/selects whose value is pinned by the YAML config —
 // visually mutes the control to signal "you can't edit this here".

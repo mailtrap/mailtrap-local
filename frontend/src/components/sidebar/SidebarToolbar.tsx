@@ -22,8 +22,12 @@ const statusBadge = [
 ].join(' ')
 
 // data-expanded drives the "cover the icon row" mode on focus.
+// `flex items-center` centers the input vertically so the absolutely-
+// positioned clear-× (anchored to top: 50% of this wrapper) lines up
+// with the input's vertical center when the wrapper grows taller than
+// the input (expanded mode).
 const searchWrap = [
-  'group relative',
+  'group relative flex items-center',
   'data-[expanded=true]:absolute data-[expanded=true]:left-3 data-[expanded=true]:right-3',
   'data-[expanded=true]:top-3 data-[expanded=true]:bottom-3 data-[expanded=true]:z-[2]',
 ].join(' ')

@@ -306,6 +306,39 @@ func TestSearchBackfillsOnOpen(t *testing.T) {
 	}
 }
 
+// QA caught a bug: search was only matching complete words. Typing a
+// partial word should still find messages whose tokens start with it.
+func TestSearchPrefixMatch(t *testing.T) {
+	t.Parallel()
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	_, _ = s.Insert(ctx, fixturePayload("Welcome aboard", "a@x.test", "alice@example.com", ""))
+	_, _ = s.Insert(ctx, fixturePayload("Receipt #1234", "b@x.test", "bob@example.com", ""))
+
+	cases := []struct {
+		name, query string
+		want        int
+	}{
+		{"subject prefix", "wel", 1},
+		{"subject longer prefix", "welco", 1},
+		{"recipient prefix", "ali", 1},
+		{"from prefix", "billi", 0}, // 'billi' shouldn't match — no row starts a token with that
+		{"no match", "zzzzz", 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := s.Search(ctx, SearchOpts{Query: tc.query, Limit: 50})
+			if err != nil {
+				t.Fatalf("search: %v", err)
+			}
+			if got := len(res.Messages); got != tc.want {
+				t.Errorf("query %q: got %d, want %d", tc.query, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestSearchEscapesLikeWildcards(t *testing.T) {
 	t.Parallel()
 	s := newTestStore(t)

@@ -277,5 +277,12 @@ export function rawMessageUrl(id: string, download = false): string {
   return `/api/v1/message/${id}/raw${download ? '?dl=1' : ''}`
 }
 
+/** URL to a single message part (attachment or inline) — bytes with the
+ *  original Content-Type. Browsers honour Content-Disposition: attachment
+ *  from the backend (download by default for attachments). */
+export function partUrl(id: string, partId: string): string {
+  return `/api/v1/message/${id}/part/${partId}`
+}
+
 // Per-message relay forward lives in `api/relay.ts` (releaseMessage) — kept
 // near the relay connection it depends on, not here.

@@ -80,11 +80,33 @@ interface Props {
   busy: boolean
   cloudSent: boolean
   onConfirmDelete: () => void
-  onSendForward: (to: string) => Promise<void>
+  onSendForward: (to: string[]) => Promise<void>
   onCloudForward: () => void
   onDownload: () => void
   onShowHeaders: () => void
   onEscapeIdle: () => void
+}
+
+// Single-address shape check. Deliberately permissive (we let the relay
+// reject anything truly malformed); we just need to flag obvious typos
+// before hitting the SMTP roundtrip.
+const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function parseRecipients(raw: string): {
+  valid: string[]
+  invalid: string[]
+} {
+  const tokens = raw
+    .split(/[,;\s]+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+  const valid: string[] = []
+  const invalid: string[] = []
+  for (const t of tokens) {
+    if (emailLike.test(t)) valid.push(t)
+    else invalid.push(t)
+  }
+  return { valid, invalid }
 }
 
 export default function MessageHeader({
@@ -102,6 +124,8 @@ export default function MessageHeader({
 }: Props) {
   const [mode, setMode] = useState<Mode>('default')
   const [forwardEmail, setForwardEmail] = useState('')
+  const { valid: forwardValid, invalid: forwardInvalid } =
+    parseRecipients(forwardEmail)
 
   // ESC closes inline modes; from idle, the parent decides what to do
   // (usually navigate back to the empty-state sandbox).
@@ -126,10 +150,9 @@ export default function MessageHeader({
   const cloudReason = disabledReason(cloudState, 'cloud')
 
   const handleForwardSubmit = async () => {
-    const to = forwardEmail.trim()
-    if (!to) return
+    if (forwardValid.length === 0 || forwardInvalid.length > 0) return
     try {
-      await onSendForward(to)
+      await onSendForward(forwardValid)
       setMode('default')
       setForwardEmail('')
     } catch {
@@ -206,10 +229,15 @@ export default function MessageHeader({
             }}
           >
             <input
-              type="email"
-              required
+              type="text"
               autoFocus
-              placeholder="Forward to email"
+              placeholder="alice@example.com, bob@example.com"
+              title={
+                forwardInvalid.length > 0
+                  ? `Invalid: ${forwardInvalid.join(', ')}`
+                  : undefined
+              }
+              aria-invalid={forwardInvalid.length > 0 || undefined}
               className={inlineBarInput}
               value={forwardEmail}
               onChange={(e) => setForwardEmail(e.target.value)}
@@ -218,7 +246,9 @@ export default function MessageHeader({
             <Button
               variant="primary"
               type="submit"
-              disabled={busy || !forwardEmail.trim()}
+              disabled={
+                busy || forwardValid.length === 0 || forwardInvalid.length > 0
+              }
             >
               Send
             </Button>

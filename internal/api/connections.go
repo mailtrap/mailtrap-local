@@ -47,12 +47,28 @@ func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
 		return
 	}
-	if body.APIToken == "" || body.SandboxID == 0 {
+
+	// Preserve existing credentials when the caller leaves them blank — the
+	// dialog only sends api_token when the user re-enters it, and a partial
+	// update (e.g. toggling mirror_enabled on a connected sandbox) should
+	// not require re-typing the token or sandbox ID.
+	apiToken, sandboxID := body.APIToken, body.SandboxID
+	if apiToken == "" || sandboxID == 0 {
+		if existing, _ := s.Store.CloudGet(r.Context()); existing != nil {
+			if apiToken == "" {
+				apiToken = existing.APIToken
+			}
+			if sandboxID == 0 {
+				sandboxID = existing.SandboxID
+			}
+		}
+	}
+	if apiToken == "" || sandboxID == 0 {
 		writeError(w, http.StatusUnprocessableEntity, "api_token and sandbox_id are required")
 		return
 	}
 	c := &store.CloudConnection{
-		APIToken: body.APIToken, SandboxID: body.SandboxID, MirrorEnabled: body.MirrorEnabled,
+		APIToken: apiToken, SandboxID: sandboxID, MirrorEnabled: body.MirrorEnabled,
 	}
 	if err := s.Store.CloudUpsert(r.Context(), c); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())

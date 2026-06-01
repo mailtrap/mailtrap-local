@@ -22,6 +22,7 @@ import HtmlCheck from '../components/message/HtmlCheck'
 import HtmlSource from '../components/message/HtmlSource'
 import MessageHeader from '../components/message/MessageHeader'
 import MessagePreview from '../components/message/MessagePreview'
+import Attachments from '../components/message/Attachments'
 import { Strip } from '../components/ui/Strip'
 import CodePane from '../components/message/CodePane'
 import { TabRoot, TabList, Tab, TabPanel } from '../components/message/MessageTabs'
@@ -144,17 +145,18 @@ export default function MessageView() {
     }
   }
 
-  const onSendForward = async (to: string) => {
-    if (!id) return
+  const onSendForward = async (to: string[]) => {
+    if (!id || to.length === 0) return
     setBusy(true)
     setActionError(null)
     setActionSuccess(null)
     try {
-      await releaseMessage(id, [to])
+      await releaseMessage(id, to)
+      const list = to.join(', ')
       setActionSuccess(
         relayState?.host
-          ? `Forwarded to ${to} via ${relayState.host}`
-          : `Forwarded to ${to}`,
+          ? `Forwarded to ${list} via ${relayState.host}`
+          : `Forwarded to ${list}`,
       )
     } catch (e) {
       setActionError(`Forward failed: ${extractApiError(e)}`)
@@ -234,6 +236,8 @@ export default function MessageView() {
           {actionSuccess}
         </Strip>
       )}
+
+      <Attachments messageId={msg.id} attachments={msg.attachments} />
 
       <TabRoot
         value={activeTab ?? (msg.html ? 'html' : 'text')}

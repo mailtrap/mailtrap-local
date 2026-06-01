@@ -319,16 +319,17 @@ func splitTokens(q string) []string {
 // buildFTSMatchExpr turns a slice of whitespace-split user tokens into
 // an FTS5 MATCH expression. Each token is wrapped in double quotes so
 // FTS5 operators inside the token (parens, hyphens, AND/OR, etc.) are
-// treated as literal text. Internal double quotes are escaped per
-// FTS5's "" rule. Tokens are space-joined: FTS5's default is implicit
-// AND across phrases.
+// treated as literal text, and suffixed with `*` so partial typing
+// matches (typing "foo" finds "foobar"). Internal double quotes are
+// escaped per FTS5's "" rule. Tokens are space-joined: FTS5's default
+// is implicit AND across phrases.
 func buildFTSMatchExpr(tokens []string) string {
 	if len(tokens) == 0 {
 		return ""
 	}
 	parts := make([]string, 0, len(tokens))
 	for _, t := range tokens {
-		parts = append(parts, `"`+strings.ReplaceAll(t, `"`, `""`)+`"`)
+		parts = append(parts, `"`+strings.ReplaceAll(t, `"`, `""`)+`"*`)
 	}
 	return strings.Join(parts, " ")
 }
