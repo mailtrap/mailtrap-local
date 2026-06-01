@@ -43,8 +43,7 @@ const TLS_OPTIONS: Array<{ value: RelayConnection['tls']; label: string }> = [
 
 const AUTH_OPTIONS: Array<{ value: RelayConnection['auth']; label: string }> = [
   { value: 'plain', label: 'PLAIN' },
-  { value: 'login', label: 'LOGIN' },
-  { value: 'cram_md5', label: 'CRAM-MD5' },
+  { value: 'none', label: 'None' },
 ]
 
 export default function RelayConnectDialog({ open, onOpenChange }: Props) {

@@ -1039,7 +1039,7 @@ components:
           description: Stored locally; never returned in responses.
         auth:
           type: string
-          enum: [plain, login, none]
+          enum: [plain, none]
           default: plain
         tls:
           type: string
@@ -1066,7 +1066,7 @@ components:
           nullable: true
         auth:
           type: string
-          enum: [plain, login, none]
+          enum: [plain, none]
           nullable: true
         tls:
           type: string

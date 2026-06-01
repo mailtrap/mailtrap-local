@@ -153,9 +153,18 @@ func dial(ctx context.Context, host string, port int, tlsMode string) (net.Conn,
 
 func maybeStartTLS(c *smtp.Client, host, tlsMode string) error {
 	switch strings.ToLower(tlsMode) {
-	case "auto", "starttls", "":
+	case "starttls":
+		// Explicit STARTTLS: require it. Failing closed stops a network
+		// attacker from stripping the STARTTLS advertisement to force a
+		// cleartext session (the classic STARTTLS-stripping downgrade).
 		if ok, _ := c.Extension("STARTTLS"); !ok {
-			return nil // server doesn't advertise it; auto = best-effort
+			return errors.New("relay: tls=starttls requested but server does not advertise STARTTLS")
+		}
+		return c.StartTLS(&tls.Config{ServerName: host})
+	case "auto", "":
+		// Opportunistic: encrypt if offered, else continue.
+		if ok, _ := c.Extension("STARTTLS"); !ok {
+			return nil
 		}
 		return c.StartTLS(&tls.Config{ServerName: host})
 	case "off", "never", "none":
@@ -167,41 +176,25 @@ func maybeStartTLS(c *smtp.Client, host, tlsMode string) error {
 	return nil
 }
 
+// authenticate runs SMTP AUTH PLAIN, the only supported mechanism. PLAIN
+// covers every relay target this tool realistically points at — Mailtrap
+// cloud and modern providers (SendGrid/Mailgun/SES/Postmark). The legacy
+// LOGIN and CRAM-MD5 mechanisms were dropped: LOGIN was a hand-rolled
+// equivalent of PLAIN that only legacy Exchange needs, and CRAM-MD5 is
+// effectively dead. Any non-empty mode other than "none" is treated as
+// PLAIN, so connections saved with a legacy auth value still work.
+//
+// stdlib PlainAuth refuses to transmit credentials over an unencrypted
+// connection to a non-loopback host, so cleartext credential leaks are
+// prevented without extra guards here.
 func authenticate(c *smtp.Client, host, user, pass, mode string) error {
 	if user == "" && pass == "" {
 		return nil // no auth configured
 	}
-	switch strings.ToLower(mode) {
-	case "", "plain":
-		return c.Auth(smtp.PlainAuth("", user, pass, host))
-	case "login":
-		return c.Auth(loginAuth{user, pass})
-	case "cram_md5", "cram-md5":
-		return c.Auth(smtp.CRAMMD5Auth(user, pass))
-	case "none":
+	if strings.EqualFold(mode, "none") {
 		return nil
 	}
-	return fmt.Errorf("unknown auth mode: %s", mode)
-}
-
-// loginAuth implements the LOGIN SMTP auth mechanism (Microsoft-flavored,
-// not part of the Go stdlib).
-type loginAuth struct{ user, pass string }
-
-func (a loginAuth) Start(_ *smtp.ServerInfo) (string, []byte, error) {
-	return "LOGIN", nil, nil
-}
-func (a loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
-	if !more {
-		return nil, nil
-	}
-	switch strings.ToLower(strings.TrimSpace(string(fromServer))) {
-	case "username:":
-		return []byte(a.user), nil
-	case "password:":
-		return []byte(a.pass), nil
-	}
-	return nil, fmt.Errorf("unexpected challenge: %q", fromServer)
+	return c.Auth(smtp.PlainAuth("", user, pass, host))
 }
 
 // rewriteFromHeader replaces the first `From:` header value with the

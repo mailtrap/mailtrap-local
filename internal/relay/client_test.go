@@ -132,6 +132,32 @@ func TestProbeFailsOnClosedPort(t *testing.T) {
 	}
 }
 
+// Explicit tls=starttls must fail closed when the server doesn't
+// advertise STARTTLS, instead of silently continuing in cleartext. The
+// test server has no TLS configured, so it advertises no STARTTLS.
+func TestProbeStartTLSRequiredFailsWhenUnsupported(t *testing.T) {
+	t.Parallel()
+	host, port, _ := startServer(t)
+	c := &Client{}
+	err := c.Probe(context.Background(), host, port, "", "", "", "starttls")
+	if err == nil {
+		t.Fatal("expected error when STARTTLS is required but unsupported, got nil")
+	}
+	if !strings.Contains(err.Error(), "STARTTLS") {
+		t.Errorf("error should mention STARTTLS; got %v", err)
+	}
+}
+
+// tls=auto stays best-effort: no STARTTLS advertised → continue.
+func TestProbeAutoFallsBackWhenStartTLSUnsupported(t *testing.T) {
+	t.Parallel()
+	host, port, _ := startServer(t)
+	c := &Client{}
+	if err := c.Probe(context.Background(), host, port, "", "", "", "auto"); err != nil {
+		t.Errorf("auto mode should fall back to cleartext, got %v", err)
+	}
+}
+
 // ---------------------------------------------------------------------
 // Forward — happy path + envelope plumbing
 // ---------------------------------------------------------------------
@@ -476,67 +502,6 @@ func TestRewriteToHeaderLeavesBodyToLineAlone(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------
-// loginAuth — state machine
-// ---------------------------------------------------------------------
-
-func TestLoginAuthStartReturnsLOGIN(t *testing.T) {
-	t.Parallel()
-	a := loginAuth{"u", "p"}
-	mech, init, err := a.Start(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if mech != "LOGIN" {
-		t.Errorf("mechanism = %q, want LOGIN", mech)
-	}
-	if init != nil {
-		t.Errorf("initial response should be nil for LOGIN; got %q", init)
-	}
-}
-
-func TestLoginAuthNextHandlesUsernameAndPasswordChallenges(t *testing.T) {
-	t.Parallel()
-	a := loginAuth{"alice", "p4ssw0rd"}
-
-	got, err := a.Next([]byte("Username:"), true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(got) != "alice" {
-		t.Errorf("Username response = %q, want alice", got)
-	}
-
-	got, err = a.Next([]byte("Password:"), true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(got) != "p4ssw0rd" {
-		t.Errorf("Password response = %q, want p4ssw0rd", got)
-	}
-}
-
-func TestLoginAuthRejectsUnexpectedChallenge(t *testing.T) {
-	t.Parallel()
-	a := loginAuth{"u", "p"}
-	_, err := a.Next([]byte("CaptchaBlue:"), true)
-	if err == nil {
-		t.Errorf("expected error on unexpected challenge")
-	}
-}
-
-func TestLoginAuthNoMoreReturnsNil(t *testing.T) {
-	t.Parallel()
-	a := loginAuth{"u", "p"}
-	got, err := a.Next(nil, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got != nil {
-		t.Errorf("response on !more should be nil; got %v", got)
-	}
-}
-
-// ---------------------------------------------------------------------
 // ParseAddrs
 // ---------------------------------------------------------------------
 
@@ -576,14 +541,13 @@ func TestAuthenticateNoCredsIsNoOp(t *testing.T) {
 	}
 }
 
-// TestAuthenticateUnknownMode — bogus auth mode returns an error so
-// we don't silently default to PLAIN against a server that asked for
-// something else.
-func TestAuthenticateUnknownMode(t *testing.T) {
+// auth mode "none" skips authentication even when credentials are
+// present (e.g. an open local relay like Mailpit). Nil client is safe
+// because it short-circuits before touching the connection.
+func TestAuthenticateNoneModeSkipsAuth(t *testing.T) {
 	t.Parallel()
-	err := authenticate(nil, "host", "u", "p", "kerberos5")
-	if err == nil || !strings.Contains(err.Error(), "unknown auth mode") {
-		t.Errorf("expected unknown-auth-mode error; got %v", err)
+	if err := authenticate(nil, "host", "u", "p", "none"); err != nil {
+		t.Errorf("none mode should skip auth; got %v", err)
 	}
 }
 
