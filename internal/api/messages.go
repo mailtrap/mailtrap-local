@@ -133,6 +133,9 @@ func (s *Server) rawMessage(w http.ResponseWriter, r *http.Request) {
 		disp = "attachment"
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	// text/plain + nosniff (set globally) keeps this from being sniffed
+	// into HTML; the CSP is belt-and-suspenders for the raw RFC822 source.
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; sandbox")
 	w.Header().Set("Content-Disposition", disp+`; filename="`+m.ID+`.eml"`)
 	_, _ = w.Write(m.Raw)
 }
@@ -201,7 +204,13 @@ func (s *Server) part(w http.ResponseWriter, r *http.Request) {
 		ct = "application/octet-stream"
 	}
 	w.Header().Set("Content-Type", ct)
-	disp := "inline"
+	// Defense in depth: a part is attacker-controlled bytes with an
+	// attacker-controlled Content-Type (e.g. text/html or image/svg+xml,
+	// both of which can carry script). Serving it inline would render it
+	// in the app origin. Always force a download, and lock the response
+	// down with a CSP that disallows everything in case a browser renders
+	// it anyway.
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; sandbox")
 	filename := p.Filename
 	if filename == "" && p.ContentID != "" {
 		filename = p.ContentID
@@ -209,7 +218,7 @@ func (s *Server) part(w http.ResponseWriter, r *http.Request) {
 	if filename == "" {
 		filename = "attachment"
 	}
-	w.Header().Set("Content-Disposition", disp+`; filename="`+filename+`"`)
+	w.Header().Set("Content-Disposition", `attachment; filename="`+sanitizeFilename(filename)+`"`)
 	_, _ = w.Write(p.Content)
 }
 
@@ -282,6 +291,15 @@ func (s *Server) destroyMessages(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	_, _ = w.Write([]byte("ok"))
+}
+
+// sanitizeFilename strips characters that could break out of the quoted
+// Content-Disposition filename parameter. net/http already drops CR/LF
+// from header values, but a stray double-quote or backslash would still
+// corrupt the parameter (and the original came from attacker-controlled
+// mail), so remove them.
+func sanitizeFilename(name string) string {
+	return strings.NewReplacer(`"`, "", `\`, "").Replace(name)
 }
 
 func nonBlank(s []string) []string {

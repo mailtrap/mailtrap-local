@@ -9,12 +9,18 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/live"
 )
 
-// upgrader allows any origin — this is a localhost-only dev tool, no
-// CSRF risk worth defending against.
+// upgrader accepts WebSocket upgrades only from loopback origins (or
+// requests with no Origin, e.g. non-browser clients). A malicious site a
+// developer visits would otherwise be able to open /cable cross-origin
+// and stream every caught email as it arrives — the WebSocket equivalent
+// of the cross-origin inbox read the HTTP CORS policy already blocks.
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 4096,
-	CheckOrigin:     func(*http.Request) bool { return true },
+	CheckOrigin: func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		return origin == "" || isLoopbackOrigin(origin)
+	},
 }
 
 // cable handles GET /cable. Upgrades to a WebSocket and registers the
