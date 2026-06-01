@@ -22,7 +22,7 @@ export interface RelayConnection {
   host: string | null
   port: number
   username: string | null
-  auth: 'plain' | 'login' | 'cram_md5'
+  auth: 'plain' | 'none'
   tls: 'auto' | 'ssl' | 'off'
   auto_relay_enabled: boolean
   /**
