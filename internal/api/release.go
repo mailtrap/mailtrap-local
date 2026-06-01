@@ -52,7 +52,9 @@ func (s *Server) release(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	if err := s.Relay.Forward(ctx, conn, m, tos); err != nil {
+	// rewriteTo=true: this is a manual release, so the delivered copy
+	// should read as addressed to whoever the user released it to.
+	if err := s.Relay.Forward(ctx, conn, m, tos, true); err != nil {
 		writeError(w, http.StatusBadGateway, "SMTP relay failed: "+err.Error())
 		return
 	}

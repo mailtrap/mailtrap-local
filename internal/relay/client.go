@@ -52,11 +52,21 @@ func (c *Client) Probe(ctx context.Context, host string, port int, username, pas
 	return client.Quit()
 }
 
-// Forward relays a stored message to `recipients`, mutating only the
-// To: header (preserving everything else). Optional `overrideFrom` and
-// `returnPath` rewrite the From header and the SMTP envelope sender.
+// Forward relays a stored message to `recipients` at the SMTP envelope
+// level (RCPT TO) — delivery always goes to `recipients` regardless of
+// the message headers. The message body is preserved verbatim except:
+//
+//   - conn.OverrideFrom (when set) rewrites the From: header, stashing
+//     the original under X-Original-From.
+//   - conn.ReturnPath (when set) rewrites the SMTP envelope sender.
+//   - rewriteTo (when true) rewrites the To: header to `recipients`,
+//     stashing the original under X-Original-To. Used by the manual
+//     "Release" action so the delivered copy reads as addressed to the
+//     person it was released to. Auto-relay passes false: it mirrors the
+//     message untouched, and rewriting To: to the envelope recipients
+//     would otherwise leak Bcc'd addresses into the visible To: header.
 func (c *Client) Forward(ctx context.Context, conn *store.RelayConnection,
-	m *store.Message, recipients []string,
+	m *store.Message, recipients []string, rewriteTo bool,
 ) error {
 	if len(recipients) == 0 {
 		return errors.New("no recipients")
@@ -65,6 +75,9 @@ func (c *Client) Forward(ctx context.Context, conn *store.RelayConnection,
 	body := bytes.Clone(m.Raw)
 	if conn.OverrideFrom != "" {
 		body = rewriteFromHeader(body, conn.OverrideFrom, m.FromAddress)
+	}
+	if rewriteTo {
+		body = rewriteToHeader(body, strings.Join(recipients, ", "))
 	}
 
 	envFrom := m.FromAddress
@@ -192,19 +205,26 @@ func (a loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 }
 
 // rewriteFromHeader replaces the first `From:` header value with the
-// new address, preserving the original under `X-Original-From`.
+// new address, preserving the original under `X-Original-From`. SMTP
+// always delivers CRLF, but messages ingested via the HTTP /ingest
+// endpoint may carry LF-only line endings — accept both so the
+// override doesn't silently no-op on those.
 func rewriteFromHeader(body []byte, newFrom, originalFrom string) []byte {
-	// Crude header walk — fine for our use because RFC822 has explicit
-	// CRLF folding rules and we operate on well-formed mail from the
-	// catcher, which always normalizes line endings.
+	eol := []byte("\r\n")
 	headerEnd := bytes.Index(body, []byte("\r\n\r\n"))
 	if headerEnd < 0 {
-		return body
+		// Fall back to LF — and produce LF output to match the input.
+		if i := bytes.Index(body, []byte("\n\n")); i >= 0 {
+			eol = []byte("\n")
+			headerEnd = i
+		} else {
+			return body
+		}
 	}
 	headers := body[:headerEnd]
 	rest := body[headerEnd:]
 
-	lines := bytes.Split(headers, []byte("\r\n"))
+	lines := bytes.Split(headers, eol)
 	out := make([][]byte, 0, len(lines)+1)
 	replaced := false
 	for _, line := range lines {
@@ -228,7 +248,80 @@ func rewriteFromHeader(body []byte, newFrom, originalFrom string) []byte {
 	}
 
 	var buf bytes.Buffer
-	buf.Write(bytes.Join(out, []byte("\r\n")))
+	buf.Write(bytes.Join(out, eol))
+	buf.Write(rest)
+	return buf.Bytes()
+}
+
+// rewriteToHeader replaces the To: header with `newTo` so the relayed
+// copy reads as addressed to whoever the message was released to. The
+// original To: value (including any folded continuation lines) is
+// preserved under X-Original-To. If the message carries no To: header,
+// one is appended. Matches rewriteFromHeader's CRLF/LF handling: SMTP
+// delivers CRLF, but messages ingested via /ingest may be LF-only.
+func rewriteToHeader(body []byte, newTo string) []byte {
+	if newTo == "" {
+		return body
+	}
+	eol := []byte("\r\n")
+	headerEnd := bytes.Index(body, []byte("\r\n\r\n"))
+	if headerEnd < 0 {
+		if i := bytes.Index(body, []byte("\n\n")); i >= 0 {
+			eol = []byte("\n")
+			headerEnd = i
+		} else {
+			return body
+		}
+	}
+	headers := body[:headerEnd]
+	rest := body[headerEnd:]
+
+	lines := bytes.Split(headers, eol)
+	out := make([][]byte, 0, len(lines)+1)
+	var original [][]byte
+	replaced := false
+	inOldTo := false
+	for _, line := range lines {
+		// Drop the folded continuation lines (leading space/tab) of the
+		// To: header we just replaced, capturing them as part of the
+		// original value.
+		if inOldTo {
+			if len(line) > 0 && (line[0] == ' ' || line[0] == '\t') {
+				original = append(original, bytes.TrimSpace(line))
+				continue
+			}
+			inOldTo = false
+		}
+		if !replaced && bytes.HasPrefix(bytes.ToLower(line), []byte("to:")) {
+			out = append(out, []byte("To: "+newTo))
+			original = append(original, bytes.TrimSpace(line[len("to:"):]))
+			replaced = true
+			inOldTo = true
+			continue
+		}
+		out = append(out, line)
+	}
+	if !replaced {
+		// No To: header in the source — add one so the delivered copy is
+		// addressed to the recipient.
+		out = append(out, []byte("To: "+newTo))
+	}
+
+	// Drop any pre-existing X-Original-To so multi-relay paths don't stack.
+	filtered := make([][]byte, 0, len(out))
+	for _, line := range out {
+		if bytes.HasPrefix(bytes.ToLower(line), []byte("x-original-to:")) {
+			continue
+		}
+		filtered = append(filtered, line)
+	}
+	out = filtered
+	if orig := bytes.TrimSpace(bytes.Join(original, []byte(" "))); len(orig) > 0 {
+		out = append(out, append([]byte("X-Original-To: "), orig...))
+	}
+
+	var buf bytes.Buffer
+	buf.Write(bytes.Join(out, eol))
 	buf.Write(rest)
 	return buf.Bytes()
 }

@@ -224,9 +224,12 @@ func (d *Dispatcher) relayMirror(msgID string) {
 	if err != nil {
 		return
 	}
-	// Auto-relay sends to whoever the SMTP envelope said RCPT TO was.
+	// Auto-relay sends to whoever the SMTP envelope said RCPT TO was, and
+	// mirrors the message untouched (rewriteTo=false) — rewriting To: to
+	// the envelope recipients would leak any Bcc'd addresses into the
+	// visible To: header.
 	if err := withRetry(3, func() error {
-		return d.Relay.Forward(ctx, overlay, m, m.SMTPTo)
+		return d.Relay.Forward(ctx, overlay, m, m.SMTPTo, false)
 	}); err != nil {
 		slog.Warn("relay-mirror failed",
 			slog.String("msg_id", msgID), slog.Any("err", err))
