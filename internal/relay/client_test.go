@@ -162,7 +162,7 @@ func TestForwardSingleRecipient(t *testing.T) {
 	host, port, be := startServer(t)
 	c := &Client{}
 	if err := c.Forward(context.Background(), newConn(host, port), newMsg(),
-		[]string{"new@y.test"},
+		[]string{"new@y.test"}, false,
 	); err != nil {
 		t.Fatalf("forward: %v", err)
 	}
@@ -184,7 +184,7 @@ func TestForwardMultipleRecipients(t *testing.T) {
 	host, port, be := startServer(t)
 	c := &Client{}
 	rcpts := []string{"a@y.test", "b@y.test", "c@y.test"}
-	if err := c.Forward(context.Background(), newConn(host, port), newMsg(), rcpts); err != nil {
+	if err := c.Forward(context.Background(), newConn(host, port), newMsg(), rcpts, false); err != nil {
 		t.Fatal(err)
 	}
 	tx := be.firstTx(t)
@@ -201,7 +201,7 @@ func TestForwardMultipleRecipients(t *testing.T) {
 func TestForwardRejectsEmptyRecipientList(t *testing.T) {
 	t.Parallel()
 	c := &Client{}
-	err := c.Forward(context.Background(), &store.RelayConnection{Host: "x", Port: 25}, newMsg(), nil)
+	err := c.Forward(context.Background(), &store.RelayConnection{Host: "x", Port: 25}, newMsg(), nil, false)
 	if err == nil || !strings.Contains(err.Error(), "no recipients") {
 		t.Errorf("expected 'no recipients' error, got %v", err)
 	}
@@ -213,7 +213,7 @@ func TestForwardOverridesFromHeaderAndStashesOriginal(t *testing.T) {
 	conn := newConn(host, port)
 	conn.OverrideFrom = "noreply@verified.test"
 	c := &Client{}
-	if err := c.Forward(context.Background(), conn, newMsg(), []string{"r@y.test"}); err != nil {
+	if err := c.Forward(context.Background(), conn, newMsg(), []string{"r@y.test"}, false); err != nil {
 		t.Fatal(err)
 	}
 	tx := be.firstTx(t)
@@ -230,13 +230,33 @@ func TestForwardOverridesFromHeaderAndStashesOriginal(t *testing.T) {
 	}
 }
 
+// Messages ingested via /api/v1/ingest may carry LF-only line endings.
+// rewriteFromHeader must still apply the override (otherwise the
+// rewrite silently no-ops and the original From: leaks through).
+func TestForwardOverridesFromHeaderWithLFOnlyRaw(t *testing.T) {
+	t.Parallel()
+	host, port, be := startServer(t)
+	conn := newConn(host, port)
+	conn.OverrideFrom = "noreply@verified.test"
+	m := newMsg()
+	m.Raw = []byte("From: original@x.test\nSubject: lf-only\n\nbody\n")
+	c := &Client{}
+	if err := c.Forward(context.Background(), conn, m, []string{"r@y.test"}, false); err != nil {
+		t.Fatal(err)
+	}
+	tx := be.firstTx(t)
+	if !bytes.Contains(tx.data, []byte("From: noreply@verified.test")) {
+		t.Errorf("From header NOT rewritten on LF-only raw; data:\n%s", tx.data)
+	}
+}
+
 func TestForwardReturnPathRewritesEnvelopeSender(t *testing.T) {
 	t.Parallel()
 	host, port, be := startServer(t)
 	conn := newConn(host, port)
 	conn.ReturnPath = "bounces@verified.test"
 	c := &Client{}
-	if err := c.Forward(context.Background(), conn, newMsg(), []string{"r@y.test"}); err != nil {
+	if err := c.Forward(context.Background(), conn, newMsg(), []string{"r@y.test"}, false); err != nil {
 		t.Fatal(err)
 	}
 	tx := be.firstTx(t)
@@ -247,6 +267,65 @@ func TestForwardReturnPathRewritesEnvelopeSender(t *testing.T) {
 	// OverrideFrom.
 	if !bytes.Contains(tx.data, []byte("From: original@x.test")) {
 		t.Errorf("From header should remain unchanged; got:\n%s", tx.data)
+	}
+}
+
+// rewriteTo=true (manual Release) rewrites the To: header to the
+// recipients so the delivered copy reads as addressed to them, while the
+// envelope RCPT TO still drives delivery and the original is preserved
+// under X-Original-To.
+func TestForwardRewriteToRewritesHeaderAndStashesOriginal(t *testing.T) {
+	t.Parallel()
+	host, port, be := startServer(t)
+	c := &Client{}
+	if err := c.Forward(context.Background(), newConn(host, port), newMsg(),
+		[]string{"new@y.test"}, true,
+	); err != nil {
+		t.Fatal(err)
+	}
+	tx := be.firstTx(t)
+	if len(tx.to) != 1 || tx.to[0] != "new@y.test" {
+		t.Errorf("RCPT TO = %v, want [new@y.test]", tx.to)
+	}
+	if !bytes.Contains(tx.data, []byte("To: new@y.test")) {
+		t.Errorf("To header NOT rewritten; data:\n%s", tx.data)
+	}
+	if !bytes.Contains(tx.data, []byte("X-Original-To: dropped@x.test")) {
+		t.Errorf("X-Original-To missing; data:\n%s", tx.data)
+	}
+}
+
+// rewriteTo=false (auto-relay / default) must leave the To: header alone.
+func TestForwardWithoutRewriteToPreservesHeader(t *testing.T) {
+	t.Parallel()
+	host, port, be := startServer(t)
+	c := &Client{}
+	if err := c.Forward(context.Background(), newConn(host, port), newMsg(),
+		[]string{"new@y.test"}, false,
+	); err != nil {
+		t.Fatal(err)
+	}
+	tx := be.firstTx(t)
+	if !bytes.Contains(tx.data, []byte("To: dropped@x.test")) {
+		t.Errorf("To header should be preserved when rewriteTo=false; data:\n%s", tx.data)
+	}
+	if bytes.Contains(tx.data, []byte("X-Original-To:")) {
+		t.Errorf("X-Original-To should not be added when rewriteTo=false; data:\n%s", tx.data)
+	}
+}
+
+func TestForwardRewriteToJoinsMultipleRecipients(t *testing.T) {
+	t.Parallel()
+	host, port, be := startServer(t)
+	c := &Client{}
+	if err := c.Forward(context.Background(), newConn(host, port), newMsg(),
+		[]string{"a@y.test", "b@y.test"}, true,
+	); err != nil {
+		t.Fatal(err)
+	}
+	tx := be.firstTx(t)
+	if !bytes.Contains(tx.data, []byte("To: a@y.test, b@y.test")) {
+		t.Errorf("To header should list both recipients; data:\n%s", tx.data)
 	}
 }
 
@@ -305,6 +384,94 @@ func TestRewriteFromHeaderNoHeaderBodyBoundaryReturnsInput(t *testing.T) {
 	out := rewriteFromHeader(in, "new@x", "orig@x")
 	if !bytes.Equal(in, out) {
 		t.Errorf("malformed input should pass through unchanged\nin:  %q\nout: %q", in, out)
+	}
+}
+
+// ---------------------------------------------------------------------
+// rewriteToHeader — pure unit tests
+// ---------------------------------------------------------------------
+
+func TestRewriteToHeaderReplacesAndStashesOriginal(t *testing.T) {
+	t.Parallel()
+	in := []byte("From: f@x\r\nTo: old@y\r\nSubject: hi\r\n\r\nbody\r\n")
+	out := rewriteToHeader(in, "new@z")
+	if !bytes.Contains(out, []byte("To: new@z")) {
+		t.Errorf("To not replaced: %s", out)
+	}
+	if !bytes.Contains(out, []byte("X-Original-To: old@y")) {
+		t.Errorf("X-Original-To not added: %s", out)
+	}
+	if !bytes.HasSuffix(out, []byte("\r\nbody\r\n")) {
+		t.Errorf("body modified: %s", out)
+	}
+}
+
+func TestRewriteToHeaderCollapsesFoldedOriginal(t *testing.T) {
+	t.Parallel()
+	// A folded (multi-line) To: header — continuation lines start with
+	// whitespace. All of it must be captured into X-Original-To and
+	// replaced by the single new line.
+	in := []byte("To: a@y,\r\n b@y,\r\n c@y\r\nSubject: hi\r\n\r\nbody\r\n")
+	out := rewriteToHeader(in, "new@z")
+	if bytes.Contains(out, []byte("b@y")) && !bytes.Contains(out, []byte("X-Original-To:")) {
+		t.Errorf("folded continuation leaked into headers: %s", out)
+	}
+	if !bytes.Contains(out, []byte("To: new@z")) {
+		t.Errorf("To not replaced: %s", out)
+	}
+	if !bytes.Contains(out, []byte("X-Original-To: a@y, b@y, c@y")) {
+		t.Errorf("folded original not collapsed into X-Original-To: %s", out)
+	}
+	if !bytes.Contains(out, []byte("Subject: hi")) {
+		t.Errorf("Subject header lost: %s", out)
+	}
+}
+
+func TestRewriteToHeaderAddsWhenAbsent(t *testing.T) {
+	t.Parallel()
+	in := []byte("From: f@x\r\nSubject: hi\r\n\r\nbody\r\n")
+	out := rewriteToHeader(in, "new@z")
+	if !bytes.Contains(out, []byte("To: new@z")) {
+		t.Errorf("To header not added when absent: %s", out)
+	}
+	if bytes.Contains(out, []byte("X-Original-To:")) {
+		t.Errorf("X-Original-To should not be added when no original To existed: %s", out)
+	}
+}
+
+func TestRewriteToHeaderDoesNotStackOriginal(t *testing.T) {
+	t.Parallel()
+	in := []byte("To: old@y\r\nX-Original-To: stale@y\r\nSubject: hi\r\n\r\nbody\r\n")
+	out := rewriteToHeader(in, "new@z")
+	if c := bytes.Count(out, []byte("X-Original-To:")); c != 1 {
+		t.Errorf("X-Original-To count = %d, want 1 (must replace, not stack)\n%s", c, out)
+	}
+	if !bytes.Contains(out, []byte("X-Original-To: old@y")) {
+		t.Errorf("X-Original-To should reflect old@y, not stale@y\n%s", out)
+	}
+}
+
+func TestRewriteToHeaderLFOnly(t *testing.T) {
+	t.Parallel()
+	in := []byte("From: f@x\nTo: old@y\nSubject: hi\n\nbody\n")
+	out := rewriteToHeader(in, "new@z")
+	if !bytes.Contains(out, []byte("To: new@z")) {
+		t.Errorf("To not replaced on LF-only raw: %s", out)
+	}
+	if !bytes.Contains(out, []byte("X-Original-To: old@y")) {
+		t.Errorf("X-Original-To missing on LF-only raw: %s", out)
+	}
+}
+
+func TestRewriteToHeaderLeavesBodyToLineAlone(t *testing.T) {
+	t.Parallel()
+	in := []byte("To: old@y\r\nSubject: re\r\n\r\nTo: bystander@z\r\nbody\r\n")
+	out := rewriteToHeader(in, "new@z")
+	if !bytes.Contains(out, []byte("\r\nTo: bystander@z\r\n")) {
+		t.Errorf("body 'To:' line was modified: %s", out)
+	}
+	if !bytes.HasPrefix(out, []byte("To: new@z")) {
+		t.Errorf("header To not replaced: %s", out)
 	}
 }
 
