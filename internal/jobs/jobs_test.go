@@ -327,45 +327,51 @@ func TestShutdownReturnsDeadlineExceeded(t *testing.T) {
 	}
 }
 
-// With a job that respects cancellation, Shutdown unwinds promptly (the
-// ctx-aware retry backoff aborts on cancel instead of sleeping through
-// the deadline).
-func TestShutdownCancelsCtxRespectingWorkPromptly(t *testing.T) {
+// withRetry returns immediately when the context is already cancelled,
+// without invoking fn — this is what lets a shutdown-cancelled job
+// abandon its retries promptly.
+func TestWithRetryReturnsImmediatelyWhenContextCanceled(t *testing.T) {
 	t.Parallel()
-	s, _ := store.OpenMemory()
-	defer s.Close()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
 
-	// Receiver blocks until its request context is cancelled — which
-	// Shutdown triggers by cancelling the dispatcher's parent ctx.
-	receiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		<-r.Context().Done()
-		w.WriteHeader(http.StatusNoContent)
-	}))
-	defer receiver.Close()
-
-	if err := s.WebhookUpsert(context.Background(), &store.WebhookConnection{
-		URL: receiver.URL, Enabled: true,
-	}); err != nil {
-		t.Fatal(err)
+	calls := 0
+	err := withRetry(ctx, 3, func() error {
+		calls++
+		return errors.New("transient")
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want context.Canceled", err)
 	}
-
-	d := &Dispatcher{
-		Store: s, Config: config.NewLoader(),
-		Relay: &relay.Client{}, Webhook: webhook.NewClient(),
-		BroadcastCreated:   func(string) {},
-		BroadcastDestroyed: func(string) {},
-		SerializeSummary:   func(*store.Message) ([]byte, error) { return []byte("{}"), nil },
+	if calls != 0 {
+		t.Errorf("fn called %d times on a pre-cancelled ctx, want 0", calls)
 	}
-	d.Start()
+}
 
-	id := ingest(t, s, "shutdown-clean")
-	d.AfterIngest(id)
-	time.Sleep(50 * time.Millisecond) // let the POST get in-flight
+// When the context is cancelled mid-flight, the backoff between attempts
+// aborts on ctx.Done() instead of sleeping through it — so retries stop
+// promptly during shutdown rather than burning the grace budget.
+func TestWithRetryAbortsBackoffOnCancel(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	if err := d.Shutdown(ctx); err != nil {
-		t.Fatalf("Shutdown should complete promptly, got %v", err)
+	calls := 0
+	start := time.Now()
+	err := withRetry(ctx, 3, func() error {
+		calls++
+		cancel() // cancel during the first attempt
+		return errors.New("transient")
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want context.Canceled", err)
+	}
+	if calls != 1 {
+		t.Errorf("fn called %d times, want 1 (backoff should abort before retry)", calls)
+	}
+	// Would be ~500ms+ if the backoff slept; the cancellable select makes
+	// it near-instant.
+	if elapsed := time.Since(start); elapsed > 200*time.Millisecond {
+		t.Errorf("withRetry took %v; backoff did not abort on cancel", elapsed)
 	}
 }
 
