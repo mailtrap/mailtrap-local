@@ -1,9 +1,12 @@
 name: ci
 
-# Runs on every push and PR. Three jobs that run in parallel:
+# Runs on every push and PR. Four jobs that run in parallel:
 #   - go    — gofmt, go vet, go test (every package, race detector on)
-#   - frontend — TypeScript build + ESLint
+#   - frontend — TypeScript build + ESLint + vitest
 #   - build — `scripts/build.sh` smoke (proves the embed pipeline still works)
+#   - docker — builds the image and boots it on its DEFAULT CMD (proves
+#     `docker run <image>` works out of the box; the raw-binary smoke
+#     can't catch image-level regressions like a bad CMD)
 #
 # OpenAPI drift is covered by the `go` job — internal/api/openapi_drift_test.go
 # walks the live router and fails if anything's out of sync with the spec.
@@ -110,3 +113,34 @@ jobs:
           curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
           curl -sf http://127.0.0.1:13550/ | grep -q '<div id="root"'
           kill "$PID"
+
+  docker:
+    # Builds the image and boots it with its DEFAULT CMD — exactly what
+    # `docker run ghcr.io/mailtrap/mailtrap-local` does. The raw-binary
+    # smoke above runs ./bin/mailtrap-local with explicit loopback flags,
+    # so it can't catch image-level regressions: a broken CMD, or the
+    # loopback guard rejecting the image's 0.0.0.0 bind (which once
+    # crash-looped the published image on boot).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: docker build
+        run: docker build -t mailtrap-local:ci .
+
+      - name: boot on default CMD + curl
+        run: |
+          docker run -d --name mtl -p 13550:3550 -p 13535:3535 mailtrap-local:ci
+          ok=
+          for _ in $(seq 1 20); do
+            sleep 0.5
+            if curl -sf http://127.0.0.1:13550/api/v1/messages >/dev/null; then ok=1; break; fi
+          done
+          docker logs mtl
+          if [ -z "$ok" ]; then
+            echo "::error::container did not serve the API on its default CMD"
+            docker rm -f mtl
+            exit 1
+          fi
+          curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          docker rm -f mtl
