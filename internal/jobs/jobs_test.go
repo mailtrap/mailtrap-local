@@ -294,21 +294,54 @@ func TestShutdownReturnsDeadlineExceeded(t *testing.T) {
 	s, _ := store.OpenMemory()
 	defer s.Close()
 
-	// Receiver blocks until its request context is cancelled by the
-	// client (which happens when the dispatcher's parent context is
-	// cancelled by Shutdown). Even so, the goroutine then has to walk
-	// the retry loop, so we test with a deadline shorter than that
-	// total time.
-	release := make(chan struct{})
+	// A side-effect hook that ignores cancellation and blocks forever —
+	// a stand-in for a genuinely unresponsive job. The normal jobs all
+	// honour ctx now (so they'd unwind promptly), but Shutdown must still
+	// enforce its deadline rather than hang on a stuck goroutine.
+	block := make(chan struct{})
+	defer close(block) // unblock the goroutine at test end so it doesn't leak
+
+	d := &Dispatcher{
+		Store: s, Config: config.NewLoader(),
+		Relay: &relay.Client{}, Webhook: webhook.NewClient(),
+		BroadcastCreated:   func(string) { <-block },
+		BroadcastDestroyed: func(string) {},
+		SerializeSummary:   func(*store.Message) ([]byte, error) { return []byte("{}"), nil },
+	}
+	d.Start()
+
+	id := ingest(t, s, "shutdown-stuck")
+	d.AfterIngest(id)
+
+	// Give the broadcast goroutine a beat to start and block.
+	time.Sleep(50 * time.Millisecond)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	err := d.Shutdown(ctx)
+	if err == nil {
+		t.Fatalf("Shutdown returned nil, want a deadline error")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Shutdown returned %v, want DeadlineExceeded", err)
+	}
+}
+
+// With a job that respects cancellation, Shutdown unwinds promptly (the
+// ctx-aware retry backoff aborts on cancel instead of sleeping through
+// the deadline).
+func TestShutdownCancelsCtxRespectingWorkPromptly(t *testing.T) {
+	t.Parallel()
+	s, _ := store.OpenMemory()
+	defer s.Close()
+
+	// Receiver blocks until its request context is cancelled — which
+	// Shutdown triggers by cancelling the dispatcher's parent ctx.
 	receiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		select {
-		case <-release:
-		case <-r.Context().Done():
-		}
+		<-r.Context().Done()
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	defer receiver.Close()
-	defer close(release)
 
 	if err := s.WebhookUpsert(context.Background(), &store.WebhookConnection{
 		URL: receiver.URL, Enabled: true,
@@ -325,21 +358,14 @@ func TestShutdownReturnsDeadlineExceeded(t *testing.T) {
 	}
 	d.Start()
 
-	id := ingest(t, s, "shutdown-stuck")
+	id := ingest(t, s, "shutdown-clean")
 	d.AfterIngest(id)
+	time.Sleep(50 * time.Millisecond) // let the POST get in-flight
 
-	// Give the dispatcher a beat to actually start the POST, otherwise
-	// Shutdown might fire before any goroutine is mid-flight.
-	time.Sleep(50 * time.Millisecond)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	err := d.Shutdown(ctx)
-	if err == nil {
-		t.Fatalf("Shutdown returned nil, want a deadline error")
-	}
-	if !errors.Is(err, context.DeadlineExceeded) {
-		t.Fatalf("Shutdown returned %v, want DeadlineExceeded", err)
+	if err := d.Shutdown(ctx); err != nil {
+		t.Fatalf("Shutdown should complete promptly, got %v", err)
 	}
 }
 

@@ -1,11 +1,11 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/mail"
-	"sort"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -156,33 +156,17 @@ func (s *Server) headers(w http.ResponseWriter, r *http.Request) {
 
 	headersMap := map[string][]string{}
 	if len(m.Raw) > 0 {
-		// net/mail.ReadMessage parses headers without copying the body.
-		if msg, err := mail.ReadMessage(strings.NewReader(string(m.Raw))); err == nil {
+		// bytes.NewReader avoids copying the raw message into a string.
+		if msg, err := mail.ReadMessage(bytes.NewReader(m.Raw)); err == nil {
 			for k, vs := range msg.Header {
 				headersMap[k] = append(headersMap[k], vs...)
 			}
 		}
 	}
 
-	// Stable, alphabetized output (matches the documented behavior).
-	type kv struct {
-		K string
-		V []string
-	}
-	keys := make([]string, 0, len(headersMap))
-	for k := range headersMap {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	ordered := make(map[string][]string, len(keys))
-	for _, k := range keys {
-		ordered[k] = headersMap[k]
-	}
-
-	// JSON map ordering isn't guaranteed by encoding/json, but Go maps
-	// printed via json.Marshal are sorted by key in Go 1.12+ — so this
-	// produces alphabetical output anyway.
-	writeJSON(w, http.StatusOK, ordered)
+	// encoding/json marshals map keys in sorted order, so the response is
+	// alphabetized by header name without any extra work here.
+	writeJSON(w, http.StatusOK, headersMap)
 }
 
 // part handles GET /api/v1/message/:id/part/:part_id — attachment bytes
