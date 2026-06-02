@@ -34,7 +34,7 @@ const markAllRead = vi.fn()
 
 vi.mock('../../api/messages', async () => {
   const actual = await vi.importActual<typeof import('../../api/messages')>(
-    '../api/messages',
+    '../../api/messages',
   )
   return {
     ...actual,
