@@ -250,7 +250,7 @@ describe('MessageView', () => {
     await user.click(screen.getByTitle(/Forward via SMTP relay/i))
 
     expect(
-      screen.getByPlaceholderText('Forward to email'),
+      screen.getByPlaceholderText('alice@example.com, bob@example.com'),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument()
   })

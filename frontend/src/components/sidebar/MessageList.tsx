@@ -93,7 +93,17 @@ export default function MessageList({
   error,
 }: Props) {
   if (error) return <div className={emptyState}>Error: {error}</div>
-  if (messages && messages.length === 0) {
+
+  // An active search owns the list, so resolve its empty-state before the
+  // inbox's. Otherwise a search that returns hits while the inbox itself
+  // is empty would render "No messages yet" instead of the results.
+  if (searchResults !== null) {
+    if (searchResults.length === 0 && !searching) {
+      return (
+        <div className={emptyState}>No matches for "{query.trim()}".</div>
+      )
+    }
+  } else if (messages && messages.length === 0) {
     return (
       <div className={emptyState}>
         <p>No messages yet.</p>
@@ -107,11 +117,7 @@ export default function MessageList({
       </div>
     )
   }
-  if (searchResults !== null && searchResults.length === 0 && !searching) {
-    return (
-      <div className={emptyState}>No matches for "{query.trim()}".</div>
-    )
-  }
+
   const displayed = searchResults ?? messages
   if (!displayed || displayed.length === 0) return null
   return (
