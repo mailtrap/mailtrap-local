@@ -188,7 +188,7 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 	atts, _ := d.Store.LoadAttachments(ctx, m.ID)
 
 	cl := cloud.NewClient(apiToken, sandboxID)
-	if err := withRetry(3, func() error {
+	if err := withRetry(ctx, 3, func() error {
 		return cl.Send(ctx, m, inline, atts)
 	}); err != nil {
 		slog.Warn("cloud-mirror failed",
@@ -228,7 +228,7 @@ func (d *Dispatcher) relayMirror(msgID string) {
 	// mirrors the message untouched (rewriteTo=false) — rewriting To: to
 	// the envelope recipients would leak any Bcc'd addresses into the
 	// visible To: header.
-	if err := withRetry(3, func() error {
+	if err := withRetry(ctx, 3, func() error {
 		return d.Relay.Forward(ctx, overlay, m, m.SMTPTo, false)
 	}); err != nil {
 		slog.Warn("relay-mirror failed",
@@ -257,7 +257,7 @@ func (d *Dispatcher) webhookDelivery(msgID string) {
 	if err != nil {
 		return
 	}
-	if err := withRetry(3, func() error {
+	if err := withRetry(ctx, 3, func() error {
 		return d.Webhook.Deliver(ctx, url, secret, payload)
 	}); err != nil {
 		slog.Warn("webhook delivery failed",
@@ -322,9 +322,12 @@ func (d *Dispatcher) enforceRetention() {
 // Helpers
 // ---------------------------------------------------------------------
 
-func withRetry(max int, fn func() error) error {
+func withRetry(ctx context.Context, max int, fn func() error) error {
 	var lastErr error
 	for i := 0; i < max; i++ {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		err := fn()
 		if err == nil {
 			return nil
@@ -337,8 +340,16 @@ func withRetry(max int, fn func() error) error {
 			return err
 		}
 		lastErr = err
-		// Linear backoff is fine for our scale (single-dev local tool).
-		time.Sleep(time.Duration(i+1) * 500 * time.Millisecond)
+		if i == max-1 {
+			break // no point sleeping after the final attempt
+		}
+		// Linear backoff, but abort promptly if the dispatcher is shutting
+		// down (ctx cancelled) instead of sleeping through the deadline.
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Duration(i+1) * 500 * time.Millisecond):
+		}
 	}
 	return lastErr
 }

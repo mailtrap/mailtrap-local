@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -110,8 +112,7 @@ func (s *Store) LoadPartByID(ctx context.Context, msgID, partID string) (*Part, 
 		&p.ChecksumMD5, &p.ChecksumSHA1, &p.ChecksumSHA256,
 	)
 	if err != nil {
-		// sql.ErrNoRows → ErrNotFound
-		if err.Error() == "sql: no rows in result set" {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
 		return nil, err
