@@ -33,7 +33,11 @@ func validate(htmlBody string, cfg *loaded) []match {
 		nav := htmlquery.CreateXPathNavigator(doc)
 		iter := hr.xpath.Select(nav)
 		for iter.MoveNext() {
-			node := iter.Current().(*htmlquery.NodeNavigator).Current()
+			nav, ok := iter.Current().(*htmlquery.NodeNavigator)
+			if !ok {
+				continue
+			}
+			node := nav.Current()
 			matches = append(matches, match{line: lineOf(node), rule: hr.rule})
 		}
 	}
@@ -83,12 +87,12 @@ func parseInlineDeclarations(s string) []declaration {
 		if p == "" {
 			continue
 		}
-		idx := strings.Index(p, ":")
-		if idx < 0 {
+		before, after, ok := strings.Cut(p, ":")
+		if !ok {
 			continue
 		}
-		prop := strings.ToLower(strings.TrimSpace(p[:idx]))
-		val := strings.TrimSpace(p[idx+1:])
+		prop := strings.ToLower(strings.TrimSpace(before))
+		val := strings.TrimSpace(after)
 		out = append(out, declaration{prop: prop, value: val})
 	}
 	return out

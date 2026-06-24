@@ -8,6 +8,7 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -37,6 +38,11 @@ import (
 // by goreleaser (see .goreleaser.yaml). Defaults are useful for `go run`
 // + bare `go build` so dev builds carry an obvious sentinel.
 var (
+	errEmptyListenAddress  = errors.New("empty listen address")
+	errListenBindsAll      = errors.New("listen binds all interfaces")
+	errListenNotLoopback   = errors.New("listen hostname is not loopback")
+	errListenIPNotLoopback = errors.New("listen address is not loopback")
+
 	version   = "dev"
 	commit    = "none"
 	buildDate = "unknown"
@@ -44,6 +50,11 @@ var (
 
 //go:embed openapi.yaml
 var openAPISpec []byte
+
+const (
+	shutdownTimeout  = 10 * time.Second
+	broadcastTimeout = 5 * time.Second
+)
 
 // distFS holds the built React SPA. `scripts/build.sh` populates dist/
 // from frontend/dist before `go build`. The `all:` prefix is required
@@ -80,7 +91,8 @@ func main() {
 		showVersion = flag.Bool("version", false,
 			"Print version and exit.")
 		unsafeNonLoopback = flag.Bool("unsafe-non-loopback", false,
-			"Allow binding to non-loopback addresses. The server has no auth/TLS/rate-limiting; only use on trusted networks.")
+			"Allow binding to non-loopback addresses. The server has no auth/TLS/rate-limiting; "+
+				"only use on trusted networks.")
 		logLevelFlag = flag.String("log-level", "info",
 			"Log level: debug, info, warn, error.")
 	)
@@ -122,7 +134,7 @@ func main() {
 	if err != nil {
 		fatal("open store", err)
 	}
-	defer st.Close()
+	defer func() { _ = st.Close() }()
 
 	// At-rest encryption for the cloud API token / relay password /
 	// webhook secret. Key file auto-generated on first use; override
@@ -190,11 +202,11 @@ func main() {
 	httpSrv := &http.Server{
 		Addr:              *httpListen,
 		Handler:           apiSrv.Router(),
-		ReadHeaderTimeout: 10 * time.Second,
+		ReadHeaderTimeout: shutdownTimeout,
 	}
 	go func() {
 		slog.Info("HTTP listening", slog.String("addr", *httpListen))
-		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fatal("http", err)
 		}
 	}()
@@ -217,12 +229,10 @@ func main() {
 	//      mirror, relay mirror, webhook delivery, retention). When
 	//      the deadline expires, Shutdown returns an error and the
 	//      remaining goroutines are abandoned — the process exits.
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
-	if err := srv.Close(); err != nil {
-		slog.Warn("smtp close", slog.Any("err", err))
-	}
+	srv.Close()
 	if err := httpSrv.Shutdown(shutdownCtx); err != nil {
 		slog.Warn("http shutdown", slog.Any("err", err))
 	}
@@ -236,7 +246,8 @@ func main() {
 // extra k/v attributes), then os.Exit(1). slog has no built-in
 // equivalent of log.Fatalf, hence the helper.
 func fatal(msg string, err error, kv ...any) {
-	attrs := []any{slog.Any("err", err)}
+	attrs := make([]any, 0, 1+len(kv))
+	attrs = append(attrs, slog.Any("err", err))
 	attrs = append(attrs, kv...)
 	slog.Error(msg, attrs...)
 	os.Exit(1)
@@ -246,7 +257,7 @@ func fatal(msg string, err error, kv ...any) {
 // frame. Lives here (not jobs/) because it crosses the jobs ↔ api
 // package line.
 func broadcastCreated(hub *live.Hub, st *store.Store, msgID string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), broadcastTimeout)
 	defer cancel()
 	m, err := st.Get(ctx, msgID)
 	if err != nil {
@@ -273,7 +284,7 @@ func defaultDBPath() string {
 func requireLoopback(addr string) error {
 	addr = strings.TrimSpace(addr)
 	if addr == "" {
-		return fmt.Errorf("empty listen address")
+		return errEmptyListenAddress
 	}
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
@@ -281,7 +292,7 @@ func requireLoopback(addr string) error {
 	}
 	if host == "" {
 		// e.g. ":3535" — Go binds all interfaces; refuse.
-		return fmt.Errorf("listen %q binds all interfaces", addr)
+		return fmt.Errorf("%w: %q", errListenBindsAll, addr)
 	}
 	if host == "localhost" {
 		return nil
@@ -290,10 +301,10 @@ func requireLoopback(addr string) error {
 	if ip == nil {
 		// A hostname that's not "localhost". We don't resolve here —
 		// the user should pass an explicit IP they trust.
-		return fmt.Errorf("listen %q: hostname is not loopback (use 127.0.0.1, ::1, or localhost)", addr)
+		return fmt.Errorf("%w: %q (use 127.0.0.1, ::1, or localhost)", errListenNotLoopback, addr)
 	}
 	if !ip.IsLoopback() {
-		return fmt.Errorf("listen %q: %s is not a loopback address", addr, ip)
+		return fmt.Errorf("%w: %q: %s", errListenIPNotLoopback, addr, ip)
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -9,14 +10,22 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/live"
 )
 
+const (
+	wsReadBufferSize  = 1024
+	wsWriteBufferSize = 4096
+	wsReadDeadline    = 60 * time.Second
+	wsPingInterval    = 25 * time.Second
+	wsWriteDeadline   = 10 * time.Second
+)
+
 // upgrader accepts WebSocket upgrades only from loopback origins (or
 // requests with no Origin, e.g. non-browser clients). A malicious site a
 // developer visits would otherwise be able to open /cable cross-origin
 // and stream every caught email as it arrives — the WebSocket equivalent
 // of the cross-origin inbox read the HTTP CORS policy already blocks.
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 4096,
+	ReadBufferSize:  wsReadBufferSize,
+	WriteBufferSize: wsWriteBufferSize,
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
 		return origin == "" || isLoopbackOrigin(origin)
@@ -41,16 +50,16 @@ func (s *Server) cable(w http.ResponseWriter, r *http.Request) {
 
 	// Read loop is just a way to detect a closed connection. We don't
 	// expect inbound messages.
-	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline))
 	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		_ = conn.SetReadDeadline(time.Now().Add(wsReadDeadline))
 		return nil
 	})
 
 	// Periodic ping to keep the connection alive through proxies.
 	pingDone := make(chan struct{})
 	go func() {
-		ticker := time.NewTicker(25 * time.Second)
+		ticker := time.NewTicker(wsPingInterval)
 		defer ticker.Stop()
 		for {
 			select {
@@ -84,19 +93,28 @@ func newWSSubscriber(c *websocket.Conn) *wsSubscriber {
 func (s *wsSubscriber) Send(b []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_ = s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	return s.conn.WriteMessage(websocket.TextMessage, b)
+	_ = s.conn.SetWriteDeadline(time.Now().Add(wsWriteDeadline))
+	if err := s.conn.WriteMessage(websocket.TextMessage, b); err != nil {
+		return fmt.Errorf("ws send: %w", err)
+	}
+	return nil
+}
+
+func (s *wsSubscriber) Close() error {
+	if err := s.conn.Close(); err != nil {
+		return fmt.Errorf("ws close: %w", err)
+	}
+	return nil
 }
 
 func (s *wsSubscriber) ping() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_ = s.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	return s.conn.WriteMessage(websocket.PingMessage, nil)
-}
-
-func (s *wsSubscriber) Close() error {
-	return s.conn.Close()
+	_ = s.conn.SetWriteDeadline(time.Now().Add(wsWriteDeadline))
+	if err := s.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+		return fmt.Errorf("ws ping: %w", err)
+	}
+	return nil
 }
 
 var _ live.Subscriber = (*wsSubscriber)(nil)

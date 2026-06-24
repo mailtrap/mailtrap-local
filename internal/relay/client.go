@@ -26,6 +26,11 @@ import (
 // Client is stateless — the SMTP connection is opened per call. All
 // methods accept a context for cancellation, but the stdlib smtp client
 // doesn't natively honor it; we apply it via net.Dialer.DialContext.
+var (
+	errNoRecipients     = errors.New("no recipients")
+	errStartTLSRequired = errors.New("relay: tls=starttls requested but server does not advertise STARTTLS")
+)
+
 type Client struct{}
 
 // Probe opens a connection, runs STARTTLS / auth as configured, and
@@ -35,13 +40,13 @@ func (c *Client) Probe(ctx context.Context, host string, port int, username, pas
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	client, err := smtp.NewClient(conn, host)
 	if err != nil {
 		return fmt.Errorf("greet: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	if err := maybeStartTLS(client, host, tlsMode); err != nil {
 		return err
@@ -49,7 +54,10 @@ func (c *Client) Probe(ctx context.Context, host string, port int, username, pas
 	if err := authenticate(client, host, username, password, authMode); err != nil {
 		return err
 	}
-	return client.Quit()
+	if err := client.Quit(); err != nil {
+		return fmt.Errorf("quit: %w", err)
+	}
+	return nil
 }
 
 // Forward relays a stored message to `recipients` at the SMTP envelope
@@ -69,7 +77,7 @@ func (c *Client) Forward(ctx context.Context, conn *store.RelayConnection,
 	m *store.Message, recipients []string, rewriteTo bool,
 ) error {
 	if len(recipients) == 0 {
-		return errors.New("no recipients")
+		return errNoRecipients
 	}
 
 	body := bytes.Clone(m.Raw)
@@ -89,13 +97,13 @@ func (c *Client) Forward(ctx context.Context, conn *store.RelayConnection,
 	if err != nil {
 		return err
 	}
-	defer netConn.Close()
+	defer func() { _ = netConn.Close() }()
 
 	client, err := smtp.NewClient(netConn, conn.Host)
 	if err != nil {
 		return fmt.Errorf("greet: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	if err := maybeStartTLS(client, conn.Host, conn.TLS); err != nil {
 		return err
@@ -123,7 +131,10 @@ func (c *Client) Forward(ctx context.Context, conn *store.RelayConnection,
 	if err := wc.Close(); err != nil {
 		return fmt.Errorf("close DATA: %w", err)
 	}
-	return client.Quit()
+	if err := client.Quit(); err != nil {
+		return fmt.Errorf("quit: %w", err)
+	}
+	return nil
 }
 
 // ---------------------------------------------------------------------
@@ -158,15 +169,21 @@ func maybeStartTLS(c *smtp.Client, host, tlsMode string) error {
 		// attacker from stripping the STARTTLS advertisement to force a
 		// cleartext session (the classic STARTTLS-stripping downgrade).
 		if ok, _ := c.Extension("STARTTLS"); !ok {
-			return errors.New("relay: tls=starttls requested but server does not advertise STARTTLS")
+			return errStartTLSRequired
 		}
-		return c.StartTLS(&tls.Config{ServerName: host})
+		if err := c.StartTLS(&tls.Config{ServerName: host}); err != nil {
+			return fmt.Errorf("starttls: %w", err)
+		}
+		return nil
 	case "auto", "":
 		// Opportunistic: encrypt if offered, else continue.
 		if ok, _ := c.Extension("STARTTLS"); !ok {
 			return nil
 		}
-		return c.StartTLS(&tls.Config{ServerName: host})
+		if err := c.StartTLS(&tls.Config{ServerName: host}); err != nil {
+			return fmt.Errorf("starttls: %w", err)
+		}
+		return nil
 	case "off", "never", "none":
 		return nil
 	case "ssl", "implicit", "always":
@@ -194,7 +211,10 @@ func authenticate(c *smtp.Client, host, user, pass, mode string) error {
 	if strings.EqualFold(mode, "none") {
 		return nil
 	}
-	return c.Auth(smtp.PlainAuth("", user, pass, host))
+	if err := c.Auth(smtp.PlainAuth("", user, pass, host)); err != nil {
+		return fmt.Errorf("auth: %w", err)
+	}
+	return nil
 }
 
 // rewriteFromHeader replaces the first `From:` header value with the
@@ -237,7 +257,8 @@ func rewriteFromHeader(body []byte, newFrom, originalFrom string) []byte {
 			}
 			filtered = append(filtered, line)
 		}
-		out = append(filtered, []byte("X-Original-From: "+originalFrom))
+		filtered = append(filtered, []byte("X-Original-From: "+originalFrom))
+		out = filtered
 	}
 
 	var buf bytes.Buffer

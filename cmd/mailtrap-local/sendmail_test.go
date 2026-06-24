@@ -119,7 +119,12 @@ func TestSendmailDispatch(t *testing.T) {
 		{"daemon mode (default name)", []string{"mailtrap-local", "--smtp-listen", "127.0.0.1:3535"}, false, nil},
 		{"sendmail by basename", []string{"/usr/local/bin/sendmail", "-t", "-i"}, true, []string{"-t", "-i"}},
 		{"mailtrap-sendmail by basename", []string{"/opt/homebrew/bin/mailtrap-sendmail", "-t"}, true, []string{"-t"}},
-		{"explicit subcommand", []string{"mailtrap-local", "sendmail", "-t", "you@example.com"}, true, []string{"-t", "you@example.com"}},
+		{
+			"explicit subcommand",
+			[]string{"mailtrap-local", "sendmail", "-t", "you@example.com"},
+			true,
+			[]string{"-t", "you@example.com"},
+		},
 		{"basename with .exe suffix", []string{"sendmail.exe", "-t"}, true, []string{"-t"}},
 		{"empty argv", []string{}, false, nil},
 	}
@@ -157,10 +162,12 @@ func (s *captureSession) Mail(from string, _ *smtp.MailOptions) error {
 	s.from = from
 	return nil
 }
+
 func (s *captureSession) Rcpt(to string, _ *smtp.RcptOptions) error {
 	s.to = append(s.to, to)
 	return nil
 }
+
 func (s *captureSession) Data(r io.Reader) error {
 	raw, err := io.ReadAll(r)
 	if err != nil {
@@ -280,7 +287,8 @@ func TestSendmailLFOnlyInputIsNormalized(t *testing.T) {
 	}
 	be.mu.Lock()
 	defer be.mu.Unlock()
-	assert.True(t, bytes.Contains(be.data, []byte("Subject: lf\r\n")), "expected CRLF-terminated headers in DATA, got: %q", be.data)
+	assert.True(t, bytes.Contains(be.data, []byte("Subject: lf\r\n")),
+		"expected CRLF-terminated headers in DATA, got: %q", be.data)
 	assert.False(t, bytes.Contains(be.data, []byte("\r\r\n")), "CR doubled — got bare \\r\\r\\n in DATA: %q", be.data)
 }
 

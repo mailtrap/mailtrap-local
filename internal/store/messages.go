@@ -146,7 +146,7 @@ func (s *Store) Insert(ctx context.Context, p *IngestPayload) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback() //nolint:errcheck — rolled back if Commit not called
+	defer func() { _ = tx.Rollback() }()
 
 	const insertMsg = `
 		INSERT INTO messages (
@@ -261,6 +261,7 @@ func (s *Store) List(ctx context.Context, opts ListOpts) (*ListResult, error) {
 		return nil, err
 	}
 
+	//nolint:gosec // column names are compile-time constants; scope uses placeholders
 	pageQuery := `
 		SELECT ` + messageColumns + `
 		FROM messages
@@ -273,7 +274,7 @@ func (s *Store) List(ctx context.Context, opts ListOpts) (*ListResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("page query: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var msgs []*Message
 	for rows.Next() {
@@ -284,7 +285,7 @@ func (s *Store) List(ctx context.Context, opts ListOpts) (*ListResult, error) {
 		msgs = append(msgs, m)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, wrapErr(err, "iterate messages")
 	}
 
 	counts, err := s.attachmentCounts(ctx, msgs)
@@ -340,16 +341,16 @@ func (s *Store) AllCategories(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("categories: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var cats []string
 	for rows.Next() {
 		var c string
 		if err := rows.Scan(&c); err != nil {
-			return nil, err
+			return nil, wrapErr(err, "scan category")
 		}
 		cats = append(cats, c)
 	}
-	return cats, rows.Err()
+	return cats, wrapErr(rows.Err(), "iterate categories")
 }
 
 // AttachmentsCount is the public version that takes IDs directly —
@@ -377,6 +378,7 @@ func (s *Store) attachmentCounts(ctx context.Context, msgs []*Message) (map[stri
 		args[i] = m.ID
 		out[m.ID] = 0 // ensure key exists even when no attachments
 	}
+	//nolint:gosec // IN placeholders are ?-bound
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT message_id, COUNT(*)
 		FROM attachments
@@ -387,16 +389,16 @@ func (s *Store) attachmentCounts(ctx context.Context, msgs []*Message) (map[stri
 	if err != nil {
 		return nil, fmt.Errorf("attachment counts: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var id string
 		var n int
 		if err := rows.Scan(&id, &n); err != nil {
-			return nil, err
+			return nil, wrapErr(err, "scan attachment count")
 		}
 		out[id] = n
 	}
-	return out, rows.Err()
+	return out, wrapErr(rows.Err(), "iterate attachment counts")
 }
 
 // ---------------------------------------------------------------------
@@ -451,7 +453,7 @@ func scanMessage(s scanner) (*Message, error) {
 		&createdAtStr, &updatedAtStr,
 	)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "scan message")
 	}
 	if err := json.Unmarshal([]byte(smtpToJSON), &m.SMTPTo); err != nil {
 		m.SMTPTo = []string{} // tolerant: corrupt JSON shouldn't 500 the list endpoint
@@ -511,7 +513,7 @@ func buildRecipientsText(to, cc, bcc []Address) string {
 func newID() (string, error) {
 	var b [10]byte
 	if _, err := rand.Read(b[:]); err != nil {
-		return "", err
+		return "", wrapErr(err, "generate id")
 	}
 	return base64.RawURLEncoding.EncodeToString(b[:]), nil
 }

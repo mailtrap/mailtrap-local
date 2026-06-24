@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +19,7 @@ import (
 // headers, and body Mailtrap's Send API would have received.
 type stubServer struct {
 	*httptest.Server
-	mu         func() // unused placeholder; we sync via channels not locks
+
 	lastMethod string
 	lastPath   string
 	lastAuth   string
@@ -94,12 +93,15 @@ func TestSendBuildsExpectedPayload(t *testing.T) {
 	var got map[string]any
 	require.NoError(t, json.Unmarshal(stub.lastBody, &got))
 
-	from := got["from"].(map[string]any)
+	from, ok := got["from"].(map[string]any)
+	require.True(t, ok)
 	assert.Equal(t, "app@x.test", from["email"])
 	assert.Equal(t, "App", from["name"])
-	to := got["to"].([]any)
+	to, ok := got["to"].([]any)
+	require.True(t, ok)
 	require.Len(t, to, 1)
-	first := to[0].(map[string]any)
+	first, ok := to[0].(map[string]any)
+	require.True(t, ok)
 	assert.Equal(t, "alice@y.test", first["email"])
 	assert.Equal(t, "Alice", first["name"])
 	assert.Equal(t, "Welcome", got["subject"])
@@ -134,7 +136,7 @@ func TestSendFallsBackToEmptyTextWhenBothBodiesAbsent(t *testing.T) {
 	require.NoError(t, c.Send(context.Background(), msg, nil, nil))
 	var got map[string]any
 	_ = json.Unmarshal(stub.lastBody, &got)
-	assert.Equal(t, "", got["text"])
+	assert.Empty(t, got["text"])
 }
 
 func TestSendAttachmentsBase64Encoded(t *testing.T) {
@@ -157,11 +159,13 @@ func TestSendAttachmentsBase64Encoded(t *testing.T) {
 	rawAtts, ok := got["attachments"].([]any)
 	require.True(t, ok)
 	require.Len(t, rawAtts, 1)
-	first := rawAtts[0].(map[string]any)
+	first, ok := rawAtts[0].(map[string]any)
+	require.True(t, ok)
 	assert.Equal(t, "report.pdf", first["filename"])
 	assert.Equal(t, "application/pdf", first["type"])
 	assert.Equal(t, "attachment", first["disposition"])
-	encoded := first["content"].(string)
+	encoded, ok := first["content"].(string)
+	require.True(t, ok)
 	decoded, err := base64.StdEncoding.DecodeString(encoded)
 	require.NoError(t, err)
 	assert.Equal(t, "fake-pdf-bytes", string(decoded))
@@ -184,8 +188,10 @@ func TestSendInlinePartsMarkedDispositionInline(t *testing.T) {
 	require.NoError(t, c.Send(context.Background(), minMsg(), inline, nil))
 	var got map[string]any
 	_ = json.Unmarshal(stub.lastBody, &got)
-	atts := got["attachments"].([]any)
-	first := atts[0].(map[string]any)
+	atts, ok := got["attachments"].([]any)
+	require.True(t, ok)
+	first, ok := atts[0].(map[string]any)
+	require.True(t, ok)
 	assert.Equal(t, "inline", first["disposition"])
 	assert.Equal(t, "img1@x", first["content_id"])
 	assert.Equal(t, "img1@x", first["filename"])
@@ -248,7 +254,7 @@ func TestSendTransientErrorOn5xx(t *testing.T) {
 	err := c.Send(context.Background(), minMsg(), nil, nil)
 	require.Error(t, err)
 	var perm *PermanentError
-	assert.False(t, errors.As(err, &perm))
+	assert.NotErrorAs(t, err, &perm)
 }
 
 func TestSendNetworkErrorIsTransient(t *testing.T) {
@@ -261,5 +267,5 @@ func TestSendNetworkErrorIsTransient(t *testing.T) {
 	err := c.Send(context.Background(), minMsg(), nil, nil)
 	require.Error(t, err)
 	var perm *PermanentError
-	assert.False(t, errors.As(err, &perm))
+	assert.NotErrorAs(t, err, &perm)
 }

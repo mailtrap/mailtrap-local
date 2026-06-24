@@ -40,7 +40,8 @@ scripts/build.sh   # → bin/mailtrap-local
 Everything must pass before a PR is merged — CI runs all of this.
 
 ```sh
-# Go: every package, race detector on (matches CI)
+# Go: lint + every package, race detector on (matches CI)
+golangci-lint run ./cmd/... ./internal/...
 go test -race ./cmd/... ./internal/...
 
 # Frontend (from frontend/)
@@ -56,7 +57,7 @@ routes, update **both** `docs/api/openapi.yaml` and the embedded copy at
 
 ## Code style
 
-- **Go:** `gofmt` is enforced in CI. Keep handlers thin; the `internal/`
+- **Go:** `golangci-lint` (see `.golangci.yml`) is enforced in CI. Keep handlers thin; the `internal/`
   packages are split by concern (`api`, `smtpd`, `store`, `jobs`, `relay`,
   `webhook`, `cloud`, `live`, `secrets`, `config`). Prefer `errors.Is`/`errors.As`
   over string matching.
@@ -74,7 +75,7 @@ routes, update **both** `docs/api/openapi.yaml` and the embedded copy at
    PR.
 3. Add or update tests for behavior changes. Bug fixes should come with a
    regression test.
-4. Make sure the full test suite (Go + frontend) and `go vet` pass locally.
+4. Make sure `golangci-lint`, the full test suite (Go + frontend), and `go vet` pass locally.
 5. Write a clear description: what changed, why, and how you verified it.
 
 ## Security

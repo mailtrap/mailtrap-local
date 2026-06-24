@@ -25,6 +25,14 @@ import (
 
 // Server wraps the emersion/go-smtp listener with our backend +
 // metadata. Caller drives the lifecycle via Start / Close.
+var errEmptyDataBody = errors.New("empty DATA body")
+
+const (
+	defaultMaxMessageBytes = 25 * 1024 * 1024
+	defaultReadTimeout     = 5 * time.Minute
+	maxSnippetLen          = 250
+)
+
 type Server struct {
 	// Listen is the bind address; default "127.0.0.1:3535". Comma-
 	// separated host:port pairs spin up multiple listeners (used to
@@ -54,13 +62,13 @@ func (s *Server) Start() error {
 		s.Listen = "127.0.0.1:3535"
 	}
 	if s.MaxMessageBytes == 0 {
-		s.MaxMessageBytes = 25 * 1024 * 1024
+		s.MaxMessageBytes = defaultMaxMessageBytes
 	}
 
 	be := &backend{store: s.Store, afterInsert: s.AfterInsert}
 	srv := smtp.NewServer(be)
 	srv.Domain = "mailtrap-local"
-	srv.ReadTimeout = 5 * time.Minute
+	srv.ReadTimeout = defaultReadTimeout
 	srv.WriteTimeout = 1 * time.Minute
 	srv.MaxMessageBytes = s.MaxMessageBytes
 	srv.MaxRecipients = 100
@@ -100,7 +108,7 @@ func (s *Server) Addrs() []string {
 
 // Close stops the server and closes all listeners. Safe to call
 // multiple times.
-func (s *Server) Close() error {
+func (s *Server) Close() {
 	if s.server != nil {
 		_ = s.server.Close()
 	}
@@ -108,7 +116,6 @@ func (s *Server) Close() error {
 		_ = l.Close()
 	}
 	s.listeners = nil
-	return nil
 }
 
 // ---------------------------------------------------------------------
@@ -144,7 +151,7 @@ func (s *session) Rcpt(to string, _ *smtp.RcptOptions) error {
 func (s *session) Data(r io.Reader) error {
 	raw, err := io.ReadAll(r)
 	if err != nil {
-		return err
+		return fmt.Errorf("read data: %w", err)
 	}
 	// Reject empty/whitespace-only DATA bodies — clients that close
 	// DATA without writing any content still send the SMTP terminator
@@ -152,7 +159,7 @@ func (s *session) Data(r io.Reader) error {
 	// of CRLFs. Without this guard those would land as ghost rows
 	// the UI can't render.
 	if len(bytes.TrimSpace(raw)) == 0 {
-		return errors.New("empty DATA body")
+		return errEmptyDataBody
 	}
 	env, err := enmime.ReadEnvelope(bytes.NewReader(raw))
 	if err != nil {
@@ -193,7 +200,7 @@ func buildPayload(env *enmime.Envelope, raw []byte, smtpFrom string, smtpTo []st
 	}
 
 	snippet := env.Text
-	if len(snippet) > 250 {
+	if len(snippet) > maxSnippetLen {
 		snippet = snippet[:250]
 	}
 
