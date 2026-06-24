@@ -1,0 +1,172 @@
+internal/webhook/client_test.go
+  s_8a2c4bff8ef3fb::t_9515b302403042 15-17,132
+  s_6ead94e5554ac8::t_224cb2f03060b7 64-70,80-81,93,96-97,106-107,115,117,124,126,133,140-142,149-150,158
+internal/api/wire_test.go
+  s_6ead94e5554ac8::t_786aac2f03c5b8 1-124
+cmd/mailtrap-local/sendmail_test.go
+  s_6ead94e5554ac8::t_4aaa172d77206a 92
+  s_6ead94e5554ac8::t_9b20d84c17dc00 310
+  s_dec85b381db747::t_a206e20f0933a0 283-284
+  s_dec85b381db747::t_ca286ba42ff9b7 232
+  s_6ead94e5554ac8::t_bc3bf834363651 296
+  s_dec85b381db747::t_cbd4e58204c467 13-14,82-83,129-131,220,225,229,231,250,254,258-259,275,279,297,311
+  s_6ead94e5554ac8::t_8512535e47f221 193
+  s_6ead94e5554ac8::t_04810be9bb08a3 108
+internal/relay/client_test.go
+  s_6ead94e5554ac8::t_a689e0db675988 125
+  s_6ead94e5554ac8::t_7204a55c8b4610 182-183
+  s_6ead94e5554ac8::t_9ee769157f4e3d 432
+  s_6ead94e5554ac8::t_51ac82f4b1680e 194,196
+  s_6ead94e5554ac8::t_cc41cbf38c1408 332
+  s_6ead94e5554ac8::t_d8ef637d55a7ed 265
+  s_6ead94e5554ac8::t_38afb21e1aca16 445
+  s_6ead94e5554ac8::t_594efc237a40c3 205
+  s_6ead94e5554ac8::t_1296e7a734ea22 106,184
+  s_6ead94e5554ac8::t_c24a67dbd21aba 85
+  s_6ead94e5554ac8::t_56ce1ca1fa4f99 220
+  s_6ead94e5554ac8::t_ae829a36af0a17 424
+  s_6ead94e5554ac8::t_7e4bf0df625025 136-137
+  s_35d738b67e4940::t_fb904dc7f41396 18-19,118,177,179,192,204,214,234,245,261,263,275,277,287,289,305,314,325,345,356,375,392,441,443-444
+  s_35d738b67e4940::t_855b842b9c10ec 216-217,236,250,266-267,279-280,291,302-303,315,324,343-344,358-360,367-368,376,383-384,391
+  s_6ead94e5554ac8::t_d298f21bc0d167 145
+  s_6ead94e5554ac8::t_f5a7e865a687bb 247
+  s_6ead94e5554ac8::t_ddf0ecbc8600ea 403,407,409
+internal/config/config_test.go
+  s_dec85b381db747::t_9740c156be3515 7-9,14-15,31-32,42-44,46-47,63-68,78-83,100-105,118,127-128,137-138,159-161,175-176,182-183,186-188
+  s_dec85b381db747::t_2766255d2355b8 45
+internal/htmlcheck/service_test.go
+  s_6ead94e5554ac8::t_48ff8e7903c2ec 85
+  s_dec85b381db747::t_2fd86e97cd419a 6-8,15,34,53,66-67,94-96
+  s_6ead94e5554ac8::t_cb3386ac5854b8 47
+  s_6ead94e5554ac8::t_fedd40b79f38ef 73-74
+  s_6ead94e5554ac8::t_dfe81180d379c4 57-58
+internal/api/helpers_test.go
+  s_6ead94e5554ac8::t_67556fc80c8353 1-64
+internal/api/openapi_drift_test.go
+  s_6ead94e5554ac8::t_593cfd5689f63b 60
+  s_8a2c4bff8ef3fb::t_b6e15f5c2de2e5 17-18,49-50,59,89-92
+  s_6ead94e5554ac8::t_c349ffe9aaef9b 54
+  s_6ead94e5554ac8::t_747f7a2004dfa7 114
+internal/jobs/overlay_test.go
+  s_6ead94e5554ac8::t_5de179a99967c7 1-70
+internal/cloud/client_test.go
+  s_35d738b67e4940::t_0c00a1d381c5d5 15-16,69-73,92,98-99,101,103-107,117,134,153,159,161-163,167,184,189,210,215-216
+  s_6ead94e5554ac8::t_b65ae835297c14 190-191
+  s_6ead94e5554ac8::t_fda9ddce2fe4dc 95
+  s_6ead94e5554ac8::t_f41899d6c161b4 233,235-236
+  s_6ead94e5554ac8::t_9ce17af61e1f6e 262,264
+  s_6ead94e5554ac8::t_ccfb6b0fbe7857 218
+  s_6ead94e5554ac8::t_62467c25b638c5 158
+  s_6ead94e5554ac8::t_746786ad852de3 249,251
+  s_6ead94e5554ac8::t_d1b343a65ad14e 121-122
+  s_6ead94e5554ac8::t_a793f027c78657 137
+  s_6ead94e5554ac8::t_fede9dcc32d168 214
+  s_6ead94e5554ac8::t_5103358b8f9b87 166
+  s_6ead94e5554ac8::t_df44154a332d16 108-110
+internal/secrets/secrets_test.go
+  s_8a2c4bff8ef3fb::t_66e8de6ed34399 9-11,19,41,44,72,96,114,129,137
+  s_6ead94e5554ac8::t_28dc39c38341ff 30,32-33,42,45,53,60-62,73,88,97,106-107,110-111,115,121-123,130,138
+  s_6ead94e5554ac8::t_6e387b20152917 87
+cmd/mailtrap-local/main_test.go
+  s_dec85b381db747::t_2e63dad1b3d017 3-7
+  s_6ead94e5554ac8::t_6490db92a1925a 43
+internal/store/store_test.go
+  s_6ead94e5554ac8::t_a5dd5073d9850e 424
+  s_6ead94e5554ac8::t_45d18a6885446c 428-429
+  s_6ead94e5554ac8::t_bee871a61745c6 378
+  s_c3c746921c2457::t_651a0c29ff1bde 9-10,19-20,22,32,61-62,65-73,85-86,94,107-110,112,116,120,132,134,136,139,141,144,146,159-160,163,167-168,170,197,216-217,220,223,228,230,256-257,277-279,288,290,292-294,296-297,300,306,308-311,314,316,318-321,339,344,360-361,363-364,366,374-376,385-387,406,413-414,416-417,419-420
+  s_6ead94e5554ac8::t_8345f4b7af7c6d 199
+  s_6ead94e5554ac8::t_86e8032ac2fb75 258
+  s_c3c746921c2457::t_48f4740473f9ef 341-342
+internal/api/api_test.go
+  s_6ead94e5554ac8::t_0d3a077de5d414 259
+  s_6ead94e5554ac8::t_1210260c4aebc9 323
+  s_6ead94e5554ac8::t_d7d0fa854674d8 24
+  s_6ead94e5554ac8::t_42e023ee531598 55
+  s_6ead94e5554ac8::t_95f7d485e548e3 16-17,89-94,96-99,123,126-127,131-132,144-145,148-150,165,170,179,187,201,251,253,255,274,276-277,286,288-289,291,308,320-322,324-335,337-381,401,405-406,408-411,413,416,427,434,436,447,452-454,469,476,482,486-490
+  s_6ead94e5554ac8::t_94bda89445d704 113
+  s_6ead94e5554ac8::t_081e3908b107fe 59,62
+  s_6ead94e5554ac8::t_c49f13062e15f6 70
+internal/jobs/jobs_test.go
+  s_c3c746921c2457::t_088a747ed9c0d5 20-21,34,80,122,124,140-141,174,200,219,245,247,268,304-305,321-322,339-340,343,355,373-374,406
+  s_c3c746921c2457::t_24917bdba01558 55
+  s_c3c746921c2457::t_5244288cac0350 7
+internal/live/hub_test.go
+  s_6ead94e5554ac8::t_81a6d063076276 214
+  s_6ead94e5554ac8::t_12ed3678eace8c 94
+  s_6ead94e5554ac8::t_f03c6b76a014c8 270
+  s_6ead94e5554ac8::t_b5740444a25e3a 82
+  s_35d738b67e4940::t_e3fd54fe90e8f5 11-13,142-144
+  s_35d738b67e4940::t_d70292692b7cbe 76
+  s_6ead94e5554ac8::t_08cc5c1a7caac6 85
+  s_6ead94e5554ac8::t_d23b44f3cbb771 121-123
+  s_6ead94e5554ac8::t_721ba664c1592c 252
+  s_6ead94e5554ac8::t_bb6fcba798e2f4 256
+  s_35d738b67e4940::t_0d40a8cf90c414 6
+internal/smtpd/smtpd_test.go
+  s_dec85b381db747::t_67ca5562d410b0 12-13,53,63,65,83,124,131-132,134-138,149,165-166
+  s_6ead94e5554ac8::t_74f2eb6562dbd1 108
+  s_6ead94e5554ac8::t_f9b2d272089edc 154
+  s_6ead94e5554ac8::t_0b64a82d73c536 51
+  s_6ead94e5554ac8::t_6593e20e74af5d 125-127
+  s_6ead94e5554ac8::t_2766f60f9fac28 93
+  s_6ead94e5554ac8::t_244b260ba80c4b 111-113,115
+  s_6ead94e5554ac8::t_165edf138d0a71 103
+internal/store/parts_test.go
+  s_6ead94e5554ac8::t_17c5368f41f675 24
+  s_6ead94e5554ac8::t_2d3b15596872c0 26,30
+  s_6ead94e5554ac8::t_edc621fc33136d 1-23,25,27-29,31-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "e587fac9534f40e7b19f4a31a03c5c28845f9001",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_35d738b67e4940": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5cab2de1-7e0b-441d-bf0b-76e641a2d96f",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    },
+    "s_6ead94e5554ac8": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "267d7d10-6f04-46b2-aa0e-f2759e0d39bd",
+        "model": "default"
+      },
+      "human_author": null
+    },
+    "s_8a2c4bff8ef3fb": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bb9cd559-ac27-4f47-81d2-f3734667646e",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    },
+    "s_c3c746921c2457": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "85025bf0-b450-473f-8c27-fa90f9297ea0",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    },
+    "s_dec85b381db747": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "35006bc8-da18-413b-8b9b-7e696e69c009",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
