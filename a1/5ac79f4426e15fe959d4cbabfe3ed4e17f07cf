@@ -1,0 +1,185 @@
+cmd/mailtrap-local/main_test.go
+  s_076621a495ae80::t_c4f9c79b1c3dce 42
+internal/api/release.go
+  s_076621a495ae80::t_dd07de43bb353f 16
+internal/api/middleware.go
+  s_076621a495ae80::t_a6df85ef7febe9 91-94
+internal/smtpd/smtpd_test.go
+  s_076621a495ae80::t_46e2c43c86e516 106,152
+  s_076621a495ae80::t_a26be962000415 96,111,148
+internal/store/fs.go
+  s_076621a495ae80::t_a98e980a085c01 5
+  s_076621a495ae80::t_938c0f76e40180 11,13-14
+  s_076621a495ae80::t_8b6847ce56eaa9 12
+internal/htmlcheck/loader.go
+  s_076621a495ae80::t_d06f7d77222a66 51
+  s_076621a495ae80::t_bbae60c735aeb4 163-169
+  s_076621a495ae80::t_0e9c3ccb210d73 5
+.github/workflows/ci.yml
+  s_7dd112117333f6::t_b584e15f642f37 4
+  s_7dd112117333f6::t_7d35a6317c26f7 34-38
+internal/store/operations.go
+  s_076621a495ae80::t_e0c66a93a6bdbd 271
+  s_076621a495ae80::t_75263f705020a4 191
+  s_076621a495ae80::t_35cc1b9e69e28f 193
+  s_076621a495ae80::t_8f05a454d6974d 241
+  s_076621a495ae80::t_e19a41edbe7ee7 239
+  s_076621a495ae80::t_016b4886b2fa9f 250
+  s_076621a495ae80::t_5db0561c6bf047 204
+  s_076621a495ae80::t_50471cd2f5eb20 162,170
+  s_076621a495ae80::t_a26be962000415 262
+  s_076621a495ae80::t_a71e0cebc19923 280-281
+  s_076621a495ae80::t_77db5180c3b44c 286,291,295
+  s_076621a495ae80::t_3b83cfaf8226b4 254,260
+  s_076621a495ae80::t_f08b70af3301ec 119
+  s_076621a495ae80::t_09d6f18397a591 284
+  s_076621a495ae80::t_d3973a9c2cee61 267
+  s_076621a495ae80::t_4730c4f1f889b8 39-40
+  s_076621a495ae80::t_90e68e9186499d 36
+  s_076621a495ae80::t_10b95cf8a8eb03 199
+internal/api/api.go
+  s_076621a495ae80::t_d06f7d77222a66 143-145,151-153
+cmd/mailtrap-local/main.go
+  s_076621a495ae80::t_d06f7d77222a66 41-43
+  s_076621a495ae80::t_8c6852d72885c0 235
+  s_076621a495ae80::t_3cbbb11bd63364 54-58
+  s_076621a495ae80::t_7a0f14edbcc47a 94-95
+  s_076621a495ae80::t_a26be962000415 137
+internal/htmlcheck/stats.go
+  s_076621a495ae80::t_1d7ef2194d8f59 252
+  s_076621a495ae80::t_58d9095a6ea7d4 10
+internal/api/openapi_drift_test.go
+  s_076621a495ae80::t_1242f4a30a05d5 36-37
+  s_076621a495ae80::t_a26be962000415 28
+cmd/mailtrap-local/sendmail.go
+  s_076621a495ae80::t_d06f7d77222a66 25-28,30-31
+  s_076621a495ae80::t_34e81cb467f15f 110,113
+internal/htmlcheck/service_test.go
+  s_076621a495ae80::t_2813e3c4338c48 100
+  s_076621a495ae80::t_05df0601f4509a 53
+cmd/mailtrap-local/sendmail_test.go
+  s_076621a495ae80::t_938c0f76e40180 122-127
+internal/store/connections.go
+  s_076621a495ae80::t_3f3b8f5a2d8f31 52-53,60-61,87,91,110,116,121,143,147,164,167,180,185,204,208,222,225,231,236
+internal/config/config.go
+  s_076621a495ae80::t_d06f7d77222a66 47,52-54,65-67,115
+internal/api/connections.go
+  s_076621a495ae80::t_504e8c8ed3a0e0 12
+internal/smtpd/smtpd.go
+  s_076621a495ae80::t_6cda1a7d1d534d 154
+internal/store/checksums.go
+  s_076621a495ae80::t_d06f7d77222a66 4-5,13-15
+internal/webhook/client.go
+  s_076621a495ae80::t_d06f7d77222a66 23-25,50,58-60,72,91
+  s_076621a495ae80::t_a26be962000415 87
+  s_076621a495ae80::t_96636f0b20d956 20
+internal/api/messages.go
+  s_076621a495ae80::t_50d4040fd940c9 15
+internal/live/hub.go
+  s_076621a495ae80::t_3a05bc50264f56 45,109,113-115,121,125-127,131-138,187
+internal/store/store.go
+  s_076621a495ae80::t_8f704a0efd1db3 97
+  s_076621a495ae80::t_06bde408931a07 24
+  s_076621a495ae80::t_4068ef5d8fa10e 184
+  s_076621a495ae80::t_c7fa50fb55b4ee 138-144,147-153,156-169
+  s_076621a495ae80::t_c170657043ca6d 197
+  s_076621a495ae80::t_e92a5380322d5b 191
+CONTRIBUTING.md
+  s_7dd112117333f6::t_3f2a529539e0cc 60
+  s_7dd112117333f6::t_061fb69f8f66e4 78
+  s_7dd112117333f6::t_8b8b1d4f90efda 43-44
+.golangci.yml
+  s_7dd112117333f6::t_4e8153d964c521 9-15,18-21
+  s_7dd112117333f6::t_f66d502d7b3bd5 17,22
+  s_7dd112117333f6::t_4c1ea476986b8e 2-5
+  s_7dd112117333f6::t_efcadd378e5ee5 1,6-8,16,23-71
+internal/store/store_test.go
+  s_076621a495ae80::t_144efd7eb56caf 94,196,256,299
+internal/htmlcheck/types.go
+  s_076621a495ae80::t_fb431d6b8e981e 24-25
+  s_076621a495ae80::t_d06f7d77222a66 26,29-30,37-38,41
+  s_076621a495ae80::t_837f48010d9bf3 20-23
+internal/jobs/jobs_test.go
+  s_076621a495ae80::t_90a8ef59be09b8 317,319,321,334
+  s_076621a495ae80::t_a26be962000415 67,89,112,151,185,212,236,277,352,370,396
+internal/store/errors.go
+  s_076621a495ae80::t_187c05b6ef9138 1-10
+internal/cloud/client.go
+  s_076621a495ae80::t_7bfffb44ba3859 28-29
+  s_076621a495ae80::t_f29d249100fc8a 25
+  s_076621a495ae80::t_a26be962000415 78
+  s_076621a495ae80::t_3905cb1a284dff 91-95
+internal/secrets/secrets.go
+  s_076621a495ae80::t_1e033f4ee2d0c1 43-45
+  s_076621a495ae80::t_d06f7d77222a66 49-51
+.tool-versions
+  s_7dd112117333f6::t_121f7f17996f54 4
+internal/htmlcheck/validator.go
+  s_076621a495ae80::t_86c2b3df26eca1 36-40
+internal/cloud/client_test.go
+  s_076621a495ae80::t_02e8544dbf1f33 162-163,167-168
+  s_076621a495ae80::t_69b963dcadb083 191-194
+  s_076621a495ae80::t_50ff82b0abdebd 96-97,100-101,103-104
+internal/api/api_test.go
+  s_076621a495ae80::t_a26be962000415 56,71,82-88,132,168,173,179,183,188,192,248,260,283,295,306,312,318,324,339,350,361,366,375,381,385,397,405,408,419,423,443,456,469,487,491
+  s_076621a495ae80::t_604322572a5fc1 357
+  s_076621a495ae80::t_2a4e86dd0cbe9f 414
+internal/api/cable.go
+  s_076621a495ae80::t_9b6e83645cb628 4,13-20,27-28,53,55,62,96-107,113-117
+internal/store/parts_test.go
+  s_076621a495ae80::t_794a902db097a3 66,98,105
+internal/store/messages.go
+  s_076621a495ae80::t_734fa88d591f8c 353
+  s_076621a495ae80::t_092355c9636a33 288
+  s_076621a495ae80::t_a26be962000415 277,344
+  s_076621a495ae80::t_830710888cd7ea 149
+  s_076621a495ae80::t_67fede16efb6e5 349
+  s_076621a495ae80::t_6e1be9e7dc21aa 264
+internal/jobs/jobs.go
+  s_076621a495ae80::t_7668d8e41cc6db 13,25-31,57,62-80,91,94,96,126,143-178,211,222,250,261,272-273,276,289-290,299,301,303,313,316,331,348,350,352,366,373-374,416,419,427
+  s_076621a495ae80::t_3c7bafe9e9f52a 412-414
+  s_076621a495ae80::t_6be4504ef510d1 95,97-99
+internal/relay/client_test.go
+  s_076621a495ae80::t_892061f4fb59fc 27-31
+  s_076621a495ae80::t_25e557ee978e17 334-337
+  s_076621a495ae80::t_938c0f76e40180 64,69,475-478
+  s_076621a495ae80::t_907a6a8b8e728f 296-299
+  s_076621a495ae80::t_bcf98f267bffb4 391-392
+  s_076621a495ae80::t_5e127f1e7322f7 228-231
+  s_076621a495ae80::t_97784e154a3100 22-26
+  s_076621a495ae80::t_8b30348c3cdeb9 283-284
+  s_076621a495ae80::t_35a3423bf999b3 39-40,86,102-103,378
+  s_076621a495ae80::t_abb47532277eed 399-402
+  s_076621a495ae80::t_50cf8abc6bd0b2 381-382
+  s_076621a495ae80::t_f3dc88e86b2f76 250-251
+  s_076621a495ae80::t_1e4334430b845d 265-266
+  s_076621a495ae80::t_62ce1f6342ea17 310-311
+  s_076621a495ae80::t_f5d4fd374cdf1a 88
+internal/relay/client.go
+  s_076621a495ae80::t_d06f7d77222a66 29-33,57-60,80,134-137,172,174-177,183-186,214-217,260-261
+  s_076621a495ae80::t_a26be962000415 43,49,100,106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "a15ac79f4426e15fe959d4cbabfe3ed4e17f07cf",
+  "prompts": {},
+  "sessions": {
+    "s_076621a495ae80": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "8f7f4151-4284-4dac-8790-a891726a0374",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    },
+    "s_7dd112117333f6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9ae6872c-90bc-4efe-8cee-cf424bdbfddb",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
