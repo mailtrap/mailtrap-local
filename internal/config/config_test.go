@@ -4,16 +4,15 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func writeFile(t *testing.T, path, body string) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+	require.NoError(t, os.WriteFile(path, []byte(body), 0o644))
 }
 
 func loadFromFile(t *testing.T, body string) *Loaded {
@@ -29,9 +28,8 @@ func TestLoadStorageMaxMessages(t *testing.T) {
 storage:
   max_messages: 100
 `)
-	if got.Storage.MaxMessages == nil || *got.Storage.MaxMessages != 100 {
-		t.Errorf("Storage.MaxMessages = %v, want 100", got.Storage.MaxMessages)
-	}
+	require.NotNil(t, got.Storage.MaxMessages)
+	assert.Equal(t, 100, *got.Storage.MaxMessages)
 }
 
 func TestLoadCloudFields(t *testing.T) {
@@ -41,15 +39,12 @@ cloud:
   sandbox_id: 7
   mirror_enabled: true
 `)
-	if got.Cloud.APIToken == nil || *got.Cloud.APIToken != "tok-abc" {
-		t.Errorf("Cloud.APIToken = %v, want tok-abc", got.Cloud.APIToken)
-	}
-	if got.Cloud.SandboxID == nil || *got.Cloud.SandboxID != 7 {
-		t.Errorf("Cloud.SandboxID = %v, want 7", got.Cloud.SandboxID)
-	}
-	if got.Cloud.MirrorEnabled == nil || !*got.Cloud.MirrorEnabled {
-		t.Errorf("Cloud.MirrorEnabled = %v, want true", got.Cloud.MirrorEnabled)
-	}
+	require.NotNil(t, got.Cloud.APIToken)
+	assert.Equal(t, "tok-abc", *got.Cloud.APIToken)
+	require.NotNil(t, got.Cloud.SandboxID)
+	assert.Equal(t, int64(7), *got.Cloud.SandboxID)
+	require.NotNil(t, got.Cloud.MirrorEnabled)
+	assert.True(t, *got.Cloud.MirrorEnabled)
 }
 
 func TestLoadRelayFields(t *testing.T) {
@@ -65,15 +60,12 @@ relay:
   override_from: noreply@x.test
   return_path: bounces@x.test
 `)
-	if got.Relay.Host == nil || *got.Relay.Host != "smtp.example.com" {
-		t.Errorf("Relay.Host = %v", got.Relay.Host)
-	}
-	if got.Relay.Port == nil || *got.Relay.Port != 587 {
-		t.Errorf("Relay.Port = %v", got.Relay.Port)
-	}
-	if got.Relay.AutoRelayEnabled == nil || !*got.Relay.AutoRelayEnabled {
-		t.Errorf("Relay.AutoRelayEnabled = %v, want true", got.Relay.AutoRelayEnabled)
-	}
+	require.NotNil(t, got.Relay.Host)
+	assert.Equal(t, "smtp.example.com", *got.Relay.Host)
+	require.NotNil(t, got.Relay.Port)
+	assert.Equal(t, 587, *got.Relay.Port)
+	require.NotNil(t, got.Relay.AutoRelayEnabled)
+	assert.True(t, *got.Relay.AutoRelayEnabled)
 }
 
 func TestLoadWebhookFields(t *testing.T) {
@@ -83,15 +75,12 @@ webhook:
   secret: shh
   enabled: true
 `)
-	if got.Webhook.URL == nil || *got.Webhook.URL != "https://hooks.example.com/x" {
-		t.Errorf("Webhook.URL = %v", got.Webhook.URL)
-	}
-	if got.Webhook.Secret == nil || *got.Webhook.Secret != "shh" {
-		t.Errorf("Webhook.Secret = %v", got.Webhook.Secret)
-	}
-	if got.Webhook.Enabled == nil || !*got.Webhook.Enabled {
-		t.Errorf("Webhook.Enabled = %v", got.Webhook.Enabled)
-	}
+	require.NotNil(t, got.Webhook.URL)
+	assert.Equal(t, "https://hooks.example.com/x", *got.Webhook.URL)
+	require.NotNil(t, got.Webhook.Secret)
+	assert.Equal(t, "shh", *got.Webhook.Secret)
+	require.NotNil(t, got.Webhook.Enabled)
+	assert.True(t, *got.Webhook.Enabled)
 }
 
 // TestEnvInterpolation — `${VAR}` references in string fields resolve
@@ -108,15 +97,12 @@ relay:
   password: ${MTL_TEST_PASS}
   username: literal-user
 `)
-	if got.Cloud.APIToken == nil || *got.Cloud.APIToken != "resolved-tok-XYZ" {
-		t.Errorf("Cloud.APIToken = %v, want resolved-tok-XYZ", got.Cloud.APIToken)
-	}
-	if got.Relay.Password == nil || *got.Relay.Password != "resolved-passw0rd" {
-		t.Errorf("Relay.Password = %v, want resolved-passw0rd", got.Relay.Password)
-	}
-	if got.Relay.Username == nil || *got.Relay.Username != "literal-user" {
-		t.Errorf("Relay.Username = %v, want literal-user", got.Relay.Username)
-	}
+	require.NotNil(t, got.Cloud.APIToken)
+	assert.Equal(t, "resolved-tok-XYZ", *got.Cloud.APIToken)
+	require.NotNil(t, got.Relay.Password)
+	assert.Equal(t, "resolved-passw0rd", *got.Relay.Password)
+	require.NotNil(t, got.Relay.Username)
+	assert.Equal(t, "literal-user", *got.Relay.Username)
 }
 
 // Unset env vars resolve to nil — same shape as "key not in YAML".
@@ -129,9 +115,7 @@ func TestEnvInterpolationUnsetResolvesToNil(t *testing.T) {
 cloud:
   api_token: ${MTL_DEFINITELY_UNSET}
 `)
-	if got.Cloud.APIToken != nil {
-		t.Errorf("Cloud.APIToken = %v, want nil for unset env var", got.Cloud.APIToken)
-	}
+	assert.Nil(t, got.Cloud.APIToken)
 }
 
 // TestNoFileFound — if neither MAILTRAP_LOCAL_CONFIG nor a file at the
@@ -140,12 +124,8 @@ cloud:
 func TestNoFileFound(t *testing.T) {
 	t.Setenv("MAILTRAP_LOCAL_CONFIG", filepath.Join(t.TempDir(), "does-not-exist.yml"))
 	got := NewLoader().Get()
-	if got.SourcePath != "" {
-		t.Errorf("SourcePath = %q, want \"\" when file missing", got.SourcePath)
-	}
-	if got.Storage.MaxMessages != nil {
-		t.Errorf("Storage.MaxMessages = %v, want nil with no config", got.Storage.MaxMessages)
-	}
+	assert.Empty(t, got.SourcePath)
+	assert.Nil(t, got.Storage.MaxMessages)
 }
 
 // TestMalformedYAML — a syntax error doesn't crash the loader; it
@@ -154,12 +134,8 @@ func TestNoFileFound(t *testing.T) {
 // "your config didn't parse, here's the path".
 func TestMalformedYAML(t *testing.T) {
 	got := loadFromFile(t, "this: is: not: valid yaml: [\n")
-	if got.Storage.MaxMessages != nil {
-		t.Errorf("malformed YAML should yield zero-value Storage; got %+v", got.Storage)
-	}
-	if got.SourcePath == "" {
-		t.Errorf("SourcePath should be populated even when parse fails")
-	}
+	assert.Nil(t, got.Storage.MaxMessages)
+	assert.NotEmpty(t, got.SourcePath)
 }
 
 // TestExplicitConfigPathBeatsXDG — MAILTRAP_LOCAL_CONFIG always wins
@@ -180,12 +156,9 @@ func TestExplicitConfigPathBeatsXDG(t *testing.T) {
 	t.Setenv("MAILTRAP_LOCAL_CONFIG", override)
 
 	got := NewLoader().Get()
-	if got.Storage.MaxMessages == nil || *got.Storage.MaxMessages != 1 {
-		t.Errorf("MAILTRAP_LOCAL_CONFIG should win; got MaxMessages=%v", got.Storage.MaxMessages)
-	}
-	if got.SourcePath != override {
-		t.Errorf("SourcePath = %q, want %q", got.SourcePath, override)
-	}
+	require.NotNil(t, got.Storage.MaxMessages)
+	assert.Equal(t, 1, *got.Storage.MaxMessages)
+	assert.Equal(t, override, got.SourcePath)
 }
 
 // TestReloadRefreshesCache — Reload() picks up file edits, even if Get
@@ -199,20 +172,18 @@ func TestReloadRefreshesCache(t *testing.T) {
 `)
 	l := NewLoader()
 	first := l.Get()
-	if first.Storage.MaxMessages == nil || *first.Storage.MaxMessages != 50 {
-		t.Fatalf("first read: MaxMessages = %v, want 50", first.Storage.MaxMessages)
-	}
+	require.NotNil(t, first.Storage.MaxMessages)
+	require.Equal(t, 50, *first.Storage.MaxMessages)
 
 	writeFile(t, path, `storage:
   max_messages: 200
 `)
 	second := l.Reload()
-	if second.Storage.MaxMessages == nil || *second.Storage.MaxMessages != 200 {
-		t.Errorf("after Reload: MaxMessages = %v, want 200", second.Storage.MaxMessages)
-	}
+	require.NotNil(t, second.Storage.MaxMessages)
+	assert.Equal(t, 200, *second.Storage.MaxMessages)
 
 	// Subsequent Get returns the reloaded value.
-	if got := l.Get().Storage.MaxMessages; got == nil || *got != 200 {
-		t.Errorf("Get after Reload: MaxMessages = %v, want 200", got)
-	}
+	got := l.Get().Storage.MaxMessages
+	require.NotNil(t, got)
+	assert.Equal(t, 200, *got)
 }

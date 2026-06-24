@@ -3,15 +3,16 @@ package htmlcheck
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestEmptyBody — short-circuits to "no_html".
 func TestEmptyBody(t *testing.T) {
 	t.Parallel()
 	r := Run("")
-	if r.Status != "no_html" {
-		t.Errorf("status = %q, want no_html", r.Status)
-	}
+	assert.Equal(t, "no_html", r.Status)
 }
 
 // TestKnownBadHTML — fires several real rules.
@@ -30,9 +31,7 @@ func TestKnownBadHTML(t *testing.T) {
 </body>
 </html>`
 	r := Run(body)
-	if r.Status != "success" {
-		t.Fatalf("status = %q, want success", r.Status)
-	}
+	require.Equal(t, "success", r.Status)
 
 	titles := map[string]bool{}
 	for _, issue := range r.Issues {
@@ -45,24 +44,18 @@ func TestKnownBadHTML(t *testing.T) {
 		"accent-color",
 		"display:flex",
 	} {
-		if !titles[want] {
-			t.Errorf("missing rule %q in report; got %v", want, keysOf(titles))
-		}
+		assert.True(t, titles[want], "missing %q; got %v", want, keysOf(titles))
 	}
 
 	// Each issue should be decorated with display_name + family_group.
 	for _, issue := range r.Issues {
 		if len(issue.Clients) == 0 {
-			t.Errorf("issue %q has no clients", issue.RuleName)
+			assert.Fail(t, "issue %q has no clients", issue.RuleName)
 			continue
 		}
 		c := issue.Clients[0]
-		if c.DisplayName == "" {
-			t.Errorf("issue %q client[0].DisplayName empty", issue.RuleName)
-		}
-		if c.FamilyGroup == "" {
-			t.Errorf("issue %q client[0].FamilyGroup empty", issue.RuleName)
-		}
+		assert.NotEmpty(t, c.DisplayName)
+		assert.NotEmpty(t, c.FamilyGroup)
 	}
 }
 
@@ -70,23 +63,15 @@ func TestKnownBadHTML(t *testing.T) {
 func TestFamiliesShape(t *testing.T) {
 	t.Parallel()
 	r := Run("<html><body><p>hi</p></body></html>")
-	if r.Status != "success" {
-		t.Fatalf("status = %q", r.Status)
-	}
-	if len(r.Families) != 5 {
-		t.Errorf("families count = %d, want 5", len(r.Families))
-	}
+	require.Equal(t, "success", r.Status)
+	assert.Len(t, r.Families, 5)
 	wantFamilies := map[string]bool{
 		"apple-mail": true, "gmail": true, "outlook": true,
 		"yahoo": true, "other": true,
 	}
 	for _, f := range r.Families {
-		if !wantFamilies[f.Family] {
-			t.Errorf("unexpected family in report: %s", f.Family)
-		}
-		if f.MarketShare <= 0 {
-			t.Errorf("family %s has zero market_share", f.Family)
-		}
+		assert.True(t, wantFamilies[f.Family])
+		assert.Positive(t, f.MarketShare)
 	}
 }
 
@@ -97,9 +82,7 @@ func TestBodyRuleSuppressed(t *testing.T) {
 	t.Parallel()
 	r := Run("<p>no body tag here</p>")
 	for _, issue := range r.Issues {
-		if issue.RuleName == "<body> element" {
-			t.Errorf("body rule fired despite source having no <body>")
-		}
+		assert.NotEqual(t, "<body> element", issue.RuleName)
 	}
 }
 
@@ -108,12 +91,9 @@ func TestMarketSupportPercent(t *testing.T) {
 	t.Parallel()
 	body := `<html><body><div style="accent-color: red;">x</div></body></html>`
 	r := Run(body)
-	if r.Status != "success" {
-		t.Fatal("status")
-	}
-	if r.MarketSupportPercent < 0 || r.MarketSupportPercent > 100 {
-		t.Errorf("market_support_percent = %v out of [0,100]", r.MarketSupportPercent)
-	}
+	require.Equal(t, "success", r.Status)
+	assert.GreaterOrEqual(t, r.MarketSupportPercent, 0.0)
+	assert.LessOrEqual(t, r.MarketSupportPercent, 100.0)
 }
 
 func keysOf(m map[string]bool) []string {

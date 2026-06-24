@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestRequireLoopback(t *testing.T) {
 	t.Parallel()
@@ -36,9 +40,7 @@ func TestRequireLoopback(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := requireLoopback(tc.addr)
-			if (err != nil) != tc.wantErr {
-				t.Errorf("requireLoopback(%q): wantErr=%v, got %v", tc.addr, tc.wantErr, err)
-			}
+			assert.Equal(t, tc.wantErr, err != nil)
 		})
 	}
 }

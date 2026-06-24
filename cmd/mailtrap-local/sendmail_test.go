@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"io"
 	"net"
-	"reflect"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/emersion/go-smtp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseSendmailArgs(t *testing.T) {
@@ -78,12 +79,8 @@ func TestParseSendmailArgs(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := parseSendmailArgs(tc.argv)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Fatalf("got %+v, want %+v", got, tc.want)
-			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
 		})
 	}
 }
@@ -92,9 +89,7 @@ func TestParseSendmailArgsRejectsUnsupportedModes(t *testing.T) {
 	for _, mode := range []string{"-bs", "-bp", "-bd", "-bv", "-bt"} {
 		t.Run(mode, func(t *testing.T) {
 			_, err := parseSendmailArgs([]string{mode})
-			if err == nil {
-				t.Fatalf("expected error for %s, got nil", mode)
-			}
+			require.Error(t, err)
 		})
 	}
 }
@@ -110,9 +105,7 @@ func TestNormalizeCRLF(t *testing.T) {
 	}
 	for _, tc := range cases {
 		got := string(normalizeCRLF([]byte(tc.in)))
-		if got != tc.want {
-			t.Fatalf("normalizeCRLF(%q) = %q, want %q", tc.in, got, tc.want)
-		}
+		require.Equal(t, tc.want, got)
 	}
 }
 
@@ -133,11 +126,9 @@ func TestSendmailDispatch(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			got, argv := sendmailDispatch(tc.osArgs)
-			if got != tc.want {
-				t.Fatalf("ok = %v, want %v", got, tc.want)
-			}
-			if got && !reflect.DeepEqual(argv, tc.wantArgv) {
-				t.Fatalf("argv = %v, want %v", argv, tc.wantArgv)
+			require.Equal(t, tc.want, got)
+			if got {
+				require.Equal(t, tc.wantArgv, argv)
 			}
 		})
 	}
@@ -199,9 +190,7 @@ func startCaptureSMTP(t *testing.T) (string, *captureBackend) {
 	server.WriteTimeout = 5 * time.Second
 
 	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("listen: %v", err)
-	}
+	require.NoError(t, err)
 	server.Addr = l.Addr().String()
 	go func() { _ = server.Serve(l) }()
 	t.Cleanup(func() {
@@ -228,27 +217,19 @@ func TestSendmailEndToEndDashT(t *testing.T) {
 		strings.NewReader(msg),
 		&stderr,
 	)
-	if code != 0 {
-		t.Fatalf("exit code %d, stderr=%q", code, stderr.String())
-	}
+	require.Equal(t, 0, code, "exit code %d, stderr=%q", code, stderr.String())
 
 	select {
 	case <-be.received:
 	case <-time.After(2 * time.Second):
-		t.Fatal("listener did not receive message")
+		require.Fail(t, "listener did not receive message")
 	}
 	be.mu.Lock()
 	defer be.mu.Unlock()
-	if be.from != "a@example.com" {
-		t.Errorf("envelope from = %q, want a@example.com", be.from)
-	}
+	assert.Equal(t, "a@example.com", be.from)
 	wantTo := []string{"b@example.com", "c@example.com", "d@example.com"}
-	if !reflect.DeepEqual(be.to, wantTo) {
-		t.Errorf("envelope to = %v, want %v", be.to, wantTo)
-	}
-	if !bytes.Contains(be.data, []byte("Subject: hi")) {
-		t.Errorf("DATA missing Subject header; got: %q", be.data)
-	}
+	assert.Equal(t, wantTo, be.to)
+	assert.True(t, bytes.Contains(be.data, []byte("Subject: hi")), "DATA missing Subject header; got: %q", be.data)
 }
 
 func TestSendmailEndToEndPositionalRecipientsAndDashF(t *testing.T) {
@@ -266,22 +247,16 @@ func TestSendmailEndToEndPositionalRecipientsAndDashF(t *testing.T) {
 		strings.NewReader(msg),
 		&stderr,
 	)
-	if code != 0 {
-		t.Fatalf("exit code %d, stderr=%q", code, stderr.String())
-	}
+	require.Equal(t, 0, code, "exit code %d, stderr=%q", code, stderr.String())
 	select {
 	case <-be.received:
 	case <-time.After(2 * time.Second):
-		t.Fatal("listener did not receive message")
+		require.Fail(t, "listener did not receive message")
 	}
 	be.mu.Lock()
 	defer be.mu.Unlock()
-	if be.from != "ops@example.com" {
-		t.Errorf("envelope from = %q, want ops@example.com", be.from)
-	}
-	if !reflect.DeepEqual(be.to, []string{"rcpt@example.com"}) {
-		t.Errorf("envelope to = %v, want [rcpt@example.com]", be.to)
-	}
+	assert.Equal(t, "ops@example.com", be.from)
+	assert.Equal(t, []string{"rcpt@example.com"}, be.to)
 }
 
 func TestSendmailLFOnlyInputIsNormalized(t *testing.T) {
@@ -297,22 +272,16 @@ func TestSendmailLFOnlyInputIsNormalized(t *testing.T) {
 		strings.NewReader(msg),
 		&stderr,
 	)
-	if code != 0 {
-		t.Fatalf("exit code %d, stderr=%q", code, stderr.String())
-	}
+	require.Equal(t, 0, code, "exit code %d, stderr=%q", code, stderr.String())
 	select {
 	case <-be.received:
 	case <-time.After(2 * time.Second):
-		t.Fatal("listener did not receive message")
+		require.Fail(t, "listener did not receive message")
 	}
 	be.mu.Lock()
 	defer be.mu.Unlock()
-	if !bytes.Contains(be.data, []byte("Subject: lf\r\n")) {
-		t.Errorf("expected CRLF-terminated headers in DATA, got: %q", be.data)
-	}
-	if bytes.Contains(be.data, []byte("\r\r\n")) {
-		t.Errorf("CR doubled — got bare \\r\\r\\n in DATA: %q", be.data)
-	}
+	assert.True(t, bytes.Contains(be.data, []byte("Subject: lf\r\n")), "expected CRLF-terminated headers in DATA, got: %q", be.data)
+	assert.False(t, bytes.Contains(be.data, []byte("\r\r\n")), "CR doubled — got bare \\r\\r\\n in DATA: %q", be.data)
 }
 
 func TestSendmailEmptyStdin(t *testing.T) {
@@ -324,12 +293,8 @@ func TestSendmailEmptyStdin(t *testing.T) {
 		strings.NewReader(""),
 		&stderr,
 	)
-	if code != exitDataErr {
-		t.Fatalf("exit code %d, want %d", code, exitDataErr)
-	}
-	if !strings.Contains(stderr.String(), "empty message") {
-		t.Errorf("expected 'empty message' in stderr, got: %q", stderr.String())
-	}
+	require.Equal(t, exitDataErr, code)
+	assert.Contains(t, stderr.String(), "empty message")
 }
 
 func TestSendmailNoRecipients(t *testing.T) {
@@ -342,10 +307,6 @@ func TestSendmailNoRecipients(t *testing.T) {
 		strings.NewReader(msg),
 		&stderr,
 	)
-	if code != exitUsage {
-		t.Fatalf("exit code %d, want %d", code, exitUsage)
-	}
-	if !strings.Contains(stderr.String(), "no recipients") {
-		t.Errorf("expected 'no recipients' in stderr, got: %q", stderr.String())
-	}
+	require.Equal(t, exitUsage, code)
+	assert.Contains(t, stderr.String(), "no recipients")
 }

@@ -9,13 +9,14 @@ import (
 	"net"
 	stdsmtp "net/smtp"
 	"strconv"
-	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	smtp "github.com/emersion/go-smtp"
 	"github.com/mailtrap/mailtrap-local/internal/store"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // ---------------------------------------------------------------------
@@ -81,9 +82,7 @@ func startServer(t *testing.T) (host string, port int, be *captureBackend) {
 	server.WriteTimeout = 5 * time.Second
 
 	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("listen: %v", err)
-	}
+	require.NoError(t, err)
 	go func() { _ = server.Serve(l) }()
 	t.Cleanup(func() {
 		_ = server.Close()
@@ -104,9 +103,7 @@ func (b *captureBackend) firstTx(t *testing.T) capturedTx {
 	t.Helper()
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if len(b.tx) == 0 {
-		t.Fatal("no transactions captured")
-	}
+	require.NotEmpty(t, b.tx)
 	return b.tx[0]
 }
 
@@ -118,18 +115,14 @@ func TestProbeSuccess(t *testing.T) {
 	t.Parallel()
 	host, port, _ := startServer(t)
 	c := &Client{}
-	if err := c.Probe(context.Background(), host, port, "", "", "", "off"); err != nil {
-		t.Errorf("probe: %v", err)
-	}
+	assert.NoError(t, c.Probe(context.Background(), host, port, "", "", "", "off"))
 }
 
 func TestProbeFailsOnClosedPort(t *testing.T) {
 	t.Parallel()
 	c := &Client{}
 	err := c.Probe(context.Background(), "127.0.0.1", 1, "", "", "", "off")
-	if err == nil {
-		t.Errorf("expected error against closed port, got nil")
-	}
+	assert.Error(t, err)
 }
 
 // Explicit tls=starttls must fail closed when the server doesn't
@@ -140,12 +133,8 @@ func TestProbeStartTLSRequiredFailsWhenUnsupported(t *testing.T) {
 	host, port, _ := startServer(t)
 	c := &Client{}
 	err := c.Probe(context.Background(), host, port, "", "", "", "starttls")
-	if err == nil {
-		t.Fatal("expected error when STARTTLS is required but unsupported, got nil")
-	}
-	if !strings.Contains(err.Error(), "STARTTLS") {
-		t.Errorf("error should mention STARTTLS; got %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "STARTTLS")
 }
 
 // tls=auto stays best-effort: no STARTTLS advertised → continue.
@@ -153,9 +142,7 @@ func TestProbeAutoFallsBackWhenStartTLSUnsupported(t *testing.T) {
 	t.Parallel()
 	host, port, _ := startServer(t)
 	c := &Client{}
-	if err := c.Probe(context.Background(), host, port, "", "", "", "auto"); err != nil {
-		t.Errorf("auto mode should fall back to cleartext, got %v", err)
-	}
+	assert.NoError(t, c.Probe(context.Background(), host, port, "", "", "", "auto"))
 }
 
 // ---------------------------------------------------------------------
@@ -187,22 +174,14 @@ func TestForwardSingleRecipient(t *testing.T) {
 	t.Parallel()
 	host, port, be := startServer(t)
 	c := &Client{}
-	if err := c.Forward(context.Background(), newConn(host, port), newMsg(),
+	require.NoError(t, c.Forward(context.Background(), newConn(host, port), newMsg(),
 		[]string{"new@y.test"}, false,
-	); err != nil {
-		t.Fatalf("forward: %v", err)
-	}
+	))
 
 	tx := be.firstTx(t)
-	if tx.from != "original@x.test" {
-		t.Errorf("MAIL FROM = %q, want original@x.test", tx.from)
-	}
-	if len(tx.to) != 1 || tx.to[0] != "new@y.test" {
-		t.Errorf("RCPT TO = %v, want [new@y.test]", tx.to)
-	}
-	if !bytes.Contains(tx.data, []byte("Subject: probe")) {
-		t.Errorf("DATA missing Subject header; got: %q", tx.data)
-	}
+	assert.Equal(t, "original@x.test", tx.from)
+	assert.Equal(t, []string{"new@y.test"}, tx.to)
+	assert.True(t, bytes.Contains(tx.data, []byte("Subject: probe")))
 }
 
 func TestForwardMultipleRecipients(t *testing.T) {
@@ -210,17 +189,11 @@ func TestForwardMultipleRecipients(t *testing.T) {
 	host, port, be := startServer(t)
 	c := &Client{}
 	rcpts := []string{"a@y.test", "b@y.test", "c@y.test"}
-	if err := c.Forward(context.Background(), newConn(host, port), newMsg(), rcpts, false); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Forward(context.Background(), newConn(host, port), newMsg(), rcpts, false))
 	tx := be.firstTx(t)
-	if len(tx.to) != 3 {
-		t.Errorf("RCPT TO count = %d, want 3 (got %v)", len(tx.to), tx.to)
-	}
+	require.Len(t, tx.to, 3)
 	for i, r := range rcpts {
-		if tx.to[i] != r {
-			t.Errorf("RCPT[%d] = %q, want %q", i, tx.to[i], r)
-		}
+		assert.Equal(t, r, tx.to[i])
 	}
 }
 
@@ -228,9 +201,8 @@ func TestForwardRejectsEmptyRecipientList(t *testing.T) {
 	t.Parallel()
 	c := &Client{}
 	err := c.Forward(context.Background(), &store.RelayConnection{Host: "x", Port: 25}, newMsg(), nil, false)
-	if err == nil || !strings.Contains(err.Error(), "no recipients") {
-		t.Errorf("expected 'no recipients' error, got %v", err)
-	}
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no recipients")
 }
 
 func TestForwardOverridesFromHeaderAndStashesOriginal(t *testing.T) {
@@ -239,21 +211,13 @@ func TestForwardOverridesFromHeaderAndStashesOriginal(t *testing.T) {
 	conn := newConn(host, port)
 	conn.OverrideFrom = "noreply@verified.test"
 	c := &Client{}
-	if err := c.Forward(context.Background(), conn, newMsg(), []string{"r@y.test"}, false); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Forward(context.Background(), conn, newMsg(), []string{"r@y.test"}, false))
 	tx := be.firstTx(t)
-	if !bytes.Contains(tx.data, []byte("From: noreply@verified.test")) {
-		t.Errorf("From header NOT rewritten; data:\n%s", tx.data)
-	}
-	if !bytes.Contains(tx.data, []byte("X-Original-From: original@x.test")) {
-		t.Errorf("X-Original-From missing; data:\n%s", tx.data)
-	}
+	assert.True(t, bytes.Contains(tx.data, []byte("From: noreply@verified.test")), "From header NOT rewritten; data:\n%s", tx.data)
+	assert.True(t, bytes.Contains(tx.data, []byte("X-Original-From: original@x.test")), "X-Original-From missing; data:\n%s", tx.data)
 	// Envelope sender (MAIL FROM) is independent of From-header
 	// rewriting — it follows ReturnPath if set, else the original.
-	if tx.from != "original@x.test" {
-		t.Errorf("envelope From = %q, want original@x.test", tx.from)
-	}
+	assert.Equal(t, "original@x.test", tx.from)
 }
 
 // Messages ingested via /api/v1/ingest may carry LF-only line endings.
@@ -267,13 +231,9 @@ func TestForwardOverridesFromHeaderWithLFOnlyRaw(t *testing.T) {
 	m := newMsg()
 	m.Raw = []byte("From: original@x.test\nSubject: lf-only\n\nbody\n")
 	c := &Client{}
-	if err := c.Forward(context.Background(), conn, m, []string{"r@y.test"}, false); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Forward(context.Background(), conn, m, []string{"r@y.test"}, false))
 	tx := be.firstTx(t)
-	if !bytes.Contains(tx.data, []byte("From: noreply@verified.test")) {
-		t.Errorf("From header NOT rewritten on LF-only raw; data:\n%s", tx.data)
-	}
+	assert.True(t, bytes.Contains(tx.data, []byte("From: noreply@verified.test")), "From header NOT rewritten on LF-only raw; data:\n%s", tx.data)
 }
 
 func TestForwardReturnPathRewritesEnvelopeSender(t *testing.T) {
@@ -282,18 +242,12 @@ func TestForwardReturnPathRewritesEnvelopeSender(t *testing.T) {
 	conn := newConn(host, port)
 	conn.ReturnPath = "bounces@verified.test"
 	c := &Client{}
-	if err := c.Forward(context.Background(), conn, newMsg(), []string{"r@y.test"}, false); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Forward(context.Background(), conn, newMsg(), []string{"r@y.test"}, false))
 	tx := be.firstTx(t)
-	if tx.from != "bounces@verified.test" {
-		t.Errorf("envelope MAIL FROM = %q, want bounces@verified.test", tx.from)
-	}
+	assert.Equal(t, "bounces@verified.test", tx.from)
 	// The DATA From: header is NOT rewritten by ReturnPath — only by
 	// OverrideFrom.
-	if !bytes.Contains(tx.data, []byte("From: original@x.test")) {
-		t.Errorf("From header should remain unchanged; got:\n%s", tx.data)
-	}
+	assert.True(t, bytes.Contains(tx.data, []byte("From: original@x.test")), "From header should remain unchanged; got:\n%s", tx.data)
 }
 
 // rewriteTo=true (manual Release) rewrites the To: header to the
@@ -304,21 +258,13 @@ func TestForwardRewriteToRewritesHeaderAndStashesOriginal(t *testing.T) {
 	t.Parallel()
 	host, port, be := startServer(t)
 	c := &Client{}
-	if err := c.Forward(context.Background(), newConn(host, port), newMsg(),
+	require.NoError(t, c.Forward(context.Background(), newConn(host, port), newMsg(),
 		[]string{"new@y.test"}, true,
-	); err != nil {
-		t.Fatal(err)
-	}
+	))
 	tx := be.firstTx(t)
-	if len(tx.to) != 1 || tx.to[0] != "new@y.test" {
-		t.Errorf("RCPT TO = %v, want [new@y.test]", tx.to)
-	}
-	if !bytes.Contains(tx.data, []byte("To: new@y.test")) {
-		t.Errorf("To header NOT rewritten; data:\n%s", tx.data)
-	}
-	if !bytes.Contains(tx.data, []byte("X-Original-To: dropped@x.test")) {
-		t.Errorf("X-Original-To missing; data:\n%s", tx.data)
-	}
+	assert.Equal(t, []string{"new@y.test"}, tx.to)
+	assert.True(t, bytes.Contains(tx.data, []byte("To: new@y.test")), "To header NOT rewritten; data:\n%s", tx.data)
+	assert.True(t, bytes.Contains(tx.data, []byte("X-Original-To: dropped@x.test")), "X-Original-To missing; data:\n%s", tx.data)
 }
 
 // rewriteTo=false (auto-relay / default) must leave the To: header alone.
@@ -326,33 +272,23 @@ func TestForwardWithoutRewriteToPreservesHeader(t *testing.T) {
 	t.Parallel()
 	host, port, be := startServer(t)
 	c := &Client{}
-	if err := c.Forward(context.Background(), newConn(host, port), newMsg(),
+	require.NoError(t, c.Forward(context.Background(), newConn(host, port), newMsg(),
 		[]string{"new@y.test"}, false,
-	); err != nil {
-		t.Fatal(err)
-	}
+	))
 	tx := be.firstTx(t)
-	if !bytes.Contains(tx.data, []byte("To: dropped@x.test")) {
-		t.Errorf("To header should be preserved when rewriteTo=false; data:\n%s", tx.data)
-	}
-	if bytes.Contains(tx.data, []byte("X-Original-To:")) {
-		t.Errorf("X-Original-To should not be added when rewriteTo=false; data:\n%s", tx.data)
-	}
+	assert.True(t, bytes.Contains(tx.data, []byte("To: dropped@x.test")), "To header should be preserved when rewriteTo=false; data:\n%s", tx.data)
+	assert.False(t, bytes.Contains(tx.data, []byte("X-Original-To:")), "X-Original-To should not be added when rewriteTo=false; data:\n%s", tx.data)
 }
 
 func TestForwardRewriteToJoinsMultipleRecipients(t *testing.T) {
 	t.Parallel()
 	host, port, be := startServer(t)
 	c := &Client{}
-	if err := c.Forward(context.Background(), newConn(host, port), newMsg(),
+	require.NoError(t, c.Forward(context.Background(), newConn(host, port), newMsg(),
 		[]string{"a@y.test", "b@y.test"}, true,
-	); err != nil {
-		t.Fatal(err)
-	}
+	))
 	tx := be.firstTx(t)
-	if !bytes.Contains(tx.data, []byte("To: a@y.test, b@y.test")) {
-		t.Errorf("To header should list both recipients; data:\n%s", tx.data)
-	}
+	assert.True(t, bytes.Contains(tx.data, []byte("To: a@y.test, b@y.test")), "To header should list both recipients; data:\n%s", tx.data)
 }
 
 // ---------------------------------------------------------------------
@@ -363,16 +299,10 @@ func TestRewriteFromHeaderReplacesFirstFrom(t *testing.T) {
 	t.Parallel()
 	in := []byte("From: orig@x\r\nTo: t@y\r\nSubject: hi\r\n\r\nbody\r\n")
 	out := rewriteFromHeader(in, "new@x", "orig@x")
-	if !bytes.Contains(out, []byte("From: new@x")) {
-		t.Errorf("From not replaced: %s", out)
-	}
-	if !bytes.Contains(out, []byte("X-Original-From: orig@x")) {
-		t.Errorf("X-Original-From not added: %s", out)
-	}
+	assert.True(t, bytes.Contains(out, []byte("From: new@x")), "From not replaced: %s", out)
+	assert.True(t, bytes.Contains(out, []byte("X-Original-From: orig@x")), "X-Original-From not added: %s", out)
 	// Body preserved untouched.
-	if !bytes.HasSuffix(out, []byte("\r\nbody\r\n")) {
-		t.Errorf("body modified: %s", out)
-	}
+	assert.True(t, bytes.HasSuffix(out, []byte("\r\nbody\r\n")), "body modified: %s", out)
 }
 
 func TestRewriteFromHeaderDoesNotStackOriginalFrom(t *testing.T) {
@@ -381,13 +311,8 @@ func TestRewriteFromHeaderDoesNotStackOriginalFrom(t *testing.T) {
 		"X-Original-From: stale@x\r\n" +
 		"To: t@y\r\n\r\nbody\r\n")
 	out := rewriteFromHeader(in, "new@x", "orig@x")
-	count := bytes.Count(out, []byte("X-Original-From:"))
-	if count != 1 {
-		t.Errorf("X-Original-From count = %d, want 1 (must replace, not stack)\n%s", count, out)
-	}
-	if !bytes.Contains(out, []byte("X-Original-From: orig@x")) {
-		t.Errorf("X-Original-From should reflect orig@x, not stale@x\n%s", out)
-	}
+	assert.Equal(t, 1, bytes.Count(out, []byte("X-Original-From:")), "X-Original-From count (must replace, not stack)\n%s", out)
+	assert.True(t, bytes.Contains(out, []byte("X-Original-From: orig@x")), "X-Original-From should reflect orig@x, not stale@x\n%s", out)
 }
 
 func TestRewriteFromHeaderTouchesOnlyFirstFromOccurrence(t *testing.T) {
@@ -396,21 +321,15 @@ func TestRewriteFromHeaderTouchesOnlyFirstFromOccurrence(t *testing.T) {
 	// touched. We split on "\r\n\r\n" so the body is left alone.
 	in := []byte("From: orig@x\r\nSubject: re\r\n\r\nFrom: bystander@y\r\nbody\r\n")
 	out := rewriteFromHeader(in, "new@x", "")
-	if !bytes.Contains(out, []byte("\r\nFrom: bystander@y\r\n")) {
-		t.Errorf("body 'From:' line was modified: %s", out)
-	}
-	if !bytes.HasPrefix(out, []byte("From: new@x")) {
-		t.Errorf("header From not replaced: %s", out)
-	}
+	assert.True(t, bytes.Contains(out, []byte("\r\nFrom: bystander@y\r\n")), "body 'From:' line was modified: %s", out)
+	assert.True(t, bytes.HasPrefix(out, []byte("From: new@x")), "header From not replaced: %s", out)
 }
 
 func TestRewriteFromHeaderNoHeaderBodyBoundaryReturnsInput(t *testing.T) {
 	t.Parallel()
 	in := []byte("From: orig@x\r\n") // no \r\n\r\n
 	out := rewriteFromHeader(in, "new@x", "orig@x")
-	if !bytes.Equal(in, out) {
-		t.Errorf("malformed input should pass through unchanged\nin:  %q\nout: %q", in, out)
-	}
+	assert.Equal(t, in, out)
 }
 
 // ---------------------------------------------------------------------
@@ -421,15 +340,9 @@ func TestRewriteToHeaderReplacesAndStashesOriginal(t *testing.T) {
 	t.Parallel()
 	in := []byte("From: f@x\r\nTo: old@y\r\nSubject: hi\r\n\r\nbody\r\n")
 	out := rewriteToHeader(in, "new@z")
-	if !bytes.Contains(out, []byte("To: new@z")) {
-		t.Errorf("To not replaced: %s", out)
-	}
-	if !bytes.Contains(out, []byte("X-Original-To: old@y")) {
-		t.Errorf("X-Original-To not added: %s", out)
-	}
-	if !bytes.HasSuffix(out, []byte("\r\nbody\r\n")) {
-		t.Errorf("body modified: %s", out)
-	}
+	assert.True(t, bytes.Contains(out, []byte("To: new@z")), "To not replaced: %s", out)
+	assert.True(t, bytes.Contains(out, []byte("X-Original-To: old@y")), "X-Original-To not added: %s", out)
+	assert.True(t, bytes.HasSuffix(out, []byte("\r\nbody\r\n")), "body modified: %s", out)
 }
 
 func TestRewriteToHeaderCollapsesFoldedOriginal(t *testing.T) {
@@ -440,65 +353,43 @@ func TestRewriteToHeaderCollapsesFoldedOriginal(t *testing.T) {
 	in := []byte("To: a@y,\r\n b@y,\r\n c@y\r\nSubject: hi\r\n\r\nbody\r\n")
 	out := rewriteToHeader(in, "new@z")
 	if bytes.Contains(out, []byte("b@y")) && !bytes.Contains(out, []byte("X-Original-To:")) {
-		t.Errorf("folded continuation leaked into headers: %s", out)
+		assert.Fail(t, "folded continuation leaked into headers: %s", out)
 	}
-	if !bytes.Contains(out, []byte("To: new@z")) {
-		t.Errorf("To not replaced: %s", out)
-	}
-	if !bytes.Contains(out, []byte("X-Original-To: a@y, b@y, c@y")) {
-		t.Errorf("folded original not collapsed into X-Original-To: %s", out)
-	}
-	if !bytes.Contains(out, []byte("Subject: hi")) {
-		t.Errorf("Subject header lost: %s", out)
-	}
+	assert.True(t, bytes.Contains(out, []byte("To: new@z")), "To not replaced: %s", out)
+	assert.True(t, bytes.Contains(out, []byte("X-Original-To: a@y, b@y, c@y")), "folded original not collapsed into X-Original-To: %s", out)
+	assert.True(t, bytes.Contains(out, []byte("Subject: hi")), "Subject header lost: %s", out)
 }
 
 func TestRewriteToHeaderAddsWhenAbsent(t *testing.T) {
 	t.Parallel()
 	in := []byte("From: f@x\r\nSubject: hi\r\n\r\nbody\r\n")
 	out := rewriteToHeader(in, "new@z")
-	if !bytes.Contains(out, []byte("To: new@z")) {
-		t.Errorf("To header not added when absent: %s", out)
-	}
-	if bytes.Contains(out, []byte("X-Original-To:")) {
-		t.Errorf("X-Original-To should not be added when no original To existed: %s", out)
-	}
+	assert.True(t, bytes.Contains(out, []byte("To: new@z")), "To header not added when absent: %s", out)
+	assert.False(t, bytes.Contains(out, []byte("X-Original-To:")), "X-Original-To should not be added when no original To existed: %s", out)
 }
 
 func TestRewriteToHeaderDoesNotStackOriginal(t *testing.T) {
 	t.Parallel()
 	in := []byte("To: old@y\r\nX-Original-To: stale@y\r\nSubject: hi\r\n\r\nbody\r\n")
 	out := rewriteToHeader(in, "new@z")
-	if c := bytes.Count(out, []byte("X-Original-To:")); c != 1 {
-		t.Errorf("X-Original-To count = %d, want 1 (must replace, not stack)\n%s", c, out)
-	}
-	if !bytes.Contains(out, []byte("X-Original-To: old@y")) {
-		t.Errorf("X-Original-To should reflect old@y, not stale@y\n%s", out)
-	}
+	assert.Equal(t, 1, bytes.Count(out, []byte("X-Original-To:")), "X-Original-To count (must replace, not stack)\n%s", out)
+	assert.True(t, bytes.Contains(out, []byte("X-Original-To: old@y")), "X-Original-To should reflect old@y, not stale@y\n%s", out)
 }
 
 func TestRewriteToHeaderLFOnly(t *testing.T) {
 	t.Parallel()
 	in := []byte("From: f@x\nTo: old@y\nSubject: hi\n\nbody\n")
 	out := rewriteToHeader(in, "new@z")
-	if !bytes.Contains(out, []byte("To: new@z")) {
-		t.Errorf("To not replaced on LF-only raw: %s", out)
-	}
-	if !bytes.Contains(out, []byte("X-Original-To: old@y")) {
-		t.Errorf("X-Original-To missing on LF-only raw: %s", out)
-	}
+	assert.True(t, bytes.Contains(out, []byte("To: new@z")), "To not replaced on LF-only raw: %s", out)
+	assert.True(t, bytes.Contains(out, []byte("X-Original-To: old@y")), "X-Original-To missing on LF-only raw: %s", out)
 }
 
 func TestRewriteToHeaderLeavesBodyToLineAlone(t *testing.T) {
 	t.Parallel()
 	in := []byte("To: old@y\r\nSubject: re\r\n\r\nTo: bystander@z\r\nbody\r\n")
 	out := rewriteToHeader(in, "new@z")
-	if !bytes.Contains(out, []byte("\r\nTo: bystander@z\r\n")) {
-		t.Errorf("body 'To:' line was modified: %s", out)
-	}
-	if !bytes.HasPrefix(out, []byte("To: new@z")) {
-		t.Errorf("header To not replaced: %s", out)
-	}
+	assert.True(t, bytes.Contains(out, []byte("\r\nTo: bystander@z\r\n")), "body 'To:' line was modified: %s", out)
+	assert.True(t, bytes.HasPrefix(out, []byte("To: new@z")), "header To not replaced: %s", out)
 }
 
 // ---------------------------------------------------------------------
@@ -509,19 +400,13 @@ func TestParseAddrsAcceptsValidAndDropsBad(t *testing.T) {
 	t.Parallel()
 	in := []string{"a@x.test", "Bob <b@y.test>", "not-an-email", "", "c@z.test"}
 	out := ParseAddrs(in)
-	if len(out) != 3 {
-		t.Errorf("count = %d, want 3 (got %v)", len(out), out)
-	}
+	require.Len(t, out, 3)
 	gotAddrs := []string{out[0].Address, out[1].Address, out[2].Address}
 	want := []string{"a@x.test", "b@y.test", "c@z.test"}
 	for i := range want {
-		if gotAddrs[i] != want[i] {
-			t.Errorf("address[%d] = %q, want %q", i, gotAddrs[i], want[i])
-		}
+		assert.Equal(t, want[i], gotAddrs[i])
 	}
-	if out[1].Name != "Bob" {
-		t.Errorf("display name not parsed for %q", in[1])
-	}
+	assert.Equal(t, "Bob", out[1].Name)
 }
 
 // ---------------------------------------------------------------------
@@ -536,9 +421,7 @@ func TestAuthenticateNoCredsIsNoOp(t *testing.T) {
 	t.Parallel()
 	// `authenticate` short-circuits when both user and pass are empty
 	// (no auth configured). Pass a nil client and assert no panic.
-	if err := authenticate(nil, "host", "", "", "plain"); err != nil {
-		t.Errorf("expected nil error for empty creds; got %v", err)
-	}
+	assert.NoError(t, authenticate(nil, "host", "", "", "plain"))
 }
 
 // auth mode "none" skips authentication even when credentials are
@@ -546,9 +429,7 @@ func TestAuthenticateNoCredsIsNoOp(t *testing.T) {
 // because it short-circuits before touching the connection.
 func TestAuthenticateNoneModeSkipsAuth(t *testing.T) {
 	t.Parallel()
-	if err := authenticate(nil, "host", "u", "p", "none"); err != nil {
-		t.Errorf("none mode should skip auth; got %v", err)
-	}
+	assert.NoError(t, authenticate(nil, "host", "u", "p", "none"))
 }
 
 // Sanity that the test SMTP server itself works the way we assume.
@@ -557,14 +438,11 @@ func TestHarnessSmokeViaStdlibClient(t *testing.T) {
 	t.Parallel()
 	host, port, be := startServer(t)
 	addr := fmt.Sprintf("%s:%d", host, port)
-	if err := stdsmtp.SendMail(addr, nil, "from@x", []string{"to@y"},
+	require.NoError(t, stdsmtp.SendMail(addr, nil, "from@x", []string{"to@y"},
 		[]byte("Subject: hi\r\n\r\nbody\r\n"),
-	); err != nil {
-		t.Fatal(err)
-	}
-	if got := be.firstTx(t); got.from != "from@x" {
-		t.Errorf("envelope from = %q, want from@x", got.from)
-	}
+	))
+	got := be.firstTx(t)
+	assert.Equal(t, "from@x", got.from)
 }
 
 // silence unused-helper lint

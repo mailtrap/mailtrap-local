@@ -9,6 +9,8 @@ import (
 
 	"github.com/jhillyerd/enmime/v2"
 	"github.com/mailtrap/mailtrap-local/internal/store"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestExtractCategory pins the X-MT-Category > Category precedence.
@@ -46,13 +48,9 @@ func TestExtractCategory(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			env, err := enmime.ReadEnvelope(strings.NewReader(tc.raw))
-			if err != nil {
-				t.Fatalf("read envelope: %v", err)
-			}
+			require.NoError(t, err)
 			got := extractCategory(env)
-			if got != tc.want {
-				t.Errorf("got %q, want %q", got, tc.want)
-			}
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }
@@ -62,13 +60,9 @@ func TestBuildPayloadIncludesCategory(t *testing.T) {
 	t.Parallel()
 	raw := "From: a@example.com\r\nTo: b@example.com\r\nX-MT-Category: Welcome\r\n\r\nhi\r\n"
 	env, err := enmime.ReadEnvelope(strings.NewReader(raw))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	p := buildPayload(env, []byte(raw), "a@example.com", []string{"b@example.com"})
-	if p.Category != "Welcome" {
-		t.Errorf("payload.Category = %q, want Welcome", p.Category)
-	}
+	assert.Equal(t, "Welcome", p.Category)
 }
 
 // TestExpandListenAddrs validates the localhost dual-stack expansion.
@@ -86,14 +80,7 @@ func TestExpandListenAddrs(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.in, func(t *testing.T) {
 			got := expandListenAddrs(tc.in)
-			if len(got) != len(tc.want) {
-				t.Fatalf("got %v, want %v", got, tc.want)
-			}
-			for i := range got {
-				if got[i] != tc.want[i] {
-					t.Errorf("[%d] got %q, want %q", i, got[i], tc.want[i])
-				}
-			}
+			require.Equal(t, tc.want, got)
 		})
 	}
 }
@@ -103,9 +90,7 @@ func TestExpandListenAddrs(t *testing.T) {
 // with the right shape + that AfterInsert fired with the correct ID.
 func TestEndToEndIngest(t *testing.T) {
 	st, err := store.OpenMemory()
-	if err != nil {
-		t.Fatalf("open memory: %v", err)
-	}
+	require.NoError(t, err)
 	defer st.Close()
 
 	var afterInsertID string
@@ -115,31 +100,19 @@ func TestEndToEndIngest(t *testing.T) {
 		Store:       st,
 		AfterInsert: func(id string) { afterInsertID = id },
 	}
-	if err := srv.Start(); err != nil {
-		t.Fatalf("start: %v", err)
-	}
+	require.NoError(t, srv.Start())
 	defer srv.Close()
 
 	addr := srv.Addrs()[0]
 	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Fatalf("dial %s: %v", addr, err)
-	}
+	require.NoError(t, err)
 	defer c.Close()
 
-	if err := c.Hello("test"); err != nil {
-		t.Fatalf("HELO: %v", err)
-	}
-	if err := c.Mail("sender@example.test"); err != nil {
-		t.Fatalf("MAIL: %v", err)
-	}
-	if err := c.Rcpt("rcpt@example.test"); err != nil {
-		t.Fatalf("RCPT: %v", err)
-	}
+	require.NoError(t, c.Hello("test"))
+	require.NoError(t, c.Mail("sender@example.test"))
+	require.NoError(t, c.Rcpt("rcpt@example.test"))
 	w, err := c.Data()
-	if err != nil {
-		t.Fatalf("DATA: %v", err)
-	}
+	require.NoError(t, err)
 	body := strings.NewReader(
 		"From: Sender <sender@example.test>\r\n" +
 			"To: rcpt@example.test\r\n" +
@@ -148,37 +121,21 @@ func TestEndToEndIngest(t *testing.T) {
 			"\r\n" +
 			"body line\r\n",
 	)
-	if _, err := body.WriteTo(w); err != nil {
-		t.Fatalf("write data: %v", err)
-	}
-	if err := w.Close(); err != nil {
-		t.Fatalf("close data: %v", err)
-	}
-	if err := c.Quit(); err != nil {
-		t.Fatalf("QUIT: %v", err)
-	}
+	_, err = body.WriteTo(w)
+	require.NoError(t, err)
+	require.NoError(t, w.Close())
+	require.NoError(t, c.Quit())
 
 	// Verify the row landed.
 	res, err := st.List(context.Background(), store.ListOpts{Limit: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if res.Total != 1 {
-		t.Fatalf("total = %d, want 1", res.Total)
-	}
+	require.NoError(t, err)
+	require.Equal(t, 1, res.Total)
 	got := res.Messages[0]
-	if got.Subject != "Hello via SMTP" {
-		t.Errorf("subject = %q", got.Subject)
-	}
-	if got.Category == nil || *got.Category != "welcome" {
-		t.Errorf("category = %v", got.Category)
-	}
-	if afterInsertID == "" {
-		t.Error("AfterInsert was not called")
-	}
-	if afterInsertID != got.ID {
-		t.Errorf("AfterInsert id = %q, want %q", afterInsertID, got.ID)
-	}
+	assert.Equal(t, "Hello via SMTP", got.Subject)
+	require.NotNil(t, got.Category)
+	assert.Equal(t, "welcome", *got.Category)
+	assert.NotEmpty(t, afterInsertID)
+	assert.Equal(t, got.ID, afterInsertID)
 }
 
 // TestRejectEmptyData ensures we don't persist a row for an empty DATA
@@ -189,16 +146,12 @@ func TestRejectEmptyData(t *testing.T) {
 	defer st.Close()
 
 	srv := &Server{Listen: "127.0.0.1:0", Store: st}
-	if err := srv.Start(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, srv.Start())
 	defer srv.Close()
 
 	addr := srv.Addrs()[0]
 	c, err := smtp.Dial(addr)
-	if err != nil {
-		t.Fatalf("dial: %v", err)
-	}
+	require.NoError(t, err)
 	_ = c.Hello("test")
 	_ = c.Mail("a@b")
 	_ = c.Rcpt("c@d")
@@ -209,12 +162,8 @@ func TestRejectEmptyData(t *testing.T) {
 	c.Close()
 
 	res, err := st.List(context.Background(), store.ListOpts{Limit: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if res.Total != 0 {
-		t.Errorf("expected no messages persisted; total = %d", res.Total)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Total)
 }
 
 // silence the unused-import warning for net (used transitively below)
