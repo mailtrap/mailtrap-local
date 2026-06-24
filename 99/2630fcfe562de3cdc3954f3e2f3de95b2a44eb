@@ -1,0 +1,99 @@
+internal/api/openapi_drift_test.go
+  s_8a2c4bff8ef3fb::t_b6e15f5c2de2e5 17-18,49-50,54,59-60,89-92
+  s_8a2c4bff8ef3fb::t_30617aea03d506 114
+internal/api/api_test.go
+  s_6ead94e5554ac8::t_95f7d485e548e3 16-17,24,55,70,89-94,96-99,113,123,126-127,131-132,144-145,148-150,165,170,179,187,201,251,253,255,259,274,276-277,286,288-289,291,308,320-335,337-381,401,405-406,408-411,413,416,427,434,436,447,452-454,469,476,482,486-490
+  s_6ead94e5554ac8::t_081e3908b107fe 59,62
+internal/webhook/client_test.go
+  s_8a2c4bff8ef3fb::t_9515b302403042 15-17,64-71,81-82,85,97-98,101-102,105,114-115,123,125,132,134,140-141,148-151,158-159,161,169
+internal/jobs/jobs_test.go
+  s_c3c746921c2457::t_088a747ed9c0d5 20-21,34,80,122,124,140-141,174,200,219,245,247,268,304-305,321-322,339-340,343,355,373-374,406
+  s_c3c746921c2457::t_24917bdba01558 55
+  s_c3c746921c2457::t_5244288cac0350 7
+internal/live/hub_test.go
+  s_35d738b67e4940::t_d70292692b7cbe 76
+  s_35d738b67e4940::t_e3fd54fe90e8f5 11-13,82,85,94,121-122,142-144,214,270
+  s_35d738b67e4940::t_a4e0c78006fd57 123,256
+  s_35d738b67e4940::t_0d40a8cf90c414 6
+internal/htmlcheck/service_test.go
+  s_dec85b381db747::t_2fd86e97cd419a 6-8,15,34,47,53,57-58,66-67,73-74,85,94-96
+internal/relay/client_test.go
+  s_35d738b67e4940::t_855b842b9c10ec 184,216-217,236,250,266-267,279-280,291,302-303,315,324,343-344,358-360,367-368,376,383-384,391
+  s_35d738b67e4940::t_fb904dc7f41396 18-19,85,106,118,125,136-137,145,177,179,182-183,192,194,196,204-205,214,220,234,245,247,261,263,265,275,277,287,289,305,314,325,332,345,356,375,392,403,407,409,424,432,441,443-445
+internal/config/config_test.go
+  s_dec85b381db747::t_9740c156be3515 7-9,14-15,31-32,42-44,46-47,63-68,78-83,100-105,118,127-128,137-138,159-161,175-176,182-183,186-188
+  s_dec85b381db747::t_2766255d2355b8 45
+internal/api/helpers_test.go
+  s_6ead94e5554ac8::t_67556fc80c8353 1-64
+internal/jobs/overlay_test.go
+  s_6ead94e5554ac8::t_5de179a99967c7 1-70
+internal/cloud/client_test.go
+  s_35d738b67e4940::t_0c00a1d381c5d5 15-16,69-73,92,95,98-99,101,103-110,117,121-122,134,137,153,158-159,161-163,166-167,184,189-190,193,212,216-218,220,235,237-238,251,253,264,266
+internal/secrets/secrets_test.go
+  s_8a2c4bff8ef3fb::t_66e8de6ed34399 9-11,19,30,32-33,41-42,44-45,53,60-62,72-73,87-88,96-97,106-107,111-112,116-117,123-126,132-133,140,142
+internal/api/wire_test.go
+  s_6ead94e5554ac8::t_786aac2f03c5b8 1-124
+cmd/mailtrap-local/sendmail_test.go
+  s_dec85b381db747::t_cbd4e58204c467 13-14,82-83,92,108,129-131,193,220,225,229,231,250,254,258-259,275,279,296-297,310-311
+  s_dec85b381db747::t_ca286ba42ff9b7 232
+  s_dec85b381db747::t_a206e20f0933a0 283-284
+internal/smtpd/smtpd_test.go
+  s_dec85b381db747::t_67ca5562d410b0 12-13,51,53,63,65,83,93,103,108,111-113,115,124-127,131-132,134-138,149,154,165-166
+cmd/mailtrap-local/main_test.go
+  s_dec85b381db747::t_2e63dad1b3d017 3-7,43
+internal/store/parts_test.go
+  s_6ead94e5554ac8::t_edc621fc33136d 1-23,25,27-29,31-106
+  s_6ead94e5554ac8::t_17c5368f41f675 24
+  s_6ead94e5554ac8::t_2d3b15596872c0 26,30
+internal/store/store_test.go
+  s_c3c746921c2457::t_651a0c29ff1bde 9-10,19-20,22,32,61-62,65-73,85-86,94,107-110,112,116,120,132,134,136,139,141,144,146,159-160,163,167-168,170,197,199,216-217,220,223,228,230,256-258,277-279,288,290,292-294,296-297,300,306,308-311,314,316,318-321,339,344,360-361,363-364,366,374-376,378,385-387,406,413-414,416-417,419-420,424,428-429
+  s_c3c746921c2457::t_48f4740473f9ef 341-342
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "992630fcfe562de3cdc3954f3e2f3de95b2a44eb",
+  "prompts": {},
+  "sessions": {
+    "s_35d738b67e4940": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5cab2de1-7e0b-441d-bf0b-76e641a2d96f",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    },
+    "s_6ead94e5554ac8": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "267d7d10-6f04-46b2-aa0e-f2759e0d39bd",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    },
+    "s_8a2c4bff8ef3fb": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bb9cd559-ac27-4f47-81d2-f3734667646e",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    },
+    "s_c3c746921c2457": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "85025bf0-b450-473f-8c27-fa90f9297ea0",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    },
+    "s_dec85b381db747": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "35006bc8-da18-413b-8b9b-7e696e69c009",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
