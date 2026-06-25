@@ -20,11 +20,9 @@ requests, discussions, or any other channel).
 
 ## Reporting
 
-If you experience or witness unacceptable behavior, please report it privately to
-the maintainers.
-
-<!-- TODO(maintainers): add a contact (email or a named maintainer) for conduct
-     reports before making the repository public. -->
+If you experience or witness unacceptable behavior, please report it privately
+to the maintainers at [support@mailtrap.io](mailto:support@mailtrap.io).
+Include a link to the relevant issue, pull request, or discussion if applicable.
 
 All reports will be reviewed and investigated promptly and fairly, and the
 reporter's privacy will be respected.

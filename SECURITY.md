@@ -13,6 +13,11 @@ Because of that, the relevant threat model is narrow:
   the explicit `--unsafe-non-loopback` flag. Do **not** expose the HTTP or SMTP
   port to an untrusted network. If you need network access, put an
   authenticating, TLS-terminating reverse proxy in front of it.
+- **Connection test endpoints make outbound requests.** `POST
+  /api/v1/relay_connection/test` and `POST /api/v1/webhook_connection/test` open
+  TCP connections to hostnames you supply. On loopback this is limited to whoever
+  can already reach the local API; if you expose the HTTP port beyond localhost,
+  an attacker could use these endpoints for SSRF-style probing from your machine.
 - **It renders attacker-controlled content.** Anything that can reach the SMTP
   port can submit arbitrary email, including hostile HTML and attachments. The
   UI renders message HTML inside a sandboxed iframe and serves attachments as
@@ -38,13 +43,12 @@ the latest release (or `main`) before reporting.
 
 **Please do not open a public issue for security problems.**
 
-Report privately via GitHub's **"Report a vulnerability"** button on the
-repository's **Security** tab (Security advisories → Report a vulnerability).
-This opens a private channel with the maintainers.
+Report privately via GitHub Security Advisories:
 
-<!-- TODO(maintainers): if you prefer email, add a dedicated security contact
-     here (e.g. security@yourdomain) and enable "Private vulnerability reporting"
-     in the repository's Settings → Security. -->
+<https://github.com/mailtrap/mailtrap-local/security/advisories/new>
+
+You can also use the **"Report a vulnerability"** button on the repository's
+**Security** tab. Both open a private channel with the maintainers.
 
 When reporting, please include:
 

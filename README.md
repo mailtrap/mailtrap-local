@@ -67,6 +67,16 @@ docker run --rm \
   ghcr.io/mailtrap/mailtrap-local:latest
 ```
 
+**LAN exposure:** `-p 3535:3535 -p 3550:3550` publishes the unauthenticated SMTP
+and HTTP API on every host interface. Prefer binding to loopback on the host:
+
+```sh
+docker run --rm \
+  -p 127.0.0.1:3535:3535 -p 127.0.0.1:3550:3550 \
+  -v mailtrap-local:/var/lib/mailtrap-local \
+  ghcr.io/mailtrap/mailtrap-local:latest
+```
+
 The same image is mirrored to Docker Hub at `mailtrap/mailtrap-local:latest`.
 
 ### Prebuilt binary
@@ -135,6 +145,7 @@ mailtrap-local/
 │   ├── api/                 # chi handlers, wire types, SPA serving
 │   ├── smtpd/               # go-smtp wrapper + enmime ingest
 │   ├── store/               # SQLite schema + queries
+│   ├── secrets/             # at-rest AES-GCM encryption for connection credentials
 │   ├── jobs/                # cloud mirror / relay / webhook / retention
 │   ├── htmlcheck/           # HTML email compatibility rule engine
 │   ├── live/                # in-process pub-sub for WebSocket
