@@ -1,0 +1,26 @@
+.github/dependabot.yml
+  s_297efc20f3206c::t_291d1d51799029 1-39
+go.mod
+  s_297efc20f3206c::t_6ac7624130bd22 14,43-44
+.github/workflows/ci.yml
+  s_297efc20f3206c::t_ea15c268897053 43-47
+  s_297efc20f3206c::t_c348ae392f01ba 4
+go.sum
+  s_297efc20f3206c::t_1e7c1b5692c116 82-83,93-94,116-117,136-137,144-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "8935901d6d9f41183dafec534e413ab72f53c000",
+  "prompts": {},
+  "sessions": {
+    "s_297efc20f3206c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c25dc794-51e0-46b5-8a25-6f2510f4b67a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
