@@ -13,15 +13,15 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/relay"
 	"github.com/mailtrap/mailtrap-local/internal/store"
 	"github.com/mailtrap/mailtrap-local/internal/webhook"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // helper: build a Server backed by an in-memory store + httptest server.
 func newTestServer(t *testing.T) (*Server, *httptest.Server) {
 	t.Helper()
 	st, err := store.OpenMemory()
-	if err != nil {
-		t.Fatalf("open memory store: %v", err)
-	}
+	require.NoError(t, err)
 	t.Cleanup(func() { _ = st.Close() })
 
 	srv := &Server{
@@ -52,16 +52,14 @@ func ingestSample(t *testing.T, base string, subject, fromAddr, toAddr, category
 		Snippet:   "Body of " + subject,
 	})
 	resp, err := http.Post(base+"/api/v1/ingest", "application/json", bytes.NewReader(payload))
-	if err != nil {
-		t.Fatalf("post ingest: %v", err)
-	}
+	require.NoError(t, err)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
 		body, _ := io.ReadAll(resp.Body)
-		t.Fatalf("ingest %d: %s", resp.StatusCode, body)
+		require.FailNow(t, "ingest status", "%d: %s", resp.StatusCode, body)
 	}
 	var out struct{ ID string }
-	_ = json.NewDecoder(resp.Body).Decode(&out)
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&out))
 	return out.ID
 }
 
@@ -69,9 +67,7 @@ func ingestSample(t *testing.T, base string, subject, fromAddr, toAddr, category
 func getJSON(t *testing.T, url string, v any) int {
 	t.Helper()
 	resp, err := http.Get(url)
-	if err != nil {
-		t.Fatalf("get %s: %v", url, err)
-	}
+	require.NoError(t, err)
 	defer resp.Body.Close()
 	if v != nil {
 		_ = json.NewDecoder(resp.Body).Decode(v)
@@ -90,28 +86,17 @@ func TestListEndpointEnvelope(t *testing.T) {
 	ingestSample(t, ts.URL, "Welcome", "a@x.test", "b@y.test", "welcome")
 
 	var resp MessagesResponse
-	if code := getJSON(t, ts.URL+"/api/v1/messages", &resp); code != 200 {
-		t.Fatalf("status %d", code)
-	}
-	if resp.Total != 1 || resp.Count != 1 || resp.Unread != 1 {
-		t.Errorf("envelope counts: %+v", resp)
-	}
-	if len(resp.Messages) != 1 {
-		t.Fatalf("messages length = %d, want 1", len(resp.Messages))
-	}
+	assert.Equal(t, 200, getJSON(t, ts.URL+"/api/v1/messages", &resp))
+	assert.Equal(t, 1, resp.Total)
+	assert.Equal(t, 1, resp.Count)
+	assert.Equal(t, 1, resp.Unread)
+	require.Len(t, resp.Messages, 1)
+
 	got := resp.Messages[0]
-	if got.Subject != "Welcome" {
-		t.Errorf("Subject = %q, want Welcome", got.Subject)
-	}
-	if !equalSliceStr(got.Tags, []string{"welcome"}) {
-		t.Errorf("Tags = %v, want [welcome]", got.Tags)
-	}
-	if got.From.Address != "a@x.test" {
-		t.Errorf("From.Address = %q", got.From.Address)
-	}
-	if got.Read {
-		t.Errorf("Read = true on fresh insert; want false")
-	}
+	assert.Equal(t, "Welcome", got.Subject)
+	assert.Equal(t, []string{"welcome"}, got.Tags)
+	assert.Equal(t, "a@x.test", got.From.Address)
+	assert.False(t, got.Read)
 }
 
 func TestGetMessageMarksAsRead(t *testing.T) {
@@ -123,12 +108,9 @@ func TestGetMessageMarksAsRead(t *testing.T) {
 	var detail MessageDetail
 	getJSON(t, ts.URL+"/api/v1/message/"+id, &detail)
 
-	// Now /messages should report 0 unread.
 	var listResp MessagesResponse
 	getJSON(t, ts.URL+"/api/v1/messages", &listResp)
-	if listResp.Unread != 0 {
-		t.Errorf("Unread after GET = %d, want 0", listResp.Unread)
-	}
+	assert.Equal(t, 0, listResp.Unread)
 }
 
 func TestRawHeadersEndpoints(t *testing.T) {
@@ -137,26 +119,17 @@ func TestRawHeadersEndpoints(t *testing.T) {
 
 	id := ingestSample(t, ts.URL, "Subject Test", "a@x", "b@y", "")
 
-	// Raw
 	resp, err := http.Get(ts.URL + "/api/v1/message/" + id + "/raw")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	body, _ := io.ReadAll(resp.Body)
 	resp.Body.Close()
-	if !strings.Contains(string(body), "Subject: Subject Test") {
-		t.Errorf("raw body missing subject; got: %s", body)
-	}
-	if !strings.Contains(resp.Header.Get("Content-Disposition"), "inline") {
-		t.Errorf("raw without ?dl should be inline; got %q", resp.Header.Get("Content-Disposition"))
-	}
+	assert.Contains(t, string(body), "Subject: Subject Test")
+	assert.Contains(t, resp.Header.Get("Content-Disposition"), "inline")
 
-	// Headers
 	var hdrs map[string][]string
 	getJSON(t, ts.URL+"/api/v1/message/"+id+"/headers", &hdrs)
-	if len(hdrs["Subject"]) == 0 || hdrs["Subject"][0] != "Subject Test" {
-		t.Errorf("headers Subject = %v", hdrs["Subject"])
-	}
+	require.NotEmpty(t, hdrs["Subject"])
+	assert.Equal(t, "Subject Test", hdrs["Subject"][0])
 }
 
 func TestSearchEndpoint(t *testing.T) {
@@ -168,18 +141,13 @@ func TestSearchEndpoint(t *testing.T) {
 
 	var resp MessagesResponse
 	getJSON(t, ts.URL+"/api/v1/search?query=welcome", &resp)
-	if resp.Total != 1 || resp.Messages[0].Subject != "Welcome aboard" {
-		t.Errorf("search welcome: %+v", resp)
-	}
+	assert.Equal(t, 1, resp.Total)
+	assert.Equal(t, "Welcome aboard", resp.Messages[0].Subject)
 
-	// Empty query → empty result, but envelope still has tags
 	getJSON(t, ts.URL+"/api/v1/search?query=", &resp)
-	if resp.Total != 0 || len(resp.Messages) != 0 {
-		t.Errorf("blank query should return 0; got %+v", resp)
-	}
-	if !equalSliceStr(resp.Tags, []string{"transactional", "welcome"}) {
-		t.Errorf("blank-query tags = %v", resp.Tags)
-	}
+	assert.Equal(t, 0, resp.Total)
+	assert.Empty(t, resp.Messages)
+	assert.Equal(t, []string{"transactional", "welcome"}, resp.Tags)
 }
 
 func TestDeleteAndReadToggle(t *testing.T) {
@@ -190,23 +158,17 @@ func TestDeleteAndReadToggle(t *testing.T) {
 	id2 := ingestSample(t, ts.URL, "b", "a@x", "b@y", "")
 	_ = ingestSample(t, ts.URL, "c", "a@x", "b@y", "")
 
-	// Bulk read
 	body, _ := json.Marshal(map[string]any{"read": true})
 	req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/messages", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	resp.Body.Close()
 
 	var listResp MessagesResponse
 	getJSON(t, ts.URL+"/api/v1/messages", &listResp)
-	if listResp.Unread != 0 {
-		t.Errorf("after bulk-read, unread = %d, want 0", listResp.Unread)
-	}
+	assert.Equal(t, 0, listResp.Unread)
 
-	// Delete two by id
 	delBody, _ := json.Marshal(map[string]any{"ids": []string{id1, id2}})
 	req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", bytes.NewReader(delBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -214,32 +176,17 @@ func TestDeleteAndReadToggle(t *testing.T) {
 	resp.Body.Close()
 
 	getJSON(t, ts.URL+"/api/v1/messages", &listResp)
-	if listResp.Total != 1 {
-		t.Errorf("after delete-2, total = %d, want 1", listResp.Total)
-	}
+	assert.Equal(t, 1, listResp.Total)
 
-	// Delete all — must use the explicit {"all":true} signal.
 	allBody, _ := json.Marshal(map[string]any{"all": true})
 	req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", bytes.NewReader(allBody))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = http.DefaultClient.Do(req)
 	resp.Body.Close()
 	getJSON(t, ts.URL+"/api/v1/messages", &listResp)
-	if listResp.Total != 0 {
-		t.Errorf("after delete-all, total = %d, want 0", listResp.Total)
-	}
+	assert.Equal(t, 0, listResp.Total)
 }
 
-// TestDeleteMessagesRequiresExplicitSignal pins the safety contract on
-// DELETE /api/v1/messages: every shape that doesn't unambiguously mean
-// "delete these" or "wipe the sandbox" must be rejected and must not
-// touch the DB.
-//
-// Regression for the silent-decode bug Leonid caught: an earlier
-// version of destroyMessages swallowed json.NewDecoder().Decode()
-// errors, then fell through to Delete(ctx) with empty ids — which
-// store.Delete interprets as "wipe everything". A typo in a curl
-// request was enough to truncate the user's mailbox.
 func TestDeleteMessagesRequiresExplicitSignal(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
@@ -251,7 +198,7 @@ func TestDeleteMessagesRequiresExplicitSignal(t *testing.T) {
 		body    []byte
 		setCT   bool
 		wantSC  int
-		wantMsg string // substring to find in the error body
+		wantMsg string
 	}{
 		{
 			name:    "no body (Content-Length = 0)",
@@ -301,25 +248,15 @@ func TestDeleteMessagesRequiresExplicitSignal(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 			}
 			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 			defer resp.Body.Close()
-			if resp.StatusCode != c.wantSC {
-				t.Errorf("status = %d, want %d", resp.StatusCode, c.wantSC)
-			}
+			assert.Equal(t, c.wantSC, resp.StatusCode)
 			raw, _ := io.ReadAll(resp.Body)
-			if !bytes.Contains(raw, []byte(c.wantMsg)) {
-				t.Errorf("body missing %q\n  got: %s", c.wantMsg, raw)
-			}
+			assert.Contains(t, string(raw), c.wantMsg)
 
-			// The critical assertion: nothing got deleted.
 			var listResp MessagesResponse
 			getJSON(t, ts.URL+"/api/v1/messages", &listResp)
-			if listResp.Total != 2 {
-				t.Errorf("malformed delete request truncated the mailbox: total = %d, want 2",
-					listResp.Total)
-			}
+			assert.Equal(t, 2, listResp.Total)
 		})
 	}
 }
@@ -328,23 +265,16 @@ func TestDocsRedirect(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	// Don't follow redirects.
 	c := &http.Client{
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
 	resp, err := c.Get(ts.URL + "/api/v1")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusFound {
-		t.Errorf("status = %d, want 302", resp.StatusCode)
-	}
-	if resp.Header.Get("Location") != "https://docs.mailtrap.io/" {
-		t.Errorf("Location = %q", resp.Header.Get("Location"))
-	}
+	assert.Equal(t, http.StatusFound, resp.StatusCode)
+	assert.Equal(t, "https://docs.mailtrap.io/", resp.Header.Get("Location"))
 }
 
 func TestOpenAPIYAML(t *testing.T) {
@@ -353,27 +283,18 @@ func TestOpenAPIYAML(t *testing.T) {
 	srv.OpenAPI = []byte("openapi: 3.1.0\ninfo:\n  title: test\n")
 
 	resp, err := http.Get(ts.URL + "/api/v1/openapi.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		t.Errorf("status = %d", resp.StatusCode)
-	}
-	if !strings.Contains(resp.Header.Get("Content-Type"), "yaml") {
-		t.Errorf("Content-Type = %q", resp.Header.Get("Content-Type"))
-	}
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Contains(t, resp.Header.Get("Content-Type"), "yaml")
 	body, _ := io.ReadAll(resp.Body)
-	if !strings.HasPrefix(string(body), "openapi: 3.1.0") {
-		t.Errorf("body doesn't start with openapi: 3.1.0; got: %q", body[:min(40, len(body))])
-	}
+	assert.True(t, strings.HasPrefix(string(body), "openapi: 3.1.0"))
 }
 
 func TestConnectionsCRUD(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	// Cloud
 	body, _ := json.Marshal(map[string]any{
 		"api_token": "tok", "sandbox_id": 9001, "mirror_enabled": true,
 	})
@@ -384,11 +305,8 @@ func TestConnectionsCRUD(t *testing.T) {
 
 	var cloud map[string]any
 	getJSON(t, ts.URL+"/api/v1/cloud_connection", &cloud)
-	if cloud["connected"] != true {
-		t.Errorf("cloud connected = %v", cloud["connected"])
-	}
+	assert.Equal(t, true, cloud["connected"])
 
-	// Webhook
 	body, _ = json.Marshal(map[string]any{
 		"url": "https://hooks.example.com/x", "secret": "shh", "enabled": true,
 	})
@@ -399,19 +317,70 @@ func TestConnectionsCRUD(t *testing.T) {
 
 	var wh map[string]any
 	getJSON(t, ts.URL+"/api/v1/webhook_connection", &wh)
-	if wh["connected"] != true || wh["enabled"] != true {
-		t.Errorf("webhook = %+v", wh)
-	}
-	// secret must NEVER appear in the response
-	if _, has := wh["secret"]; has {
-		t.Errorf("webhook response leaks 'secret' field")
-	}
+	assert.Equal(t, true, wh["connected"])
+	assert.Equal(t, true, wh["enabled"])
+	_, has := wh["secret"]
+	assert.False(t, has)
 }
 
-// QA caught a bug: once a cloud token was saved, toggling mirror_enabled
-// via the dialog (which omits the token field) errored with "api_token
-// and sandbox_id are required". The handler must preserve existing
-// credentials on partial updates.
+func TestRelayConnectionCRUD(t *testing.T) {
+	t.Parallel()
+	_, ts := newTestServer(t)
+
+	put := func(payload map[string]any) *http.Response {
+		body, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/relay_connection", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp, _ := http.DefaultClient.Do(req)
+		return resp
+	}
+
+	resp := put(map[string]any{
+		"host": "smtp.example.com", "port": 587, "username": "u", "password": "p",
+		"auto_relay_enabled": true,
+	})
+	resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var relay map[string]any
+	getJSON(t, ts.URL+"/api/v1/relay_connection", &relay)
+	assert.Equal(t, true, relay["connected"])
+	assert.Equal(t, "smtp.example.com", relay["host"])
+	assert.Equal(t, float64(587), relay["port"])
+
+	// Partial update preserves password when omitted.
+	resp = put(map[string]any{"host": "smtp.example.com", "auto_relay_enabled": false})
+	resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	req, _ := http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/relay_connection", nil)
+	resp, _ = http.DefaultClient.Do(req)
+	resp.Body.Close()
+	getJSON(t, ts.URL+"/api/v1/relay_connection", &relay)
+	assert.Equal(t, false, relay["connected"])
+}
+
+func TestWebhookConnectionDestroy(t *testing.T) {
+	t.Parallel()
+	_, ts := newTestServer(t)
+
+	body, _ := json.Marshal(map[string]any{
+		"url": "https://hooks.example.com/x", "enabled": true,
+	})
+	req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/webhook_connection", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	resp, _ := http.DefaultClient.Do(req)
+	resp.Body.Close()
+
+	req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/webhook_connection", nil)
+	resp, _ = http.DefaultClient.Do(req)
+	resp.Body.Close()
+
+	var wh map[string]any
+	getJSON(t, ts.URL+"/api/v1/webhook_connection", &wh)
+	assert.Equal(t, false, wh["connected"])
+}
+
 func TestCloudUpdatePreservesCredentialsOnPartialUpdate(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
@@ -424,45 +393,29 @@ func TestCloudUpdatePreservesCredentialsOnPartialUpdate(t *testing.T) {
 		return resp
 	}
 
-	// Initial connect with full credentials.
 	resp := put(map[string]any{"api_token": "tok", "sandbox_id": 9001, "mirror_enabled": false})
 	resp.Body.Close()
 
-	// Partial update: only mirror_enabled — token and sandbox omitted.
 	resp = put(map[string]any{"mirror_enabled": true})
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("partial update status = %d, want 200", resp.StatusCode)
-	}
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var cloud map[string]any
 	getJSON(t, ts.URL+"/api/v1/cloud_connection", &cloud)
-	if cloud["mirror_enabled"] != true {
-		t.Errorf("mirror_enabled not flipped: %+v", cloud)
-	}
-	if cloud["sandbox_id"].(float64) != 9001 {
-		t.Errorf("sandbox_id changed: %+v", cloud)
-	}
+	assert.Equal(t, true, cloud["mirror_enabled"])
+	assert.Equal(t, float64(9001), cloud["sandbox_id"])
 
-	// Sanity: updating with no existing connection still requires both.
-	if err := func() error {
-		req, _ := http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/cloud_connection", nil)
-		r, err := http.DefaultClient.Do(req)
-		if r != nil {
-			r.Body.Close()
-		}
-		return err
-	}(); err != nil {
-		t.Fatalf("disconnect: %v", err)
+	req, _ := http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/cloud_connection", nil)
+	r, err := http.DefaultClient.Do(req)
+	if r != nil {
+		r.Body.Close()
 	}
+	require.NoError(t, err)
 	resp = put(map[string]any{"mirror_enabled": true})
 	resp.Body.Close()
-	if resp.StatusCode != http.StatusUnprocessableEntity {
-		t.Errorf("partial update with no existing conn status = %d, want 422", resp.StatusCode)
-	}
+	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 }
 
-// OnIngest fires after a successful POST /api/v1/ingest.
 func TestIngestFiresOnIngestHook(t *testing.T) {
 	t.Parallel()
 	srv, ts := newTestServer(t)
@@ -471,24 +424,16 @@ func TestIngestFiresOnIngestHook(t *testing.T) {
 	srv.OnIngest = func(id string) { got = id }
 
 	id := ingestSample(t, ts.URL, "x", "a@x", "b@y", "")
-	// Hook is synchronous (called from the handler); no goroutine
-	// ordering concern.
-	if got == "" || got != id {
-		t.Errorf("OnIngest got = %q, want %q", got, id)
-	}
+	assert.Equal(t, id, got)
 }
 
 func TestSecurityHeadersNosniff(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 	resp, err := http.Get(ts.URL + "/api/v1/messages")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	resp.Body.Close()
-	if got := resp.Header.Get("X-Content-Type-Options"); got != "nosniff" {
-		t.Errorf("X-Content-Type-Options = %q, want nosniff", got)
-	}
+	assert.Equal(t, "nosniff", resp.Header.Get("X-Content-Type-Options"))
 }
 
 func TestCORSEchoesOnlyLoopbackOrigins(t *testing.T) {
@@ -499,24 +444,14 @@ func TestCORSEchoesOnlyLoopbackOrigins(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/messages", nil)
 		req.Header.Set("Origin", origin)
 		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		resp.Body.Close()
 		return resp.Header.Get("Access-Control-Allow-Origin")
 	}
 
-	if got := do("http://127.0.0.1:3540"); got != "http://127.0.0.1:3540" {
-		t.Errorf("loopback origin ACAO = %q, want it echoed", got)
-	}
-	if got := do("http://localhost:3540"); got != "http://localhost:3540" {
-		t.Errorf("localhost origin ACAO = %q, want it echoed", got)
-	}
-	// A public origin must NOT be allowed — the old wildcard let any site
-	// read the inbox cross-origin.
-	if got := do("https://evil.example"); got != "" {
-		t.Errorf("non-loopback origin ACAO = %q, want empty", got)
-	}
+	assert.Equal(t, "http://127.0.0.1:3540", do("http://127.0.0.1:3540"))
+	assert.Equal(t, "http://localhost:3540", do("http://localhost:3540"))
+	assert.Empty(t, do("https://evil.example"))
 }
 
 func TestPartServedAsSanitizedAttachmentWithCSP(t *testing.T) {
@@ -531,61 +466,26 @@ func TestPartServedAsSanitizedAttachmentWithCSP(t *testing.T) {
 		Raw:     []byte("From: a@x\r\nSubject: with attachment\r\n\r\nbody\r\n"),
 		Attachments: []store.PartIn{{
 			PartID:      "1",
-			Filename:    `evil".html`, // embedded quote must be stripped
+			Filename:    `evil".html`,
 			ContentType: "text/html",
 			Content:     []byte("<script>alert(1)</script>"),
 			Size:        25,
 		}},
 	})
 	resp, err := http.Post(ts.URL+"/api/v1/ingest", "application/json", bytes.NewReader(payload))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	var created struct{ ID string }
 	_ = json.NewDecoder(resp.Body).Decode(&created)
 	resp.Body.Close()
 
 	r, err := http.Get(ts.URL + "/api/v1/message/" + created.ID + "/part/1")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer r.Body.Close()
 
 	cd := r.Header.Get("Content-Disposition")
-	if !strings.HasPrefix(cd, "attachment;") {
-		t.Errorf("part Content-Disposition = %q, want attachment (never inline)", cd)
-	}
-	if strings.Contains(cd, `evil".html`) {
-		t.Errorf("filename quote not sanitized: %q", cd)
-	}
-	if !strings.Contains(cd, "evil.html") {
-		t.Errorf("sanitized filename should keep evil.html: %q", cd)
-	}
-	if csp := r.Header.Get("Content-Security-Policy"); !strings.Contains(csp, "default-src 'none'") {
-		t.Errorf("CSP = %q, want default-src 'none'", csp)
-	}
-	if got := r.Header.Get("X-Content-Type-Options"); got != "nosniff" {
-		t.Errorf("nosniff missing on part response: %q", got)
-	}
-}
-
-// ---------------------------------------------------------------------
-
-func equalSliceStr(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
+	assert.True(t, strings.HasPrefix(cd, "attachment;"))
+	assert.NotContains(t, cd, `evil".html`)
+	assert.Contains(t, cd, "evil.html")
+	assert.Contains(t, r.Header.Get("Content-Security-Policy"), "default-src 'none'")
+	assert.Equal(t, "nosniff", r.Header.Get("X-Content-Type-Options"))
 }

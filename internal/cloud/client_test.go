@@ -9,10 +9,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/mailtrap/mailtrap-local/internal/store"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // stubServer captures the last POST so tests can assert on the URL,
@@ -65,21 +66,11 @@ func TestSendHappyPath(t *testing.T) {
 	t.Parallel()
 	stub := newStub(t)
 	c := &Client{APIToken: "tok", SandboxID: 42, BaseURL: stub.URL, HTTP: http.DefaultClient}
-	if err := c.Send(context.Background(), minMsg(), nil, nil); err != nil {
-		t.Fatalf("send: %v", err)
-	}
-	if stub.lastMethod != http.MethodPost {
-		t.Errorf("method = %q, want POST", stub.lastMethod)
-	}
-	if stub.lastPath != "/api/send/42" {
-		t.Errorf("path = %q, want /api/send/42", stub.lastPath)
-	}
-	if stub.lastAuth != "Bearer tok" {
-		t.Errorf("auth header = %q, want \"Bearer tok\"", stub.lastAuth)
-	}
-	if stub.lastCT != "application/json" {
-		t.Errorf("content-type = %q, want application/json", stub.lastCT)
-	}
+	require.NoError(t, c.Send(context.Background(), minMsg(), nil, nil))
+	assert.Equal(t, http.MethodPost, stub.lastMethod)
+	assert.Equal(t, "/api/send/42", stub.lastPath)
+	assert.Equal(t, "Bearer tok", stub.lastAuth)
+	assert.Equal(t, "application/json", stub.lastCT)
 }
 
 func TestSendBuildsExpectedPayload(t *testing.T) {
@@ -98,63 +89,37 @@ func TestSendBuildsExpectedPayload(t *testing.T) {
 		HTML:         "<b>html</b>",
 		Category:     &cat,
 	}
-	if err := c.Send(context.Background(), msg, nil, nil); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Send(context.Background(), msg, nil, nil))
 
 	var got map[string]any
-	if err := json.Unmarshal(stub.lastBody, &got); err != nil {
-		t.Fatalf("unmarshal body: %v\n%s", err, stub.lastBody)
-	}
+	require.NoError(t, json.Unmarshal(stub.lastBody, &got))
 
 	from := got["from"].(map[string]any)
-	if from["email"] != "app@x.test" || from["name"] != "App" {
-		t.Errorf("from = %+v", from)
-	}
+	assert.Equal(t, "app@x.test", from["email"])
+	assert.Equal(t, "App", from["name"])
 	to := got["to"].([]any)
-	if len(to) != 1 {
-		t.Fatalf("to count = %d, want 1", len(to))
-	}
+	require.Len(t, to, 1)
 	first := to[0].(map[string]any)
-	if first["email"] != "alice@y.test" || first["name"] != "Alice" {
-		t.Errorf("to[0] = %+v", first)
-	}
-	if got["subject"] != "Welcome" {
-		t.Errorf("subject = %v", got["subject"])
-	}
-	if got["text"] != "plain" {
-		t.Errorf("text = %v", got["text"])
-	}
-	if got["html"] != "<b>html</b>" {
-		t.Errorf("html = %v", got["html"])
-	}
-	if got["category"] != "welcome" {
-		t.Errorf("category = %v, want welcome (promoted to top-level)", got["category"])
-	}
-	if _, ok := got["cc"]; !ok {
-		t.Errorf("cc absent — should appear when set")
-	}
-	if _, ok := got["bcc"]; !ok {
-		t.Errorf("bcc absent — should appear when set")
-	}
+	assert.Equal(t, "alice@y.test", first["email"])
+	assert.Equal(t, "Alice", first["name"])
+	assert.Equal(t, "Welcome", got["subject"])
+	assert.Equal(t, "plain", got["text"])
+	assert.Equal(t, "<b>html</b>", got["html"])
+	assert.Equal(t, "welcome", got["category"])
+	assert.Contains(t, got, "cc")
+	assert.Contains(t, got, "bcc")
 }
 
 func TestSendOmitsEmptyCcBcc(t *testing.T) {
 	t.Parallel()
 	stub := newStub(t)
 	c := &Client{APIToken: "t", SandboxID: 1, BaseURL: stub.URL, HTTP: http.DefaultClient}
-	if err := c.Send(context.Background(), minMsg(), nil, nil); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Send(context.Background(), minMsg(), nil, nil))
 
 	var got map[string]any
 	_ = json.Unmarshal(stub.lastBody, &got)
-	if _, ok := got["cc"]; ok {
-		t.Errorf("empty cc should be omitted from payload")
-	}
-	if _, ok := got["bcc"]; ok {
-		t.Errorf("empty bcc should be omitted from payload")
-	}
+	assert.NotContains(t, got, "cc")
+	assert.NotContains(t, got, "bcc")
 }
 
 func TestSendFallsBackToEmptyTextWhenBothBodiesAbsent(t *testing.T) {
@@ -166,14 +131,10 @@ func TestSendFallsBackToEmptyTextWhenBothBodiesAbsent(t *testing.T) {
 		FromAddress: "f@x", ToAddresses: []store.Address{{Address: "t@x"}},
 		Subject: "no-body",
 	}
-	if err := c.Send(context.Background(), msg, nil, nil); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Send(context.Background(), msg, nil, nil))
 	var got map[string]any
 	_ = json.Unmarshal(stub.lastBody, &got)
-	if got["text"] != "" {
-		t.Errorf("text = %v, want \"\" fallback (Mailtrap rejects no-body)", got["text"])
-	}
+	assert.Equal(t, "", got["text"])
 }
 
 func TestSendAttachmentsBase64Encoded(t *testing.T) {
@@ -189,34 +150,21 @@ func TestSendAttachmentsBase64Encoded(t *testing.T) {
 			Content:     []byte("fake-pdf-bytes"),
 		},
 	}
-	if err := c.Send(context.Background(), minMsg(), nil, atts); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Send(context.Background(), minMsg(), nil, atts))
 
 	var got map[string]any
 	_ = json.Unmarshal(stub.lastBody, &got)
 	rawAtts, ok := got["attachments"].([]any)
-	if !ok || len(rawAtts) != 1 {
-		t.Fatalf("attachments shape: %+v", got["attachments"])
-	}
+	require.True(t, ok)
+	require.Len(t, rawAtts, 1)
 	first := rawAtts[0].(map[string]any)
-	if first["filename"] != "report.pdf" {
-		t.Errorf("filename = %v", first["filename"])
-	}
-	if first["type"] != "application/pdf" {
-		t.Errorf("type = %v", first["type"])
-	}
-	if first["disposition"] != "attachment" {
-		t.Errorf("disposition = %v, want attachment", first["disposition"])
-	}
+	assert.Equal(t, "report.pdf", first["filename"])
+	assert.Equal(t, "application/pdf", first["type"])
+	assert.Equal(t, "attachment", first["disposition"])
 	encoded := first["content"].(string)
 	decoded, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		t.Fatalf("attachment content not valid base64: %v", err)
-	}
-	if string(decoded) != "fake-pdf-bytes" {
-		t.Errorf("decoded content = %q, want fake-pdf-bytes", decoded)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "fake-pdf-bytes", string(decoded))
 }
 
 func TestSendInlinePartsMarkedDispositionInline(t *testing.T) {
@@ -233,24 +181,14 @@ func TestSendInlinePartsMarkedDispositionInline(t *testing.T) {
 			Content:     []byte("PNG-BYTES"),
 		},
 	}
-	if err := c.Send(context.Background(), minMsg(), inline, nil); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Send(context.Background(), minMsg(), inline, nil))
 	var got map[string]any
 	_ = json.Unmarshal(stub.lastBody, &got)
 	atts := got["attachments"].([]any)
 	first := atts[0].(map[string]any)
-	if first["disposition"] != "inline" {
-		t.Errorf("disposition = %v, want inline", first["disposition"])
-	}
-	if first["content_id"] != "img1@x" {
-		t.Errorf("content_id = %v, want img1@x (angle brackets stripped)", first["content_id"])
-	}
-	// Filename fallback: when Filename is empty the code uses the
-	// stripped Content-ID. Confirms the fallback path.
-	if first["filename"] != "img1@x" {
-		t.Errorf("filename fallback = %v, want img1@x", first["filename"])
-	}
+	assert.Equal(t, "inline", first["disposition"])
+	assert.Equal(t, "img1@x", first["content_id"])
+	assert.Equal(t, "img1@x", first["filename"])
 }
 
 func TestSendCustomHeadersExtracted(t *testing.T) {
@@ -269,25 +207,15 @@ func TestSendCustomHeadersExtracted(t *testing.T) {
 		"body\r\n")
 	msg := minMsg()
 	msg.Raw = raw
-	if err := c.Send(context.Background(), msg, nil, nil); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, c.Send(context.Background(), msg, nil, nil))
 	var got map[string]any
 	_ = json.Unmarshal(stub.lastBody, &got)
 	headers, ok := got["headers"].(map[string]any)
-	if !ok {
-		t.Fatalf("headers missing/wrong shape: %+v", got["headers"])
-	}
-	if headers["X-Trace-Id"] != "trace-abc" {
-		t.Errorf("X-Trace-Id = %v", headers["X-Trace-Id"])
-	}
-	if headers["X-Original-From"] != "original@x" {
-		t.Errorf("X-Original-From = %v", headers["X-Original-From"])
-	}
+	require.True(t, ok)
+	assert.Equal(t, "trace-abc", headers["X-Trace-Id"])
+	assert.Equal(t, "original@x", headers["X-Original-From"])
 	for _, k := range []string{"From", "To", "Subject", "Message-Id", "Category"} {
-		if _, present := headers[k]; present {
-			t.Errorf("reserved header %q leaked into headers map: %v", k, headers[k])
-		}
+		assert.NotContains(t, headers, k)
 	}
 }
 
@@ -302,16 +230,10 @@ func TestSendPermanentErrorOn4xx(t *testing.T) {
 	c := &Client{APIToken: "bad", SandboxID: 1, BaseURL: stub.URL, HTTP: http.DefaultClient}
 
 	err := c.Send(context.Background(), minMsg(), nil, nil)
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
+	require.Error(t, err)
 	var perm *PermanentError
-	if !errors.As(err, &perm) {
-		t.Fatalf("expected *PermanentError, got %T: %v", err, err)
-	}
-	if !strings.Contains(perm.Error(), strconv.Itoa(http.StatusUnauthorized)) {
-		t.Errorf("error message missing status code: %q", perm.Error())
-	}
+	require.ErrorAs(t, err, &perm)
+	assert.Contains(t, perm.Error(), strconv.Itoa(http.StatusUnauthorized))
 }
 
 // TestSendTransientErrorOn5xx — 5xx + network blips are retryable.
@@ -324,13 +246,9 @@ func TestSendTransientErrorOn5xx(t *testing.T) {
 	c := &Client{APIToken: "t", SandboxID: 1, BaseURL: stub.URL, HTTP: http.DefaultClient}
 
 	err := c.Send(context.Background(), minMsg(), nil, nil)
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
+	require.Error(t, err)
 	var perm *PermanentError
-	if errors.As(err, &perm) {
-		t.Errorf("5xx should NOT be PermanentError; was %v", err)
-	}
+	assert.False(t, errors.As(err, &perm))
 }
 
 func TestSendNetworkErrorIsTransient(t *testing.T) {
@@ -341,11 +259,7 @@ func TestSendNetworkErrorIsTransient(t *testing.T) {
 		HTTP:    http.DefaultClient,
 	}
 	err := c.Send(context.Background(), minMsg(), nil, nil)
-	if err == nil {
-		t.Fatal("expected network error, got nil")
-	}
+	require.Error(t, err)
 	var perm *PermanentError
-	if errors.As(err, &perm) {
-		t.Errorf("network errors should NOT be PermanentError; was %v", err)
-	}
+	assert.False(t, errors.As(err, &perm))
 }

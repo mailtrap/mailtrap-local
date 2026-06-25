@@ -14,6 +14,8 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/relay"
 	"github.com/mailtrap/mailtrap-local/internal/store"
 	"github.com/mailtrap/mailtrap-local/internal/webhook"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
 
@@ -44,22 +46,18 @@ func TestOpenAPIDrift(t *testing.T) {
 		routerPaths[clean] = true
 		return nil
 	}
-	if err := chi.Walk(r, walk); err != nil {
-		t.Fatal(err)
-	}
+	err := chi.Walk(r, walk)
+	require.NoError(t, err)
 
 	specPath := openapiSpecPath(t)
 	specBytes, err := os.ReadFile(specPath)
-	if err != nil {
-		t.Fatalf("read spec: %v", err)
-	}
+	require.NoError(t, err)
 
 	var spec struct {
 		Paths map[string]any `yaml:"paths"`
 	}
-	if err := yaml.Unmarshal(specBytes, &spec); err != nil {
-		t.Fatalf("parse spec: %v", err)
-	}
+	err = yaml.Unmarshal(specBytes, &spec)
+	require.NoError(t, err)
 	specPaths := map[string]bool{}
 	for p := range spec.Paths {
 		specPaths[p] = true
@@ -88,14 +86,10 @@ func TestOpenAPIDrift(t *testing.T) {
 		}
 	}
 
-	if len(missingFromSpec) > 0 {
-		t.Errorf("router paths missing from openapi.yaml — add them or extend the test omit list:\n  %v",
-			missingFromSpec)
-	}
-	if len(extraInSpec) > 0 {
-		t.Errorf("openapi.yaml documents paths the router doesn't serve:\n  %v",
-			extraInSpec)
-	}
+	assert.Emptyf(t, missingFromSpec, "router paths missing from openapi.yaml — add them or extend the test omit list:\n  %v",
+		missingFromSpec)
+	assert.Emptyf(t, extraInSpec, "openapi.yaml documents paths the router doesn't serve:\n  %v",
+		extraInSpec)
 }
 
 // chiToOpenAPIPath converts chi's `/foo/{id}` into the OpenAPI form
@@ -117,9 +111,7 @@ func chiToOpenAPIPath(p string) string {
 func openapiSpecPath(t *testing.T) string {
 	t.Helper()
 	_, thisFile, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("runtime.Caller failed")
-	}
+	require.True(t, ok)
 	root := filepath.Join(filepath.Dir(thisFile), "..", "..")
 	return filepath.Join(root, "docs", "api", "openapi.yaml")
 }

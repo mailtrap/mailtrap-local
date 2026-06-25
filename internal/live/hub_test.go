@@ -3,10 +3,14 @@ package live
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // fakeSubscriber records every Send and reports counts. The optional
@@ -69,20 +73,16 @@ func waitFor(t *testing.T, deadline time.Duration, msg string, fn func() bool) {
 		}
 		time.Sleep(2 * time.Millisecond)
 	}
-	t.Fatalf("waitFor timed out after %v: %s", deadline, msg)
+	require.Fail(t, fmt.Sprintf("waitFor timed out after %v: %s", deadline, msg))
 }
 
 func TestHubSubscribeAndCount(t *testing.T) {
 	t.Parallel()
 	h := NewHub()
-	if got := h.Count(); got != 0 {
-		t.Errorf("empty hub: Count() = %d, want 0", got)
-	}
+	assert.Equal(t, 0, h.Count())
 	h.Subscribe(&fakeSubscriber{})
 	h.Subscribe(&fakeSubscriber{})
-	if got := h.Count(); got != 2 {
-		t.Errorf("after 2 subscribes: Count() = %d, want 2", got)
-	}
+	assert.Equal(t, 2, h.Count())
 }
 
 func TestHubUnsubscribeClosesSubscriber(t *testing.T) {
@@ -91,9 +91,7 @@ func TestHubUnsubscribeClosesSubscriber(t *testing.T) {
 	s := &fakeSubscriber{}
 	h.Subscribe(s)
 	h.Unsubscribe(s)
-	if h.Count() != 0 {
-		t.Errorf("after unsubscribe: Count() = %d, want 0", h.Count())
-	}
+	assert.Equal(t, 0, h.Count())
 	// Close happens in the writer goroutine's defer, so we wait.
 	waitFor(t, time.Second, "subscriber.Close()", func() bool { return s.closed.Load() })
 }
@@ -120,16 +118,9 @@ func TestBroadcastCreatedFanout(t *testing.T) {
 			Type    string          `json:"type"`
 			Message json.RawMessage `json:"message"`
 		}
-		if err := json.Unmarshal(s.lastFrame(), &frame); err != nil {
-			t.Fatalf("subscriber %s: unmarshal frame: %v", name, err)
-		}
-		if frame.Type != "created" {
-			t.Errorf("subscriber %s: type = %q, want %q", name, frame.Type, "created")
-		}
-		if string(frame.Message) != string(payload) {
-			t.Errorf("subscriber %s: message payload = %q, want %q",
-				name, string(frame.Message), string(payload))
-		}
+		require.NoError(t, json.Unmarshal(s.lastFrame(), &frame))
+		assert.Equal(t, "created", frame.Type)
+		assert.Equal(t, string(payload), string(frame.Message))
 	}
 }
 
@@ -148,12 +139,9 @@ func TestBroadcastDestroyedFanout(t *testing.T) {
 		Type string `json:"type"`
 		ID   string `json:"id"`
 	}
-	if err := json.Unmarshal(s.lastFrame(), &frame); err != nil {
-		t.Fatal(err)
-	}
-	if frame.Type != "destroyed" || frame.ID != "msg-42" {
-		t.Errorf("frame = %+v, want {type:destroyed, id:msg-42}", frame)
-	}
+	require.NoError(t, json.Unmarshal(s.lastFrame(), &frame))
+	assert.Equal(t, "destroyed", frame.Type)
+	assert.Equal(t, "msg-42", frame.ID)
 }
 
 // TestBroadcastDropsFailingSubscriber — when Send returns an error, the
@@ -223,9 +211,7 @@ func TestSlowSubscriberDoesNotStallOthers(t *testing.T) {
 	// The broadcast loop must not have blocked on the slow subscriber.
 	// Generous bound — we're really checking it didn't approach the
 	// 10s WebSocket write deadline.
-	if elapsed > 2*time.Second {
-		t.Errorf("broadcast stalled on slow subscriber: took %v", elapsed)
-	}
+	assert.LessOrEqual(t, elapsed, 2*time.Second)
 
 	// Fast subscriber receives every frame.
 	waitFor(t, 2*time.Second, "fast got all frames", func() bool {
@@ -263,13 +249,11 @@ func TestBroadcastConcurrent(t *testing.T) {
 	}
 	wg.Wait()
 
-	for i, s := range subs {
+	for _, s := range subs {
 		waitFor(t, 2*time.Second, "subscriber drained", func() bool {
 			return s.frameCount() == broadcasts
 		})
-		if got := s.frameCount(); got != broadcasts {
-			t.Errorf("subscriber %d: frameCount = %d, want %d", i, got, broadcasts)
-		}
+		assert.Equal(t, broadcasts, s.frameCount())
 	}
 }
 
@@ -283,7 +267,5 @@ func TestDoubleSubscribeReplacesPrior(t *testing.T) {
 	s := &fakeSubscriber{}
 	h.Subscribe(s)
 	h.Subscribe(s) // replace
-	if h.Count() != 1 {
-		t.Errorf("Count after double-subscribe = %d, want 1", h.Count())
-	}
+	assert.Equal(t, 1, h.Count())
 }

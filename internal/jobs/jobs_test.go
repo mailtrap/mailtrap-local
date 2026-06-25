@@ -1,10 +1,10 @@
 package jobs
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +17,8 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/relay"
 	"github.com/mailtrap/mailtrap-local/internal/store"
 	"github.com/mailtrap/mailtrap-local/internal/webhook"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // helper: pull a fixture into the store and return its ID.
@@ -29,9 +31,7 @@ func ingest(t *testing.T, s *store.Store, subject string) string {
 		Subject: subject,
 		Raw:     []byte("From: a\r\n\r\nbody\r\n"),
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	return id
 }
 
@@ -52,7 +52,7 @@ func waitFor(t *testing.T, deadline time.Duration, fn func() bool) {
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
-	t.Fatalf("timeout after %v", deadline)
+	require.Fail(t, fmt.Sprintf("timeout after %v", deadline))
 }
 
 // ---------------------------------------------------------------------
@@ -77,9 +77,7 @@ func TestAfterIngestBroadcastsCreated(t *testing.T) {
 	d.AfterIngest(id)
 
 	waitFor(t, 2*time.Second, func() bool { return b.created.Load() == 1 })
-	if b.created.Load() != 1 {
-		t.Errorf("BroadcastCreated count = %d, want 1", b.created.Load())
-	}
+	assert.Equal(t, int32(1), b.created.Load())
 }
 
 // When no cloud connection exists, cloud-mirror is a no-op.
@@ -121,11 +119,9 @@ func TestWebhookDeliveryHitsURL(t *testing.T) {
 	}))
 	defer receiver.Close()
 
-	if err := s.WebhookUpsert(context.Background(), &store.WebhookConnection{
+	require.NoError(t, s.WebhookUpsert(context.Background(), &store.WebhookConnection{
 		URL: receiver.URL, Enabled: true,
-	}); err != nil {
-		t.Fatal(err)
-	}
+	}))
 
 	d := &Dispatcher{
 		Store: s, Config: config.NewLoader(),
@@ -141,12 +137,8 @@ func TestWebhookDeliveryHitsURL(t *testing.T) {
 	d.AfterIngest(id)
 
 	waitFor(t, 3*time.Second, func() bool { return hits.Load() >= 1 })
-	if hits.Load() < 1 {
-		t.Fatalf("webhook never received a POST")
-	}
-	if !bytes.Contains(lastBody, []byte("Hello webhooks")) {
-		t.Errorf("webhook body missing subject: %s", lastBody)
-	}
+	require.GreaterOrEqual(t, hits.Load(), int32(1))
+	assert.Contains(t, string(lastBody), "Hello webhooks")
 }
 
 // TestWebhookDeliveryNoOpWhenDisabled verifies the disabled flag is
@@ -179,9 +171,7 @@ func TestWebhookDeliveryNoOpWhenDisabled(t *testing.T) {
 	d.webhookDelivery(id)
 	// Give any erroneous goroutine time to fire.
 	time.Sleep(200 * time.Millisecond)
-	if hits.Load() != 0 {
-		t.Errorf("webhook fired despite enabled=false; hits=%d", hits.Load())
-	}
+	assert.Equal(t, int32(0), hits.Load())
 }
 
 // TestRetentionEvictsOldest verifies that with cap=2 and 5 messages,
@@ -207,9 +197,7 @@ func TestRetentionEvictsOldest(t *testing.T) {
 	// inline. We can do that by setting MAILTRAP_LOCAL_CONFIG to a
 	// temp file and reloading.
 	tmp := t.TempDir() + "/config.yml"
-	if err := writeFile(tmp, "storage:\n  max_messages: 2\n"); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, writeFile(tmp, "storage:\n  max_messages: 2\n"))
 	t.Setenv("MAILTRAP_LOCAL_CONFIG", tmp)
 	cfg.Reload()
 
@@ -228,9 +216,7 @@ func TestRetentionEvictsOldest(t *testing.T) {
 	d.enforceRetention()
 
 	res, _ := s.List(context.Background(), store.ListOpts{Limit: 50})
-	if res.Total != 2 {
-		t.Errorf("after retention, total = %d, want 2", res.Total)
-	}
+	assert.Equal(t, 2, res.Total)
 }
 
 // writeFile is a small helper since os.WriteFile pulls io/fs nuances
@@ -256,11 +242,9 @@ func TestShutdownHappyPath(t *testing.T) {
 	}))
 	defer receiver.Close()
 
-	if err := s.WebhookUpsert(context.Background(), &store.WebhookConnection{
+	require.NoError(t, s.WebhookUpsert(context.Background(), &store.WebhookConnection{
 		URL: receiver.URL, Enabled: true,
-	}); err != nil {
-		t.Fatal(err)
-	}
+	}))
 
 	d := &Dispatcher{
 		Store: s, Config: config.NewLoader(),
@@ -281,9 +265,7 @@ func TestShutdownHappyPath(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := d.Shutdown(ctx); err != nil {
-		t.Fatalf("Shutdown returned %v, want nil", err)
-	}
+	require.NoError(t, d.Shutdown(ctx))
 }
 
 // Deadline path: a stuck webhook receiver keeps a goroutine alive past
@@ -319,12 +301,8 @@ func TestShutdownReturnsDeadlineExceeded(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 	err := d.Shutdown(ctx)
-	if err == nil {
-		t.Fatalf("Shutdown returned nil, want a deadline error")
-	}
-	if !errors.Is(err, context.DeadlineExceeded) {
-		t.Fatalf("Shutdown returned %v, want DeadlineExceeded", err)
-	}
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
 // withRetry returns immediately when the context is already cancelled,
@@ -340,12 +318,8 @@ func TestWithRetryReturnsImmediatelyWhenContextCanceled(t *testing.T) {
 		calls++
 		return errors.New("transient")
 	})
-	if !errors.Is(err, context.Canceled) {
-		t.Errorf("err = %v, want context.Canceled", err)
-	}
-	if calls != 0 {
-		t.Errorf("fn called %d times on a pre-cancelled ctx, want 0", calls)
-	}
+	assert.ErrorIs(t, err, context.Canceled)
+	assert.Equal(t, 0, calls)
 }
 
 // When the context is cancelled mid-flight, the backoff between attempts
@@ -362,17 +336,11 @@ func TestWithRetryAbortsBackoffOnCancel(t *testing.T) {
 		cancel() // cancel during the first attempt
 		return errors.New("transient")
 	})
-	if !errors.Is(err, context.Canceled) {
-		t.Errorf("err = %v, want context.Canceled", err)
-	}
-	if calls != 1 {
-		t.Errorf("fn called %d times, want 1 (backoff should abort before retry)", calls)
-	}
+	assert.ErrorIs(t, err, context.Canceled)
+	assert.Equal(t, 1, calls)
 	// Would be ~500ms+ if the backoff slept; the cancellable select makes
 	// it near-instant.
-	if elapsed := time.Since(start); elapsed > 200*time.Millisecond {
-		t.Errorf("withRetry took %v; backoff did not abort on cancel", elapsed)
-	}
+	assert.LessOrEqual(t, time.Since(start), 200*time.Millisecond)
 }
 
 // TestRetentionLoopRunsOnStart verifies the new behaviour: retention
@@ -384,9 +352,7 @@ func TestRetentionLoopRunsOnStart(t *testing.T) {
 	defer s.Close()
 
 	tmp := t.TempDir() + "/config.yml"
-	if err := writeFile(tmp, "storage:\n  max_messages: 2\n"); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, writeFile(tmp, "storage:\n  max_messages: 2\n"))
 	t.Setenv("MAILTRAP_LOCAL_CONFIG", tmp)
 	cfg := config.NewLoader()
 	cfg.Reload()
@@ -404,9 +370,8 @@ func TestRetentionLoopRunsOnStart(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		ingest(t, s, "msg")
 	}
-	if res, _ := s.List(context.Background(), store.ListOpts{Limit: 50}); res.Total != 5 {
-		t.Fatalf("pre-Start total = %d, want 5", res.Total)
-	}
+	res, _ := s.List(context.Background(), store.ListOpts{Limit: 50})
+	require.Equal(t, 5, res.Total)
 
 	d.Start()
 	defer func() {
@@ -438,7 +403,5 @@ func TestShutdownWithoutStartIsNoop(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	if err := d.Shutdown(ctx); err != nil {
-		t.Fatalf("Shutdown on unstarted dispatcher = %v, want nil", err)
-	}
+	require.NoError(t, d.Shutdown(ctx))
 }
