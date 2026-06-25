@@ -186,6 +186,7 @@ func main() {
 		Hub:      hub,
 		Relay:    relayCl,
 		Webhook:  webhookCl,
+		Config:   cfg,
 		Frontend: frontendFS,
 		OpenAPI:  openAPISpec,
 		OnIngest: dispatcher.AfterIngest,
