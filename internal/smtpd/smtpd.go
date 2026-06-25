@@ -201,7 +201,7 @@ func buildPayload(env *enmime.Envelope, raw []byte, smtpFrom string, smtpTo []st
 
 	snippet := env.Text
 	if len(snippet) > maxSnippetLen {
-		snippet = snippet[:250]
+		snippet = snippet[:maxSnippetLen]
 	}
 
 	return &store.IngestPayload{
