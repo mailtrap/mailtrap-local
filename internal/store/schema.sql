@@ -107,3 +107,8 @@ CREATE TABLE IF NOT EXISTS webhook_connections (
   created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
+
+-- Applied migration versions (one row, version 0 when empty).
+CREATE TABLE IF NOT EXISTS schema_version (
+  version INTEGER NOT NULL
+);

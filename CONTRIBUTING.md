@@ -78,6 +78,8 @@ routes, update **both** `docs/api/openapi.yaml` and the embedded copy at
 4. Make sure `golangci-lint`, the full test suite (Go + frontend), and `go vet` pass locally.
 5. Write a clear description: what changed, why, and how you verified it.
 
+**Schema changes:** add a numbered file under `internal/store/migrations/` (e.g. `002_add_foo.sql`) and keep `schema.sql` in sync for fresh installs. Do not edit old migration files after release.
+
 ## Security
 
 Please **do not** file security issues as public issues — see

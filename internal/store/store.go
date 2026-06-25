@@ -127,6 +127,9 @@ func (s *Store) applySchema() error {
 	if err := s.backfillFTSIfNeeded(); err != nil {
 		return fmt.Errorf("backfill fts: %w", err)
 	}
+	if err := s.runMigrations(); err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
 	return nil
 }
 
