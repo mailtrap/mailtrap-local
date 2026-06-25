@@ -1,0 +1,74 @@
+internal/config/locked.go
+  s_297efc20f3206c::t_ac005bd46281c4 1-43
+internal/api/connections_config_test.go
+  s_297efc20f3206c::t_cec7a541d7926b 8
+  s_297efc20f3206c::t_0910f0507b3e50 1-7,9-55,57,59,63-99,101-102,104-123
+  s_297efc20f3206c::t_86b55cd3312321 56,58,60-62
+  s_297efc20f3206c::t_0b7af1181eb6c7 100,103
+internal/config/locked_test.go
+  s_297efc20f3206c::t_eea155501025eb 1-22
+cmd/mailtrap-local/openapi.yaml
+  s_297efc20f3206c::t_6878cf49461a27 480,533,613,1019-1035,1094-1117,1154-1167
+internal/api/connections.go
+  s_297efc20f3206c::t_aa7449bbe8841e 121
+  s_297efc20f3206c::t_ba332fe901a71e 300
+  s_297efc20f3206c::t_defbda1eda0b15 82,419
+  s_297efc20f3206c::t_7c1202239bcede 463
+  s_297efc20f3206c::t_5960166ac5008e 83,430
+  s_297efc20f3206c::t_8b98de28b28c6c 201-202,206-207,211-212,216-217,221-222,226-227,231-232,236-237
+  s_297efc20f3206c::t_b191181f04907b 152,234,268
+  s_297efc20f3206c::t_41ead3255e12ed 247
+  s_297efc20f3206c::t_2fb3be609bba2c 391-395,399-401,413-415,418,420-429,431,435,449-450,455
+  s_297efc20f3206c::t_205a047d9a4bb8 62-64,76-78,81,90,101-105,113
+  s_297efc20f3206c::t_8cfef62f3cecc8 74-75,79-80
+  s_297efc20f3206c::t_cb96324a49f19d 138,143-148,150-151,153-163,167,170,177-179
+  s_297efc20f3206c::t_892f18712ff2f8 183-185,203-205,208-210,213-215,218-220,223-225,228-230,233,235,238-246,248-251,255-260,262-263,265-267,269-270,281,283,287,292
+  s_297efc20f3206c::t_a6a6b337d820e3 411-412,416-417
+  s_297efc20f3206c::t_8a818eb1f7b841 358-372,376,379,386-388
+  s_297efc20f3206c::t_6928a10523a862 23,28-44,46,49,56-58,389
+  s_297efc20f3206c::t_afffd1361ed19b 9
+  s_297efc20f3206c::t_97c8ea45b50e95 390
+internal/api/api.go
+  s_297efc20f3206c::t_40512e0daa3e92 12
+  s_297efc20f3206c::t_b86cef762fb344 31
+docs/api/openapi.yaml
+  s_297efc20f3206c::t_fd7be85c0184d7 533
+  s_297efc20f3206c::t_80850c3fb5ef4e 613
+  s_297efc20f3206c::t_328136dce1968e 480
+  s_297efc20f3206c::t_3c7fbe9781bb2e 1019-1035,1105
+  s_297efc20f3206c::t_e13db213d71ae4 1095-1096,1098-1099,1101-1103,1106-1110,1113-1117,1154-1167
+  s_297efc20f3206c::t_6fca2bb4fed865 1094
+  s_297efc20f3206c::t_012db927a79758 1097
+  s_297efc20f3206c::t_08012eb36f2137 1100
+  s_297efc20f3206c::t_04ce570d973275 1104
+  s_297efc20f3206c::t_e1aeb951b514d3 1111-1112
+cmd/mailtrap-local/main.go
+  s_297efc20f3206c::t_9490544f47206d 189
+internal/api/config_pins.go
+  s_297efc20f3206c::t_05dcdf2a875a37 1-4,6-27,29-91
+  s_297efc20f3206c::t_f6d08035672e7e 28
+  s_297efc20f3206c::t_1ebf540eb90d9f 5
+README.md
+  s_297efc20f3206c::t_0f6b46d462b183 157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "5656f5e450053a07f76e12dc648ecce11b158cb3",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_297efc20f3206c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c25dc794-51e0-46b5-8a25-6f2510f4b67a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
