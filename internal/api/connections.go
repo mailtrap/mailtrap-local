@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -67,8 +66,7 @@ func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
 		SandboxID     int64  `json:"sandbox_id"`
 		MirrorEnabled *bool  `json:"mirror_enabled"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+	if err := decodeJSON(w, r, &body); err != nil {
 		return
 	}
 	if locked["api_token"] && body.APIToken != "" &&
@@ -204,8 +202,7 @@ func (s *Server) relayUpdate(w http.ResponseWriter, r *http.Request) {
 		OverrideFrom     string `json:"override_from"`
 		ReturnPath       string `json:"return_path"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+	if err := decodeJSON(w, r, &body); err != nil {
 		return
 	}
 	if locked["host"] && body.Host != "" &&
@@ -321,8 +318,7 @@ func (s *Server) relayTest(w http.ResponseWriter, r *http.Request) {
 		Auth     string `json:"auth"`
 		TLS      string `json:"tls"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+	if err := decodeJSON(w, r, &body); err != nil {
 		return
 	}
 	if body.Host == "" {
@@ -414,8 +410,7 @@ func (s *Server) webhookUpdate(w http.ResponseWriter, r *http.Request) {
 		Secret  *string `json:"secret"`
 		Enabled bool    `json:"enabled"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+	if err := decodeJSON(w, r, &body); err != nil {
 		return
 	}
 	if locked["url"] && body.URL != "" &&
@@ -480,8 +475,7 @@ func (s *Server) webhookTest(w http.ResponseWriter, r *http.Request) {
 		URL    string `json:"url"`
 		Secret string `json:"secret"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+	if err := decodeJSON(w, r, &body); err != nil {
 		return
 	}
 	if body.URL == "" {

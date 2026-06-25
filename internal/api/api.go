@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"io/fs"
 	"net"
 	"net/http"
@@ -19,6 +20,9 @@ import (
 const (
 	defaultLimit = 50
 	maxLimit     = 200
+
+	// maxRequestBodyBytes matches smtpd defaultMaxMessageBytes (25 MB).
+	maxRequestBodyBytes = 25 * 1024 * 1024
 )
 
 // Server is the HTTP layer. Holds every dependency the handlers reach
@@ -128,8 +132,7 @@ func (s *Server) Router() http.Handler {
 // the live `created` broadcast via the wired callback (set in main.go).
 func (s *Server) ingest(w http.ResponseWriter, r *http.Request) {
 	var p store.IngestPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		writeError(w, http.StatusBadRequest, "decode payload: "+err.Error())
+	if err := decodeJSON(w, r, &p); err != nil {
 		return
 	}
 	id, err := s.Store.Insert(r.Context(), &p)
@@ -157,6 +160,22 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 
 func writeError(w http.ResponseWriter, code int, msg string) {
 	writeJSON(w, code, ErrorResponse{Error: msg})
+}
+
+// decodeJSON reads and unmarshals the request body, capped at
+// maxRequestBodyBytes (same limit as SMTP ingest).
+func decodeJSON(w http.ResponseWriter, r *http.Request, v any) error {
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			writeError(w, http.StatusRequestEntityTooLarge, "request body too large")
+			return err
+		}
+		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+		return err
+	}
+	return nil
 }
 
 func parseInt(s string, def int) int {
