@@ -1,0 +1,29 @@
+internal/api/connections.go
+  s_297efc20f3206c::t_79e0a485f35035 52,108,116,172,286,294,379,447,455
+internal/api/release.go
+  s_297efc20f3206c::t_4122579a880479 39,49,75,85,113
+internal/api/helpers_test.go
+  s_297efc20f3206c::t_fa98ed3a3ff873 4-5,12
+  s_297efc20f3206c::t_af99daac618fc2 15-26
+internal/api/api.go
+  s_297efc20f3206c::t_f8ebb4ce1adcca 166-170
+  s_297efc20f3206c::t_fba31bfbef95d8 7
+internal/api/messages.go
+  s_297efc20f3206c::t_07e2a5cb7c6b9a 28,72,103,137,162,192,233,274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "4345ed7814b9d6b6bf4c4b79995835e0478903ac",
+  "prompts": {},
+  "sessions": {
+    "s_297efc20f3206c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c25dc794-51e0-46b5-8a25-6f2510f4b67a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
