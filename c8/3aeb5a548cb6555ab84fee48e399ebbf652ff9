@@ -1,0 +1,25 @@
+SECURITY.md
+  s_297efc20f3206c::t_4c8b0264e44909 16-20
+  s_297efc20f3206c::t_0aaa189910bfce 46,48-51
+CODE_OF_CONDUCT.md
+  s_297efc20f3206c::t_8d256da6256ec9 23-25
+README.md
+  s_297efc20f3206c::t_f8dbbd6ab119a6 136
+  s_297efc20f3206c::t_9083cd96cbf08e 58-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "c83aeb5a548cb6555ab84fee48e399ebbf652ff9",
+  "prompts": {},
+  "sessions": {
+    "s_297efc20f3206c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c25dc794-51e0-46b5-8a25-6f2510f4b67a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
