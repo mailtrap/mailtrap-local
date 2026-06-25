@@ -121,3 +121,24 @@ cloud:
 	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 }
+
+func TestCloudConnectionPinnedMirrorRejected(t *testing.T) {
+	httpSrv := testServerWithConfig(t, `
+cloud:
+  mirror_enabled: true
+`)
+	defer httpSrv.Close()
+
+	req, err := http.NewRequest(http.MethodPut, httpSrv.URL+"/api/v1/cloud_connection",
+		bytes.NewReader(mustJSON(t, map[string]any{
+			"api_token":      "tok",
+			"sandbox_id":     1,
+			"mirror_enabled": false,
+		})))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+}

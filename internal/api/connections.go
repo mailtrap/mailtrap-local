@@ -81,6 +81,11 @@ func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnprocessableEntity, "sandbox_id is pinned by config")
 		return
 	}
+	if locked["mirror_enabled"] && cfg.Cloud.MirrorEnabled != nil &&
+		body.MirrorEnabled != *cfg.Cloud.MirrorEnabled {
+		writeError(w, http.StatusUnprocessableEntity, "mirror_enabled is pinned by config")
+		return
+	}
 
 	// Preserve existing credentials when the caller leaves them blank — the
 	// dialog only sends api_token when the user re-enters it, and a partial
