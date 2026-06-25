@@ -193,6 +193,8 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 		mirror = c.MirrorEnabled
 		apiToken = c.APIToken
 		sandboxID = c.SandboxID
+	} else if !errors.Is(err, store.ErrNotFound) {
+		slog.Warn("cloud-mirror: load cloud connection", slog.Any("err", err))
 	}
 	// Config overrides DB.
 	if cfg.Cloud.MirrorEnabled != nil {
@@ -213,6 +215,8 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 
 	m, err := d.Store.Get(ctx, msgID)
 	if err != nil {
+		slog.Warn("cloud-mirror: load message",
+			slog.String("msg_id", msgID), slog.Any("err", err))
 		return
 	}
 	inline, _ := d.Store.LoadInline(ctx, m.ID)
@@ -234,6 +238,7 @@ func (d *Dispatcher) relayMirror(msgID string) {
 		return
 	}
 	if err != nil {
+		slog.Warn("relay-mirror: load relay connection", slog.Any("err", err))
 		return
 	}
 
@@ -252,6 +257,8 @@ func (d *Dispatcher) relayMirror(msgID string) {
 
 	m, err := d.Store.Get(ctx, msgID)
 	if err != nil {
+		slog.Warn("relay-mirror: load message",
+			slog.String("msg_id", msgID), slog.Any("err", err))
 		return
 	}
 	// Auto-relay sends to whoever the SMTP envelope said RCPT TO was, and
@@ -268,7 +275,10 @@ func (d *Dispatcher) relayMirror(msgID string) {
 
 func (d *Dispatcher) webhookDelivery(msgID string) {
 	cfg := d.Config.Get()
-	conn, _ := d.Store.WebhookGet(d.parentCtx())
+	conn, err := d.Store.WebhookGet(d.parentCtx())
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		slog.Warn("webhook-delivery: load webhook connection", slog.Any("err", err))
+	}
 	whURL, secret, enabled := overlayWebhook(conn, cfg.Webhook)
 	if !enabled || whURL == "" {
 		return
@@ -277,6 +287,8 @@ func (d *Dispatcher) webhookDelivery(msgID string) {
 	defer cancel()
 	m, err := d.Store.Get(ctx, msgID)
 	if err != nil {
+		slog.Warn("webhook-delivery: load message",
+			slog.String("msg_id", msgID), slog.Any("err", err))
 		return
 	}
 
@@ -284,6 +296,8 @@ func (d *Dispatcher) webhookDelivery(msgID string) {
 	// reuse the same client code.
 	payload, err := d.SerializeSummary(m)
 	if err != nil {
+		slog.Warn("webhook-delivery: serialize message",
+			slog.String("msg_id", msgID), slog.Any("err", err))
 		return
 	}
 	if err := withRetry(ctx, func() error {

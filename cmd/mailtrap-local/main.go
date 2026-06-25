@@ -169,8 +169,17 @@ func main() {
 		// inline + attachment metadata) so receivers can target either
 		// the live POST or the REST endpoint with the same parser.
 		SerializeSummary: func(m *store.Message) ([]byte, error) {
-			inline, _ := st.LoadInline(context.Background(), m.ID)
-			atts, _ := st.LoadAttachments(context.Background(), m.ID)
+			ctx := context.Background()
+			inline, err := st.LoadInline(ctx, m.ID)
+			if err != nil {
+				slog.Warn("webhook serialize: load inline",
+					slog.String("msg_id", m.ID), slog.Any("err", err))
+			}
+			atts, err2 := st.LoadAttachments(ctx, m.ID)
+			if err2 != nil {
+				slog.Warn("webhook serialize: load attachments",
+					slog.String("msg_id", m.ID), slog.Any("err", err2))
+			}
 			return json.Marshal(api.WireDetail(m, inline, atts))
 		},
 	}
@@ -262,13 +271,22 @@ func broadcastCreated(hub *live.Hub, st *store.Store, msgID string) {
 	defer cancel()
 	m, err := st.Get(ctx, msgID)
 	if err != nil {
+		slog.Warn("live broadcast: load message",
+			slog.String("msg_id", msgID), slog.Any("err", err))
 		return
 	}
 	// Attachment count — same shape the list endpoint emits.
-	counts, _ := st.AttachmentsCount(ctx, []string{m.ID})
+	counts, err := st.AttachmentsCount(ctx, []string{m.ID})
+	if err != nil {
+		slog.Warn("live broadcast: count attachments",
+			slog.String("msg_id", msgID), slog.Any("err", err))
+		return
+	}
 	summary := api.WireSummary(m, counts[m.ID])
 	raw, err := json.Marshal(summary)
 	if err != nil {
+		slog.Warn("live broadcast: marshal summary",
+			slog.String("msg_id", msgID), slog.Any("err", err))
 		return
 	}
 	hub.BroadcastCreated(raw)

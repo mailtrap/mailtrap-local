@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -111,8 +112,15 @@ func (s *Server) getMessage(w http.ResponseWriter, r *http.Request) {
 		m.ReadAt = &now
 	}
 
-	inline, _ := s.Store.LoadInline(r.Context(), m.ID)
-	atts, _ := s.Store.LoadAttachments(r.Context(), m.ID)
+	log := loggerFrom(r.Context()).With(slog.String("msg_id", m.ID))
+	inline, err := s.Store.LoadInline(r.Context(), m.ID)
+	if err != nil {
+		log.Warn("load inline parts", slog.Any("err", err))
+	}
+	atts, err := s.Store.LoadAttachments(r.Context(), m.ID)
+	if err != nil {
+		log.Warn("load attachments", slog.Any("err", err))
+	}
 	writeJSON(w, http.StatusOK, toWireDetail(m, inline, atts))
 }
 

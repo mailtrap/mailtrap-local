@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
 
 	"github.com/mailtrap/mailtrap-local/internal/secrets"
 )
@@ -95,7 +96,9 @@ func (s *Store) CloudGet(ctx context.Context) (*CloudConnection, error) {
 
 	// Lazy migration: re-encrypt legacy plaintext rows in place.
 	if s.needsReencryption(stored) {
-		_ = s.CloudUpsert(ctx, &c) // best-effort; failure leaves plaintext
+		if err := s.CloudUpsert(ctx, &c); err != nil {
+			slog.Warn("re-encrypt cloud connection", slog.Any("err", err))
+		}
 	}
 	return &c, nil
 }
@@ -153,7 +156,9 @@ func (s *Store) RelayGet(ctx context.Context) (*RelayConnection, error) {
 	r.ReturnPath = returnP.String
 
 	if s.needsReencryption(password.String) {
-		_ = s.RelayUpsert(ctx, &r) // best-effort migration
+		if err := s.RelayUpsert(ctx, &r); err != nil {
+			slog.Warn("re-encrypt relay connection", slog.Any("err", err))
+		}
 	}
 	return &r, nil
 }
@@ -211,7 +216,9 @@ func (s *Store) WebhookGet(ctx context.Context) (*WebhookConnection, error) {
 	w.Enabled = enabled != 0
 
 	if s.needsReencryption(secret.String) {
-		_ = s.WebhookUpsert(ctx, &w) // best-effort migration
+		if err := s.WebhookUpsert(ctx, &w); err != nil {
+			slog.Warn("re-encrypt webhook connection", slog.Any("err", err))
+		}
 	}
 	return &w, nil
 }
