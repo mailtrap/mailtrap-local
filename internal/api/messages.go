@@ -25,7 +25,7 @@ func (s *Server) listMessages(w http.ResponseWriter, r *http.Request) {
 		Start: start, Limit: limit, Category: category,
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 		Query: query, Start: start, Limit: limit, Category: category,
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (s *Server) getMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 
@@ -134,7 +134,7 @@ func (s *Server) rawMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	disp := "inline"
@@ -159,7 +159,7 @@ func (s *Server) headers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 
@@ -189,7 +189,7 @@ func (s *Server) part(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	ct := p.ContentType
@@ -230,7 +230,7 @@ func (s *Server) updateRead(w http.ResponseWriter, r *http.Request) {
 	}
 	ids := nonBlank(body.IDs)
 	if err := s.Store.MarkRead(r.Context(), body.Read, ids...); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -271,7 +271,7 @@ func (s *Server) destroyMessages(w http.ResponseWriter, r *http.Request) {
 
 	deleted, err := s.Store.Delete(r.Context(), ids...)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	// Live broadcast — best-effort.
