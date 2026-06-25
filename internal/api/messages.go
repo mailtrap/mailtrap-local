@@ -12,10 +12,12 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/store"
 )
 
+const maxListStart = 1_000_000
+
 // listMessages handles GET /api/v1/messages.
 func (s *Server) listMessages(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	start := clamp(parseInt(q.Get("start"), 0), 0, 1_000_000)
+	start := clamp(parseInt(q.Get("start"), 0), 0, maxListStart)
 	limit := clamp(parseInt(q.Get("limit"), defaultLimit), 1, maxLimit)
 	category := strings.TrimSpace(q.Get("category"))
 
@@ -48,7 +50,7 @@ func (s *Server) listMessages(w http.ResponseWriter, r *http.Request) {
 func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	query := q.Get("query")
-	start := clamp(parseInt(q.Get("start"), 0), 0, 1_000_000)
+	start := clamp(parseInt(q.Get("start"), 0), 0, maxListStart)
 	limit := clamp(parseInt(q.Get("limit"), defaultLimit), 1, maxLimit)
 	category := strings.TrimSpace(q.Get("category"))
 
@@ -137,7 +139,7 @@ func (s *Server) rawMessage(w http.ResponseWriter, r *http.Request) {
 	// into HTML; the CSP is belt-and-suspenders for the raw RFC822 source.
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; sandbox")
 	w.Header().Set("Content-Disposition", disp+`; filename="`+m.ID+`.eml"`)
-	_, _ = w.Write(m.Raw)
+	_, _ = w.Write(m.Raw) //nolint:gosec // raw RFC822 download; not rendered as HTML
 }
 
 // headers handles GET /api/v1/message/:id/headers — returns parsed
@@ -203,7 +205,7 @@ func (s *Server) part(w http.ResponseWriter, r *http.Request) {
 		filename = "attachment"
 	}
 	w.Header().Set("Content-Disposition", `attachment; filename="`+sanitizeFilename(filename)+`"`)
-	_, _ = w.Write(p.Content)
+	_, _ = w.Write(p.Content) //nolint:gosec // attachment bytes; Content-Type set explicitly
 }
 
 // updateRead handles PUT /api/v1/messages — bulk read/unread toggle.

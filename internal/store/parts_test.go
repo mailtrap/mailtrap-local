@@ -63,7 +63,7 @@ func TestLoadPartByID(t *testing.T) {
 	assert.Equal(t, []byte("abc"), part.Content)
 
 	_, err = s.LoadPartByID(ctx, id, "missing")
-	assert.ErrorIs(t, err, ErrNotFound)
+	require.ErrorIs(t, err, ErrNotFound)
 }
 
 func TestAttachmentsCount(t *testing.T) {
@@ -95,12 +95,12 @@ func TestRelayAndWebhookDelete(t *testing.T) {
 	}))
 	require.NoError(t, s.RelayDelete(ctx))
 	_, err := s.RelayGet(ctx)
-	assert.ErrorIs(t, err, ErrNotFound)
+	require.ErrorIs(t, err, ErrNotFound)
 
 	require.NoError(t, s.WebhookUpsert(ctx, &WebhookConnection{
 		URL: "https://hooks.example.com", Enabled: true,
 	}))
 	require.NoError(t, s.WebhookDelete(ctx))
 	_, err = s.WebhookGet(ctx)
-	assert.ErrorIs(t, err, ErrNotFound)
+	require.ErrorIs(t, err, ErrNotFound)
 }

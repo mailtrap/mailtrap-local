@@ -33,10 +33,11 @@ func (s *Store) Delete(ctx context.Context, ids ...string) ([]string, error) {
 	// in the broadcast list.
 	existing, err := s.filterExisting(ctx, ids)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "filter existing ids")
 	}
 	if _, err := s.db.ExecContext(ctx,
-		`DELETE FROM messages WHERE id IN (`+placeholders+`)`, args...,
+		`DELETE FROM messages WHERE id IN (`+placeholders+`)`, //nolint:gosec // placeholders are ?-bound
+		args...,
 	); err != nil {
 		return nil, fmt.Errorf("delete: %w", err)
 	}
@@ -115,7 +116,7 @@ func (s *Store) LoadPartByID(ctx context.Context, msgID, partID string) (*Part, 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, err
+		return nil, wrapErr(err, "scan attachment")
 	}
 	return &p, nil
 }
@@ -158,7 +159,7 @@ func (s *Store) Search(ctx context.Context, opts SearchOpts) (*ListResult, error
 		WHERE messages_fts MATCH ?`+categoryClause,
 		args...,
 	).Scan(&total); err != nil {
-		return nil, err
+		return nil, wrapErr(err, "count search results")
 	}
 	if err := s.db.QueryRowContext(ctx, `
 		SELECT COUNT(*)
@@ -166,7 +167,7 @@ func (s *Store) Search(ctx context.Context, opts SearchOpts) (*ListResult, error
 		WHERE messages_fts MATCH ?`+categoryClause+` AND m.read_at IS NULL`,
 		args...,
 	).Scan(&unread); err != nil {
-		return nil, err
+		return nil, wrapErr(err, "count unread search results")
 	}
 
 	cats, err := s.AllCategories(ctx)
@@ -187,20 +188,20 @@ func (s *Store) Search(ctx context.Context, opts SearchOpts) (*ListResult, error
 		LIMIT ? OFFSET ?
 	`, pageArgs...)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "search messages")
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var msgs []*Message
 	for rows.Next() {
 		m, err := scanMessage(rows)
 		if err != nil {
-			return nil, err
+			return nil, wrapErr(err, "scan search message")
 		}
 		msgs = append(msgs, m)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, wrapErr(err, "iterate search messages")
 	}
 
 	counts, err := s.attachmentCounts(ctx, msgs)
@@ -235,9 +236,9 @@ func (s *Store) loadParts(ctx context.Context, msgID, disposition string) ([]Par
 		ORDER BY id ASC
 	`, msgID, disposition)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "query parts")
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []Part
 	for rows.Next() {
 		var p Part
@@ -246,28 +247,28 @@ func (s *Store) loadParts(ctx context.Context, msgID, disposition string) ([]Par
 			&p.Disposition, &p.Size, &p.Content,
 			&p.ChecksumMD5, &p.ChecksumSHA1, &p.ChecksumSHA256,
 		); err != nil {
-			return nil, err
+			return nil, wrapErr(err, "scan part")
 		}
 		out = append(out, p)
 	}
-	return out, rows.Err()
+	return out, wrapErr(rows.Err(), "iterate parts")
 }
 
 func (s *Store) allIDs(ctx context.Context) ([]string, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT id FROM messages`)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "query message ids")
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var ids []string
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			return nil, err
+			return nil, wrapErr(err, "scan id")
 		}
 		ids = append(ids, id)
 	}
-	return ids, rows.Err()
+	return ids, wrapErr(rows.Err(), "iterate ids")
 }
 
 func (s *Store) filterExisting(ctx context.Context, ids []string) ([]string, error) {
@@ -276,21 +277,22 @@ func (s *Store) filterExisting(ctx context.Context, ids []string) ([]string, err
 	}
 	placeholders, args := inClause(ids)
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id FROM messages WHERE id IN (`+placeholders+`)`, args...,
+		`SELECT id FROM messages WHERE id IN (`+placeholders+`)`, //nolint:gosec // placeholders are ?-bound
+		args...,
 	)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "query existing ids")
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []string
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			return nil, err
+			return nil, wrapErr(err, "scan id")
 		}
 		out = append(out, id)
 	}
-	return out, rows.Err()
+	return out, wrapErr(rows.Err(), "iterate existing ids")
 }
 
 // inClause builds a "?,?,?" placeholder string + matching []any args.
@@ -309,7 +311,7 @@ func inClause(ids []string) (string, []any) {
 
 func splitTokens(q string) []string {
 	var out []string
-	for _, t := range strings.Fields(strings.TrimSpace(q)) {
+	for t := range strings.FieldsSeq(strings.TrimSpace(q)) {
 		if t != "" {
 			out = append(out, t)
 		}

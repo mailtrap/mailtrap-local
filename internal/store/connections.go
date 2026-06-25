@@ -49,14 +49,16 @@ func (s *Store) encryptForStorage(plaintext string) (string, error) {
 	if s.secrets == nil {
 		return plaintext, nil
 	}
-	return s.secrets.Encrypt(plaintext)
+	out, err := s.secrets.Encrypt(plaintext)
+	return out, wrapErr(err, "encrypt")
 }
 
 func (s *Store) decryptFromStorage(stored string) (string, error) {
 	if s.secrets == nil {
 		return stored, nil
 	}
-	return s.secrets.Decrypt(stored)
+	out, err := s.secrets.Decrypt(stored)
+	return out, wrapErr(err, "decrypt")
 }
 
 // needsReencryption reports whether `stored` is plaintext that should
@@ -82,11 +84,11 @@ func (s *Store) CloudGet(ctx context.Context) (*CloudConnection, error) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "scan")
 	}
 	pt, err := s.decryptFromStorage(stored)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "scan")
 	}
 	c.APIToken = pt
 	c.MirrorEnabled = mirror != 0
@@ -105,18 +107,18 @@ func (s *Store) CloudUpsert(ctx context.Context, c *CloudConnection) error {
 		return err
 	}
 	if _, err := s.db.ExecContext(ctx, `DELETE FROM cloud_connections`); err != nil {
-		return err
+		return wrapErr(err, "delete cloud")
 	}
 	_, err = s.db.ExecContext(ctx, `
 		INSERT INTO cloud_connections (id, api_token, sandbox_id, mirror_enabled)
 		VALUES (1, ?, ?, ?)
 	`, enc, c.SandboxID, boolToInt(c.MirrorEnabled))
-	return err
+	return wrapErr(err, "insert cloud")
 }
 
 func (s *Store) CloudDelete(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, `DELETE FROM cloud_connections`)
-	return err
+	return wrapErr(err, "delete cloud")
 }
 
 // ---------------------------------------------------------------------
@@ -138,11 +140,11 @@ func (s *Store) RelayGet(ctx context.Context) (*RelayConnection, error) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "scan")
 	}
 	pt, err := s.decryptFromStorage(password.String)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "scan")
 	}
 	r.Username = username.String
 	r.Password = pt
@@ -159,10 +161,10 @@ func (s *Store) RelayGet(ctx context.Context) (*RelayConnection, error) {
 func (s *Store) RelayUpsert(ctx context.Context, r *RelayConnection) error {
 	enc, err := s.encryptForStorage(r.Password)
 	if err != nil {
-		return err
+		return wrapErr(err, "encrypt relay password")
 	}
 	if _, err := s.db.ExecContext(ctx, `DELETE FROM relay_connections`); err != nil {
-		return err
+		return wrapErr(err, "delete relay")
 	}
 	_, err = s.db.ExecContext(ctx, `
 		INSERT INTO relay_connections (
@@ -175,12 +177,12 @@ func (s *Store) RelayUpsert(ctx context.Context, r *RelayConnection) error {
 		r.Auth, r.TLS, boolToInt(r.AutoRelayEnabled),
 		nullString(r.OverrideFrom), nullString(r.ReturnPath),
 	)
-	return err
+	return wrapErr(err, "insert relay")
 }
 
 func (s *Store) RelayDelete(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, `DELETE FROM relay_connections`)
-	return err
+	return wrapErr(err, "delete relay")
 }
 
 // ---------------------------------------------------------------------
@@ -199,11 +201,11 @@ func (s *Store) WebhookGet(ctx context.Context) (*WebhookConnection, error) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "scan")
 	}
 	pt, err := s.decryptFromStorage(secret.String)
 	if err != nil {
-		return nil, err
+		return nil, wrapErr(err, "scan")
 	}
 	w.Secret = pt
 	w.Enabled = enabled != 0
@@ -217,21 +219,21 @@ func (s *Store) WebhookGet(ctx context.Context) (*WebhookConnection, error) {
 func (s *Store) WebhookUpsert(ctx context.Context, w *WebhookConnection) error {
 	enc, err := s.encryptForStorage(w.Secret)
 	if err != nil {
-		return err
+		return wrapErr(err, "encrypt webhook secret")
 	}
 	if _, err := s.db.ExecContext(ctx, `DELETE FROM webhook_connections`); err != nil {
-		return err
+		return wrapErr(err, "delete webhook")
 	}
 	_, err = s.db.ExecContext(ctx, `
 		INSERT INTO webhook_connections (id, url, secret, enabled)
 		VALUES (1, ?, ?, ?)
 	`, w.URL, nullString(enc), boolToInt(w.Enabled))
-	return err
+	return wrapErr(err, "insert webhook")
 }
 
 func (s *Store) WebhookDelete(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, `DELETE FROM webhook_connections`)
-	return err
+	return wrapErr(err, "delete webhook")
 }
 
 // ---------------------------------------------------------------------

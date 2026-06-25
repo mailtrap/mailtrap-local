@@ -4,6 +4,12 @@ import (
 	"sort"
 )
 
+const (
+	percentBase       = 100
+	roundToOneDecimal = 0.5
+	decimalScale      = 10
+)
+
 // mainFamily is the data we know per-family without any HTML to scan:
 // its market-share weight + version counts in each category.
 type mainFamily struct {
@@ -105,7 +111,7 @@ func aggregateVersionCounts(cfg *loaded, family string, mainKeys []string) Categ
 //	  for each affected client (where support != "yes"):
 //	    for each {status, versions} in client.versions:
 //	      family_key = client.family if main else "other"
-//	      drop = 100 * len(versions) / total_versions[family_key][category]
+//	      drop = percentBase * len(versions) / total_versions[family_key][category]
 //	      aggregated[family_key][rule_name][status][category] += drop
 //
 // Then for each family, support_per_category[c] = 100 - sum(drops in c).
@@ -148,7 +154,7 @@ func supportPercents(
 				if len(versions) == 0 {
 					continue
 				}
-				drop := 100 * len(versions) / total
+				drop := percentBase * len(versions) / total
 				if agg[famKey] == nil {
 					agg[famKey] = map[string]map[string]map[string]int{}
 				}
@@ -195,9 +201,9 @@ func perCategorySupport(byRule map[string]map[string]map[string]int) CategoryCou
 		}
 	}
 	return CategoryCounts{
-		Desktop: 100 - clampPct(dDrop),
-		Mobile:  100 - clampPct(mDrop),
-		Web:     100 - clampPct(wDrop),
+		Desktop: percentBase - clampPct(dDrop),
+		Mobile:  percentBase - clampPct(mDrop),
+		Web:     percentBase - clampPct(wDrop),
 	}
 }
 
@@ -206,7 +212,7 @@ func perCategorySupport(byRule map[string]map[string]map[string]int) CategoryCou
 func overallFromCategories(perCat, counts CategoryCounts) int {
 	totalVersions := counts.Desktop + counts.Mobile + counts.Web
 	if totalVersions == 0 {
-		return 100
+		return percentBase
 	}
 	weighted := perCat.Desktop*counts.Desktop +
 		perCat.Mobile*counts.Mobile +
@@ -223,7 +229,7 @@ func marketSupportPercent(families []FamilyReport) float64 {
 		totalShare += f.MarketShare
 	}
 	if totalShare == 0 {
-		return 100
+		return percentBase
 	}
 	weighted := 0
 	for _, f := range families {
@@ -236,12 +242,12 @@ func clampPct(n int) int {
 	if n < 0 {
 		return 0
 	}
-	if n > 100 {
-		return 100
+	if n > percentBase {
+		return percentBase
 	}
 	return n
 }
 
 func roundOne(f float64) float64 {
-	return float64(int(f*10+0.5)) / 10
+	return float64(int(f*decimalScale+roundToOneDecimal)) / decimalScale
 }

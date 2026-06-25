@@ -39,6 +39,7 @@ func TestRequireLoopback(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			err := requireLoopback(tc.addr)
 			assert.Equal(t, tc.wantErr, err != nil)
 		})

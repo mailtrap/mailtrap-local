@@ -2,11 +2,17 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+)
+
+const (
+	httpStatusServerError = 500
+	httpStatusClientError = 400
 )
 
 type ctxKey int
@@ -40,12 +46,12 @@ func requestLogger(next http.Handler) http.Handler {
 		next.ServeHTTP(rec, r.WithContext(ctx))
 
 		level := slog.LevelInfo
-		if rec.status >= 500 {
+		if rec.status >= httpStatusServerError {
 			level = slog.LevelError
-		} else if rec.status >= 400 {
+		} else if rec.status >= httpStatusClientError {
 			level = slog.LevelWarn
 		}
-		logger.LogAttrs(ctx, level, "request",
+		loggerFrom(ctx).LogAttrs(ctx, level, "request",
 			slog.Int("status", rec.status),
 			slog.Duration("dur", time.Since(start)),
 		)
@@ -66,6 +72,7 @@ func loggerFrom(ctx context.Context) *slog.Logger {
 // statusRecorder captures the HTTP status code for the access log.
 type statusRecorder struct {
 	http.ResponseWriter
+
 	status int
 	wrote  bool
 }
@@ -80,5 +87,9 @@ func (r *statusRecorder) WriteHeader(c int) {
 // statusRecorder.status defaults to 200, so we just need to mark wrote.
 func (r *statusRecorder) Write(b []byte) (int, error) {
 	r.wrote = true
-	return r.ResponseWriter.Write(b)
+	n, err := r.ResponseWriter.Write(b)
+	if err != nil {
+		return n, fmt.Errorf("write response: %w", err)
+	}
+	return n, nil
 }

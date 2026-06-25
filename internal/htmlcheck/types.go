@@ -8,36 +8,37 @@ package htmlcheck
 
 // Versions is the {yes:[], no:[], partial:[]} block on each client.
 type Versions struct {
-	Yes     []string `yaml:"yes"     json:"yes,omitempty"`
-	No      []string `yaml:"no"      json:"no,omitempty"`
-	Partial []string `yaml:"partial" json:"partial,omitempty"`
+	Yes     []string `json:"yes,omitempty"     yaml:"yes"`
+	No      []string `json:"no,omitempty"      yaml:"no"`
+	Partial []string `json:"partial,omitempty" yaml:"partial"`
 }
 
 // Client is one mail-client/version row inside a rule's clients[]. The
 // JSON shape (PascalCase-ish, snake_case keys) is what the SPA's
 // HtmlCheckClient interface expects, so it's preserved exactly.
 type Client struct {
-	Family      string   `yaml:"family"        json:"family"`
-	Platform    string   `yaml:"platform"      json:"platform"`
-	Category    string   `yaml:"category"      json:"category"`
-	Support     string   `yaml:"support"       json:"support"` // yes | no | partial
-	NoteNumbers []int    `yaml:"note_numbers"  json:"note_numbers,omitempty"`
-	Versions    Versions `yaml:"versions"      json:"versions,omitempty"`
+	Family   string `json:"family"   yaml:"family"`
+	Platform string `json:"platform" yaml:"platform"`
+	Category string `json:"category" yaml:"category"`
+	Support  string `json:"support"  yaml:"support"` // yes | no | partial
+	//nolint:tagliatelle // embedded yaml data uses snake_case keys
+	NoteNumbers []int    `json:"note_numbers,omitempty" yaml:"note_numbers"`
+	Versions    Versions `json:"versions"               yaml:"versions"`
 
 	// Filled in at response time:
-	DisplayName string `yaml:"-" json:"display_name,omitempty"`
-	FamilyGroup string `yaml:"-" json:"family_group,omitempty"`
+	DisplayName string `json:"display_name,omitempty" yaml:"-"`
+	FamilyGroup string `json:"family_group,omitempty" yaml:"-"`
 }
 
 // Rule is a single entry from html.yml or css.yml. ParserType selects
 // the matching strategy; ParserKey is its argument.
 type Rule struct {
 	Title         string            `yaml:"title"`
-	ParserKey     string            `yaml:"parser_key"`
-	ParserType    string            `yaml:"parser_type"`
+	ParserKey     string            `yaml:"parser_key"`  //nolint:tagliatelle // embedded yaml uses snake_case
+	ParserType    string            `yaml:"parser_type"` //nolint:tagliatelle // embedded yaml uses snake_case
 	URL           string            `yaml:"url"`
 	Clients       []Client          `yaml:"clients"`
-	NumberedNotes map[string]string `yaml:"numbered_notes"`
+	NumberedNotes map[string]string `yaml:"numbered_notes"` //nolint:tagliatelle // embedded yaml uses snake_case
 }
 
 // Issue is the per-rule report row the API returns. Builds during

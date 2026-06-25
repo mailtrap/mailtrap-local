@@ -50,7 +50,7 @@ func TestKnownBadHTML(t *testing.T) {
 	// Each issue should be decorated with display_name + family_group.
 	for _, issue := range r.Issues {
 		if len(issue.Clients) == 0 {
-			assert.Fail(t, "issue %q has no clients", issue.RuleName)
+			assert.Failf(t, "issue has no clients", "issue %q has no clients", issue.RuleName)
 			continue
 		}
 		c := issue.Clients[0]
@@ -97,7 +97,7 @@ func TestMarketSupportPercent(t *testing.T) {
 }
 
 func keysOf(m map[string]bool) []string {
-	var out []string
+	out := make([]string, 0, len(m))
 	for k := range m {
 		out = append(out, k)
 	}

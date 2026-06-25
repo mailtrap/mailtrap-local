@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -19,6 +20,13 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/relay"
 	"github.com/mailtrap/mailtrap-local/internal/store"
 	"github.com/mailtrap/mailtrap-local/internal/webhook"
+)
+
+const (
+	defaultRetentionCap = 500
+	sideEffectTimeout   = 30 * time.Second
+	sideEffectRetries   = 3
+	retryBackoffBase    = 500 * time.Millisecond
 )
 
 // Dispatcher fans out post-ingest work to background goroutines.
@@ -46,10 +54,29 @@ type Dispatcher struct {
 	SerializeSummary func(*store.Message) ([]byte, error)
 
 	// Lifecycle plumbing. Zero values are safe; Start() initialises.
-	ctx    context.Context
+	done   chan struct{} // closed on shutdown; nil when not started
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
 }
+
+// dispatcherContext is a minimal context.Context whose Done channel
+// mirrors the dispatcher shutdown signal without storing a context.Context
+// on the Dispatcher struct (containedctx).
+type dispatcherContext struct {
+	done <-chan struct{}
+}
+
+func (c *dispatcherContext) Deadline() (time.Time, bool) { return time.Time{}, false }
+func (c *dispatcherContext) Done() <-chan struct{}       { return c.done }
+func (c *dispatcherContext) Err() error {
+	select {
+	case <-c.done:
+		return context.Canceled
+	default:
+		return nil
+	}
+}
+func (c *dispatcherContext) Value(key any) any { return nil }
 
 // retentionInterval controls how often the retention loop wakes up
 // to enforce storage.max_messages. Trades worst-case over-cap drift
@@ -61,31 +88,19 @@ var retentionInterval = 60 * time.Second
 // a cancellable context, and Shutdown will wait for them and the
 // retention loop. Idempotent.
 func (d *Dispatcher) Start() {
-	if d.ctx != nil {
+	if d.cancel != nil {
 		return
 	}
-	d.ctx, d.cancel = context.WithCancel(context.Background())
+	done := make(chan struct{})
+	var closeOnce sync.Once
+	d.done = done
+	d.cancel = func() {
+		closeOnce.Do(func() { close(done) })
+	}
 	// Enforce retention on a ticker instead of on every ingest — the
 	// SELECT COUNT(*) over messages is wasted work for the common case
 	// where the inbox is well under cap, so amortise it.
 	d.spawn(d.retentionLoop)
-}
-
-// retentionLoop ticks every retentionInterval and runs enforceRetention.
-// First sweep fires immediately so a freshly-started binary cleans up
-// any pre-existing over-cap state from a prior session.
-func (d *Dispatcher) retentionLoop() {
-	d.enforceRetention()
-	t := time.NewTicker(retentionInterval)
-	defer t.Stop()
-	for {
-		select {
-		case <-d.ctx.Done():
-			return
-		case <-t.C:
-			d.enforceRetention()
-		}
-	}
 }
 
 // Shutdown cancels every in-flight goroutine spawned by AfterIngest
@@ -108,27 +123,8 @@ func (d *Dispatcher) Shutdown(ctx context.Context) error {
 	case <-done:
 		return nil
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("dispatcher shutdown: %w", ctx.Err())
 	}
-}
-
-// parentCtx returns the dispatcher's cancellable context if Start was
-// called, otherwise a background context (for unstarted use in tests).
-func (d *Dispatcher) parentCtx() context.Context {
-	if d.ctx != nil {
-		return d.ctx
-	}
-	return context.Background()
-}
-
-// spawn runs fn in a goroutine tracked by d.wg. When the dispatcher is
-// started, Shutdown waits on the WaitGroup.
-func (d *Dispatcher) spawn(fn func()) {
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
-		fn()
-	}()
 }
 
 // AfterIngest is called right after a successful Insert. Synchronous-
@@ -144,6 +140,42 @@ func (d *Dispatcher) AfterIngest(msgID string) {
 	d.spawn(func() { d.webhookDelivery(msgID) })
 }
 
+// MarshalSummary is a convenience for SerializeSummary wiring.
+func MarshalSummary(v any) ([]byte, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, fmt.Errorf("marshal summary: %w", err)
+	}
+	return b, nil
+}
+
+func (d *Dispatcher) retentionLoop() {
+	d.enforceRetention()
+	t := time.NewTicker(retentionInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-d.done:
+			return
+		case <-t.C:
+			d.enforceRetention()
+		}
+	}
+}
+
+func (d *Dispatcher) parentCtx() context.Context {
+	if d.done == nil {
+		return context.Background()
+	}
+	return &dispatcherContext{done: d.done}
+}
+
+func (d *Dispatcher) spawn(fn func()) {
+	d.wg.Go(func() {
+		fn()
+	})
+}
+
 func (d *Dispatcher) broadcast(msgID string) {
 	if d.BroadcastCreated == nil {
 		return
@@ -151,7 +183,6 @@ func (d *Dispatcher) broadcast(msgID string) {
 	d.BroadcastCreated(msgID)
 }
 
-// cloudMirror forwards to the connected sandbox if mirror_enabled.
 func (d *Dispatcher) cloudMirror(msgID string) {
 	cfg := d.Config.Get()
 	mirror := false
@@ -177,7 +208,7 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(d.parentCtx(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(d.parentCtx(), sideEffectTimeout)
 	defer cancel()
 
 	m, err := d.Store.Get(ctx, msgID)
@@ -188,7 +219,7 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 	atts, _ := d.Store.LoadAttachments(ctx, m.ID)
 
 	cl := cloud.NewClient(apiToken, sandboxID)
-	if err := withRetry(ctx, 3, func() error {
+	if err := withRetry(ctx, func() error {
 		return cl.Send(ctx, m, inline, atts)
 	}); err != nil {
 		slog.Warn("cloud-mirror failed",
@@ -196,7 +227,6 @@ func (d *Dispatcher) cloudMirror(msgID string) {
 	}
 }
 
-// relayMirror auto-relays via the SMTP server if auto_relay_enabled.
 func (d *Dispatcher) relayMirror(msgID string) {
 	cfg := d.Config.Get()
 	conn, err := d.Store.RelayGet(d.parentCtx())
@@ -217,7 +247,7 @@ func (d *Dispatcher) relayMirror(msgID string) {
 
 	overlay := overlayRelay(conn, cfg.Relay)
 
-	ctx, cancel := context.WithTimeout(d.parentCtx(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(d.parentCtx(), sideEffectTimeout)
 	defer cancel()
 
 	m, err := d.Store.Get(ctx, msgID)
@@ -228,7 +258,7 @@ func (d *Dispatcher) relayMirror(msgID string) {
 	// mirrors the message untouched (rewriteTo=false) — rewriting To: to
 	// the envelope recipients would leak any Bcc'd addresses into the
 	// visible To: header.
-	if err := withRetry(ctx, 3, func() error {
+	if err := withRetry(ctx, func() error {
 		return d.Relay.Forward(ctx, overlay, m, m.SMTPTo, false)
 	}); err != nil {
 		slog.Warn("relay-mirror failed",
@@ -236,15 +266,14 @@ func (d *Dispatcher) relayMirror(msgID string) {
 	}
 }
 
-// webhookDelivery POSTs to the configured URL.
 func (d *Dispatcher) webhookDelivery(msgID string) {
 	cfg := d.Config.Get()
 	conn, _ := d.Store.WebhookGet(d.parentCtx())
-	url, secret, enabled := overlayWebhook(conn, cfg.Webhook)
-	if !enabled || url == "" {
+	whURL, secret, enabled := overlayWebhook(conn, cfg.Webhook)
+	if !enabled || whURL == "" {
 		return
 	}
-	ctx, cancel := context.WithTimeout(d.parentCtx(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(d.parentCtx(), sideEffectTimeout)
 	defer cancel()
 	m, err := d.Store.Get(ctx, msgID)
 	if err != nil {
@@ -257,23 +286,21 @@ func (d *Dispatcher) webhookDelivery(msgID string) {
 	if err != nil {
 		return
 	}
-	if err := withRetry(ctx, 3, func() error {
-		return d.Webhook.Deliver(ctx, url, secret, payload)
+	if err := withRetry(ctx, func() error {
+		return d.Webhook.Deliver(ctx, whURL, secret, payload)
 	}); err != nil {
 		slog.Warn("webhook delivery failed",
 			slog.String("msg_id", msgID), slog.Any("err", err))
 	}
 }
 
-// enforceRetention deletes oldest messages if the count exceeds the
-// configured cap. Default 500; 0 = unlimited.
 func (d *Dispatcher) enforceRetention() {
 	cfg := d.Config.Get()
-	cap := 500
+	messageCap := defaultRetentionCap
 	if cfg.Storage.MaxMessages != nil {
-		cap = *cfg.Storage.MaxMessages
+		messageCap = *cfg.Storage.MaxMessages
 	}
-	if cap <= 0 {
+	if messageCap <= 0 {
 		return
 	}
 	ctx := d.parentCtx()
@@ -283,10 +310,10 @@ func (d *Dispatcher) enforceRetention() {
 	if err := d.Store.DB().QueryRowContext(ctx, `SELECT COUNT(*) FROM messages`).Scan(&total); err != nil {
 		return
 	}
-	if total <= cap {
+	if total <= messageCap {
 		return
 	}
-	excess := total - cap
+	excess := total - messageCap
 
 	// Pull the oldest excess IDs.
 	rows, err := d.Store.DB().QueryContext(ctx,
@@ -301,7 +328,7 @@ func (d *Dispatcher) enforceRetention() {
 			ids = append(ids, id)
 		}
 	}
-	rows.Close()
+	_ = rows.Close()
 	if len(ids) == 0 {
 		return
 	}
@@ -318,15 +345,11 @@ func (d *Dispatcher) enforceRetention() {
 	}
 }
 
-// ---------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------
-
-func withRetry(ctx context.Context, max int, fn func() error) error {
+func withRetry(ctx context.Context, fn func() error) error {
 	var lastErr error
-	for i := 0; i < max; i++ {
+	for i := range sideEffectRetries {
 		if err := ctx.Err(); err != nil {
-			return err
+			return fmt.Errorf("retry aborted: %w", err)
 		}
 		err := fn()
 		if err == nil {
@@ -340,15 +363,15 @@ func withRetry(ctx context.Context, max int, fn func() error) error {
 			return err
 		}
 		lastErr = err
-		if i == max-1 {
+		if i == sideEffectRetries-1 {
 			break // no point sleeping after the final attempt
 		}
 		// Linear backoff, but abort promptly if the dispatcher is shutting
 		// down (ctx cancelled) instead of sleeping through the deadline.
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(time.Duration(i+1) * 500 * time.Millisecond):
+			return fmt.Errorf("retry aborted: %w", ctx.Err())
+		case <-time.After(time.Duration(i+1) * retryBackoffBase):
 		}
 	}
 	return lastErr
@@ -386,12 +409,14 @@ func overlayRelay(db *store.RelayConnection, cfg config.Relay) *store.RelayConne
 	return &out
 }
 
-func overlayWebhook(db *store.WebhookConnection, cfg config.Webhook) (url, secret string, enabled bool) {
+func overlayWebhook(db *store.WebhookConnection, cfg config.Webhook) (string, string, bool) {
+	var whURL, secret string
+	var enabled bool
 	if db != nil {
-		url, secret, enabled = db.URL, db.Secret, db.Enabled
+		whURL, secret, enabled = db.URL, db.Secret, db.Enabled
 	}
 	if cfg.URL != nil {
-		url = *cfg.URL
+		whURL = *cfg.URL
 	}
 	if cfg.Secret != nil {
 		secret = *cfg.Secret
@@ -399,8 +424,5 @@ func overlayWebhook(db *store.WebhookConnection, cfg config.Webhook) (url, secre
 	if cfg.Enabled != nil {
 		enabled = *cfg.Enabled
 	}
-	return
+	return whURL, secret, enabled
 }
-
-// MarshalSummary is a convenience for SerializeSummary wiring.
-func MarshalSummary(v any) ([]byte, error) { return json.Marshal(v) }

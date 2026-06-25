@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -21,7 +22,13 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/store"
 )
 
-const defaultEndpoint = "https://sandbox.api.mailtrap.io"
+var errSendFailed = errors.New("cloud send failed")
+
+const (
+	defaultEndpoint      = "https://sandbox.api.mailtrap.io"
+	httpClientTimeout    = 15 * time.Second
+	httpResponseBodyPeek = 1024
+)
 
 // Client targets a specific sandbox via API token. One Client per
 // connected sandbox; built fresh each call site since auth is cheap.
@@ -41,15 +48,8 @@ func NewClient(apiToken string, sandboxID int64) *Client {
 	return &Client{
 		APIToken:  apiToken,
 		SandboxID: sandboxID,
-		HTTP:      &http.Client{Timeout: 15 * time.Second},
+		HTTP:      &http.Client{Timeout: httpClientTimeout},
 	}
-}
-
-func (c *Client) base() string {
-	if c.BaseURL != "" {
-		return c.BaseURL
-	}
-	return defaultEndpoint
 }
 
 // Send forwards a Message + its attachments to the connected sandbox.
@@ -65,7 +65,7 @@ func (c *Client) Send(ctx context.Context, m *store.Message, inline, attachments
 		fmt.Sprintf("%s/api/send/%d", c.base(), c.SandboxID),
 		bytes.NewReader(raw))
 	if err != nil {
-		return err
+		return fmt.Errorf("new request: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+c.APIToken)
 	req.Header.Set("Content-Type", "application/json")
@@ -75,17 +75,24 @@ func (c *Client) Send(ctx context.Context, m *store.Message, inline, attachments
 	if err != nil {
 		return fmt.Errorf("post: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return nil
 	}
-	buf := make([]byte, 1024)
+	buf := make([]byte, httpResponseBodyPeek)
 	n, _ := resp.Body.Read(buf)
 	msg := fmt.Sprintf("Mailtrap API %d: %s", resp.StatusCode, string(buf[:n]))
 	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
 		return &PermanentError{Msg: msg}
 	}
-	return fmt.Errorf("%s", msg)
+	return fmt.Errorf("%w: %s", errSendFailed, msg)
+}
+
+func (c *Client) base() string {
+	if c.BaseURL != "" {
+		return c.BaseURL
+	}
+	return defaultEndpoint
 }
 
 // PermanentError signals "don't retry" (bad token, malformed payload,
