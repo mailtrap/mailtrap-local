@@ -1,0 +1,32 @@
+internal/api/connections_test_endpoints_test.go
+  s_297efc20f3206c::t_d92a361478b104 1-81
+internal/api/openapi_embed_test.go
+  s_297efc20f3206c::t_44870c19fbcdc9 1-30
+internal/api/release_test.go
+  s_297efc20f3206c::t_09b229eac9b076 4,11
+  s_297efc20f3206c::t_42eceb8ba23019 1-3,6-10,12-127,150-151,154-175,177,195-196,198-200
+  s_297efc20f3206c::t_7c16fc039c991c 128-149,152-153
+  s_297efc20f3206c::t_cb74a21d234882 176,178-194,197
+  s_297efc20f3206c::t_4ca8c97d1e19d0 5
+internal/api/cable_test.go
+  s_297efc20f3206c::t_3eb2e1fa946ec8 4
+  s_297efc20f3206c::t_65832cf09c0925 58
+  s_297efc20f3206c::t_163d8a440a4c9d 1-3,5-57,59-64,66-68,71
+  s_297efc20f3206c::t_2cc03c2659c90b 65,69-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "f192306b45b4295fdd58ca7ef79a405fee291acc",
+  "prompts": {},
+  "sessions": {
+    "s_297efc20f3206c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c25dc794-51e0-46b5-8a25-6f2510f4b67a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
