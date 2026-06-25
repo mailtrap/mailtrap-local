@@ -1,6 +1,8 @@
 package config
 
 import (
+	"bytes"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"testing"
@@ -133,9 +135,22 @@ func TestNoFileFound(t *testing.T) {
 // with SourcePath populated so a future ops endpoint could surface
 // "your config didn't parse, here's the path".
 func TestMalformedYAML(t *testing.T) {
+	var logs bytes.Buffer
+	restore := swapLogger(slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{
+		Level: slog.LevelWarn,
+	})))
+	defer restore()
+
 	got := loadFromFile(t, "this: is: not: valid yaml: [\n")
 	assert.Nil(t, got.Storage.MaxMessages)
 	assert.NotEmpty(t, got.SourcePath)
+	assert.Contains(t, logs.String(), "config parse failed")
+}
+
+func swapLogger(l *slog.Logger) func() {
+	prev := slog.Default()
+	slog.SetDefault(l)
+	return func() { slog.SetDefault(prev) }
 }
 
 // TestExplicitConfigPathBeatsXDG — MAILTRAP_LOCAL_CONFIG always wins
