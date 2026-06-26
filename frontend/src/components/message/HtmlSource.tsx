@@ -8,7 +8,11 @@ const lineNumber = [
   'border-r border-border-base',
 ].join(' ')
 
-export default function HtmlSource({ code }: { code: string }) {
+interface Props {
+  code: string
+}
+
+export default function HtmlSource({ code }: Props) {
   return (
     <Highlight theme={themes.vsDark} code={code} language="markup">
       {({ className, style, tokens, getLineProps, getTokenProps }) => (

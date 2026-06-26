@@ -15,7 +15,7 @@ const lineNumCss =
 
 const codeCss = 'min-w-0 flex-1'
 
-interface CodeBlockProps {
+interface Props {
   code: string
   language: string
   showLineNumbers?: boolean
@@ -25,7 +25,7 @@ export function CodeBlock({
   code,
   language,
   showLineNumbers = false,
-}: CodeBlockProps) {
+}: Props) {
   return (
     <Highlight theme={themes.vsDark} code={code} language={language}>
       {({ className, style, tokens, getLineProps, getTokenProps }) => (

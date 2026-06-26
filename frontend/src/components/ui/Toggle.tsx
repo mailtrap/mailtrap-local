@@ -8,13 +8,13 @@ import { forwardRef, type InputHTMLAttributes } from 'react'
  *
  * 32×18 track with a 14 thumb — fits inline with 13px dialog labels.
  */
-interface ToggleProps
+interface Props
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'children'> {
   label?: string
   description?: string
 }
 
-export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(function Toggle(
+export const Toggle = forwardRef<HTMLInputElement, Props>(function Toggle(
   { label, description: _description, disabled, className, id, ...rest },
   ref,
 ) {
