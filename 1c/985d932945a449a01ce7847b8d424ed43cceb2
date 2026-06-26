@@ -1,0 +1,30 @@
+frontend/src/api/messages.ts
+  s_b31d5fa251bb7b::t_fd9b61101d6a57 167
+  s_b31d5fa251bb7b::t_5bc910da22e5bc 237
+  s_b31d5fa251bb7b::t_60b9943388a993 261
+  s_b31d5fa251bb7b::t_ad013bcaf04b5b 26
+frontend/src/hooks/useResizableSidebar.ts
+  s_b31d5fa251bb7b::t_9b6f0834598629 4-5
+frontend/src/components/ui/Button.tsx
+  s_b31d5fa251bb7b::t_d5110f81fc8ba1 10-11
+frontend/src/components/ui/IconButton.tsx
+  s_b31d5fa251bb7b::t_70387c4cf30f90 3
+frontend/src/test/fixtures.ts
+  s_b31d5fa251bb7b::t_0458de4d25ee64 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.1",
+  "base_commit_sha": "1c985d932945a449a01ce7847b8d424ed43cceb2",
+  "prompts": {},
+  "sessions": {
+    "s_b31d5fa251bb7b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "489b1404-28c5-4a78-beff-8cf587d1beb9",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "romanadamchik <roman.adamchik@gmail.com>"
+    }
+  }
+}
