@@ -63,6 +63,5 @@ export function useMessagesChannel({
     // Empty deps: the subscription persists for the lifetime of the
     // consumer. Refs above carry the freshest callback identity into
     // the dispatch.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 }

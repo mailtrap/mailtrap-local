@@ -69,8 +69,8 @@ h3 {
 /* Inline chevron for `<select>` inside dialog `field` blocks. The SVG
    pulls its colour from the embedded `fill=` value because <select> is
    too restrictive a host element for `currentColor`; default state uses
-   --color-fg-icon, hover/focus swap to --color-accent. Mirrors
-   components/icons.tsx ChevronDownIcon at 14×14. */
+   --color-fg-icon, hover/focus swap to --color-accent. Chevron-down
+   glyph at 14×14. */
 .dialog-select-chevron {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='%238b9aae'><path fill-rule='evenodd' d='M3.22 5.97a.75.75 0 0 1 1.06 0L8 9.69l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L3.22 7.03a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/></svg>");
   background-repeat: no-repeat;
