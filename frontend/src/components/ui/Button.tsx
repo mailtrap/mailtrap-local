@@ -7,8 +7,8 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react'
  * is structurally identical and could migrate later).
  */
 
-export type ButtonVariant = 'primary' | 'outline' | 'danger-text'
-export type ButtonSize = 'sm' | 'md'
+type ButtonVariant = 'primary' | 'outline' | 'danger-text'
+type ButtonSize = 'sm' | 'md'
 
 const sizes: Record<ButtonSize, string> = {
   sm: 'rounded-md px-3 py-1 text-xs',

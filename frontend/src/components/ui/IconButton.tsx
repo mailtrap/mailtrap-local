@@ -1,6 +1,6 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
 
-export type IconButtonVariant = 'toolbar' | 'header' | 'device'
+type IconButtonVariant = 'toolbar' | 'header' | 'device'
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: IconButtonVariant
