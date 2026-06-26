@@ -1,0 +1,14 @@
+README.md
+  h_293d6b90b1efce 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.1",
+  "base_commit_sha": "564f49541765405edc160bf9b2d789d5113f4638",
+  "prompts": {},
+  "humans": {
+    "h_293d6b90b1efce": {
+      "author": "romanadamchik <roman.adamchik@gmail.com>"
+    }
+  }
+}
