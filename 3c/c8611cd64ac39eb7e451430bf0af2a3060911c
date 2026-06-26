@@ -1,0 +1,86 @@
+frontend/src/components/message/MessagePreview.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 47
+frontend/src/components/connections/SettingsMenu.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 11-12
+  s_b31d5fa251bb7b::t_3518666ef67db7 59
+frontend/src/components/connections/RelayConnectDialog.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 49
+frontend/src/components/message/Attachments.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 4
+  s_b31d5fa251bb7b::t_3518666ef67db7 31
+frontend/src/components/connections/CloudConnectDialog.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 30
+frontend/src/components/message/HtmlCheck/index.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 21
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 7-8
+frontend/src/components/sidebar/Sidebar.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 25
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 11,13-14,20-22
+frontend/src/components/sidebar/Sidebar.test.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 86
+frontend/src/pages/MessageView.test.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 72
+frontend/src/App.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 2-4
+  s_b31d5fa251bb7b::t_3518666ef67db7 26
+frontend/src/components/message/HtmlCheck/HtmlCheckSummary.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 117
+frontend/src/main.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 5
+frontend/src/components/message/HtmlCheck/IssueCard.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 3
+  s_b31d5fa251bb7b::t_3518666ef67db7 84
+frontend/src/components/ui/CategoryBadge.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 14
+frontend/src/components/sidebar/MessageList.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 87
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 3
+frontend/src/components/message/MessageHeader.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 112
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 16
+frontend/src/components/message/TechInfo.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 78
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 4
+frontend/src/components/sidebar/SidebarToolbar.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 53
+frontend/src/pages/MessageView.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 32
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 20-25,27
+frontend/src/components/connections/AboutDialog.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 13
+frontend/src/pages/Sandbox.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 2
+  s_b31d5fa251bb7b::t_3518666ef67db7 17
+frontend/src/components/connections/CloudConnectDialog.test.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 59-61
+frontend/src/components/ui/EmptyCard.tsx
+  s_b31d5fa251bb7b::t_abdced8bd4dc2d 2
+frontend/src/components/sidebar/DeleteAllPrompt.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 3
+frontend/src/components/CodeSamples/index.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 69
+frontend/src/components/message/HtmlSource.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 15
+frontend/src/components/connections/WebhookConnectDialog.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 25
+frontend/src/components/ui/Panel.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 11
+frontend/src/components/message/CodePane.tsx
+  s_b31d5fa251bb7b::t_3518666ef67db7 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.1",
+  "base_commit_sha": "3cc8611cd64ac39eb7e451430bf0af2a3060911c",
+  "prompts": {},
+  "sessions": {
+    "s_b31d5fa251bb7b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "489b1404-28c5-4a78-beff-8cf587d1beb9",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "romanadamchik <roman.adamchik@gmail.com>"
+    }
+  }
+}
