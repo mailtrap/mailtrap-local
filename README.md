@@ -24,7 +24,7 @@ A local **email sandbox + catcher** for **individual developers**. Runs on your 
 | SMTP ingest | [`emersion/go-smtp`](https://github.com/emersion/go-smtp) + [`jhillyerd/enmime`](https://github.com/jhillyerd/enmime) |
 | HTTP routing | [`go-chi/chi`](https://github.com/go-chi/chi) |
 | Storage | SQLite via [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite) (pure Go — no CGo) |
-| Web UI | React 19 + Linaria + Radix UI + Vite, embedded into the binary at build time via `//go:embed` |
+| Web UI | React 19 + tailwindcss + Radix UI + Vite, embedded into the binary at build time via `//go:embed` |
 | Realtime | Plain WebSocket (`/cable`) |
 | Distribution | `brew install`, `docker run`, single static binary |
 
