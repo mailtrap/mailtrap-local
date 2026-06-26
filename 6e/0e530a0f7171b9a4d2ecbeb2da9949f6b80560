@@ -1,0 +1,23 @@
+frontend/eslint.config.js
+  s_2d853ff6e62dce::t_bd39bb2cdd1b56 23-24
+frontend/tsconfig.app.json
+  s_2d853ff6e62dce::t_dcceb3c490d8ca 19
+frontend/tsconfig.node.json
+  s_2d853ff6e62dce::t_ad1e6fd8aa1dee 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.1",
+  "base_commit_sha": "6e0e530a0f7171b9a4d2ecbeb2da9949f6b80560",
+  "prompts": {},
+  "sessions": {
+    "s_2d853ff6e62dce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fffa5d6b-e78a-4c8e-a72c-6d693b29a4e2",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": null
+    }
+  }
+}
