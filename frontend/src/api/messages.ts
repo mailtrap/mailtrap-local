@@ -203,13 +203,15 @@ export interface HtmlCheckFamily {
   version_counts: { desktop: number; mobile: number; web: number }
 }
 
+export interface HtmlCheckSuccess {
+  status: 'success'
+  market_support_percent: number
+  families: HtmlCheckFamily[]
+  issues: HtmlCheckIssue[]
+}
+
 export type HtmlCheckReport =
-  | {
-      status: 'success'
-      market_support_percent: number
-      families: HtmlCheckFamily[]
-      issues: HtmlCheckIssue[]
-    }
+  | HtmlCheckSuccess
   | { status: 'no_html' }
   | { status: 'size_limit_exceeded'; limit: number }
   | { status: 'error'; msg: string }
