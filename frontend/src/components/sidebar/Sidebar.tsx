@@ -8,21 +8,21 @@ import {
   searchMessages,
   type MessageSummary,
 } from '../../api/messages'
-import CloudConnectDialog from '../connections/CloudConnectDialog'
+import { CloudConnectDialog } from '../connections/CloudConnectDialog'
 import { ConnectionErrorBanner } from './ConnectionErrorBanner'
-import RelayConnectDialog from '../connections/RelayConnectDialog'
-import SettingsMenu from '../connections/SettingsMenu'
+import { RelayConnectDialog } from '../connections/RelayConnectDialog'
+import { SettingsMenu } from '../connections/SettingsMenu'
 import { useCloudConnection } from '../../hooks/useCloudConnection'
 import { useRelayConnection } from '../../hooks/useRelayConnection'
 import { useWebhookConnection } from '../../hooks/useWebhookConnection'
 import { useMessagesChannel } from '../../hooks/useMessagesChannel'
 import { Strip } from '../ui/Strip'
-import SidebarToolbar from './SidebarToolbar'
-import MessageList from './MessageList'
-import DeleteAllPrompt from './DeleteAllPrompt'
+import { SidebarToolbar } from './SidebarToolbar'
+import { MessageList } from './MessageList'
+import { DeleteAllPrompt } from './DeleteAllPrompt'
 import { extractApiError, isAbortError } from '../../api/client'
 
-export default function Sidebar() {
+export function Sidebar() {
   const navigate = useNavigate()
   // Sidebar lives outside <Routes>, so useMatch instead of useParams.
   const match = useMatch('/message/:id')

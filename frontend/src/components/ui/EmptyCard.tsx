@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import Panel from './Panel'
+import { Panel } from './Panel'
 
 /**
  * Centered muted text inside a Panel. Used for empty / loading /

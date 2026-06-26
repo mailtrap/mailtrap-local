@@ -10,7 +10,7 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
-export default function AboutDialog({ open, onOpenChange }: Props) {
+export function AboutDialog({ open, onOpenChange }: Props) {
   return (
     <ConnectionDialogShell
       open={open}

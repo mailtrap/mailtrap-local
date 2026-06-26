@@ -83,7 +83,7 @@ vi.mock('../../lib/cable', () => {
 })
 
 // SUT — imported AFTER the mocks above so the SUT picks them up.
-import Sidebar from './Sidebar'
+import { Sidebar } from './Sidebar'
 
 const emptyResp = {
   total: 0,

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { HelpIcon, SuccessFilledIcon } from '../ui/icons'
 import type { HeadersMap, Message } from '../../api/messages'
-import Panel from '../ui/Panel'
+import { Panel } from '../ui/Panel'
 
 // Two-column key/value table with zebra striping. Same shell wherever
 // it's used; per-cell classes live alongside the cell elements below.
@@ -75,7 +75,7 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
-export default function TechInfo({
+export function TechInfo({
   msg,
   headers,
 }: {

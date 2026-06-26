@@ -22,7 +22,7 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
-export default function WebhookConnectDialog({ open, onOpenChange }: Props) {
+export function WebhookConnectDialog({ open, onOpenChange }: Props) {
   return (
     <ConnectionDialogShell
       open={open}

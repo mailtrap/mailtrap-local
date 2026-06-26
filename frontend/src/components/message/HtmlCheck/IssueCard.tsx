@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { HtmlCheckClient, HtmlCheckSuccess } from '../../../api/messages'
-import Panel from '../../ui/Panel'
+import { Panel } from '../../ui/Panel'
 
 const title = 'mt-0 mb-2.5 text-base font-semibold text-fg font-mono'
 
@@ -81,7 +81,7 @@ interface Props {
   issue: Issue
 }
 
-export default function IssueCard({ issue }: Props) {
+export function IssueCard({ issue }: Props) {
   const [showAll, setShowAll] = useState(false)
   const visibleLines =
     showAll || issue.error_lines.length <= LINE_LIMIT

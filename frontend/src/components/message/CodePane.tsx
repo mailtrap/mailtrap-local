@@ -16,7 +16,7 @@ interface Props {
   fallback: ReactNode
 }
 
-export default function CodePane({
+export function CodePane({
   content,
   popoutTitle,
   onPopout,

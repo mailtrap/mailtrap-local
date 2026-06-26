@@ -114,7 +114,7 @@ interface Props {
   filters: HtmlCheckFilterState
 }
 
-export default function HtmlCheckSummary({ report, filters }: Props) {
+export function HtmlCheckSummary({ report, filters }: Props) {
   const {
     enabledCategories,
     setEnabledCategories,

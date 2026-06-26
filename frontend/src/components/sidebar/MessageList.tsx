@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { type MessageSummary } from '../../api/messages'
-import CategoryBadge from '../ui/CategoryBadge'
+import { CategoryBadge } from '../ui/CategoryBadge'
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()
@@ -84,7 +84,7 @@ interface Props {
   error: string | null
 }
 
-export default function MessageList({
+export function MessageList({
   messages,
   searchResults,
   searching,

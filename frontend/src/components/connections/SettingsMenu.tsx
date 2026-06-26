@@ -8,8 +8,8 @@ import {
   ExternalLinkIcon,
 } from '../ui/icons'
 import { IconButton } from '../ui/IconButton'
-import WebhookConnectDialog from './WebhookConnectDialog'
-import AboutDialog from './AboutDialog'
+import { WebhookConnectDialog } from './WebhookConnectDialog'
+import { AboutDialog } from './AboutDialog'
 
 const menuCss = [
   // Sit above Radix Dialog overlays only when nothing else is open. The
@@ -56,7 +56,7 @@ interface Props {
  * the toolbar because they're high-frequency actions; this menu is a
  * home for less-frequent / informational entries.
  */
-export default function SettingsMenu({ webhookActive }: Props) {
+export function SettingsMenu({ webhookActive }: Props) {
   const [webhookOpen, setWebhookOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
 

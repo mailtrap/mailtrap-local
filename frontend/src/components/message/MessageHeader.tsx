@@ -13,7 +13,7 @@ import { formatAddr, formatDate, formatSize } from '../../lib/messageFormatters'
 import type { Message } from '../../api/messages'
 import type { CloudConnection } from '../../api/cloud'
 import type { RelayConnection } from '../../api/relay'
-import CategoryBadge from '../ui/CategoryBadge'
+import { CategoryBadge } from '../ui/CategoryBadge'
 
 // 2-col / 3-row grid:
 //   row 1: subject  |  actions
@@ -109,7 +109,7 @@ function parseRecipients(raw: string): {
   return { valid, invalid }
 }
 
-export default function MessageHeader({
+export function MessageHeader({
   msg,
   cloudState,
   relayState,
