@@ -1,0 +1,21 @@
+frontend/tsconfig.app.json
+  s_2d853ff6e62dce::t_dcceb3c490d8ca 19
+frontend/tsconfig.node.json
+  s_2d853ff6e62dce::t_ad1e6fd8aa1dee 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.1",
+  "base_commit_sha": "4c6ba190da37b432bcb1830eb0bca1d4f8155a73",
+  "prompts": {},
+  "sessions": {
+    "s_2d853ff6e62dce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fffa5d6b-e78a-4c8e-a72c-6d693b29a4e2",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "romanadamchik <roman.adamchik@gmail.com>"
+    }
+  }
+}
