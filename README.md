@@ -20,9 +20,9 @@ Browse caught messages, preview rendered HTML, and inspect client compatibility 
 |---|---|---|
 | ![Inbox with message list and HTML preview](docs/images/inbox.png) | ![HTML Check tab with market support and issue breakdown](docs/images/message-html-check.png) | ![Empty inbox with SMTP code samples for Node.js, Python, Ruby, and more](docs/images/code-samples.png) |
 
-<video src="docs/images/demo.webm" autoplay loop muted playsinline width="100%"></video>
+**[▶ Watch quick tour](docs/images/demo.webm)** — browse the inbox, open a message, switch between HTML preview and HTML Check.
 
-*Quick tour: open a caught message, switch between HTML preview and HTML Check, browse the inbox.*
+(GitHub README does not inline-play repo-local videos; the link above opens the WebM in GitHub's file viewer.)
 
 ## What it is *not*
 
