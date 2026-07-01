@@ -54,7 +54,7 @@ func (s *Server) cloudShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tmp := *c
-	applyCloudCfg(&tmp, cfg.Cloud)
+	config.OverlayCloud(&tmp, cfg.Cloud)
 	writeJSON(w, http.StatusOK, s.cloudWire(&tmp))
 }
 
@@ -65,7 +65,7 @@ func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		APIToken      string `json:"api_token"`
 		SandboxID     int64  `json:"sandbox_id"`
-		MirrorEnabled bool   `json:"mirror_enabled"`
+		MirrorEnabled *bool  `json:"mirror_enabled"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
@@ -73,17 +73,17 @@ func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	if locked["api_token"] && body.APIToken != "" &&
 		(cfg.Cloud.APIToken == nil || body.APIToken != *cfg.Cloud.APIToken) {
-		writeError(w, http.StatusUnprocessableEntity, "api_token is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "api_token is locked by config")
 		return
 	}
 	if locked["sandbox_id"] && body.SandboxID != 0 &&
 		(cfg.Cloud.SandboxID == nil || body.SandboxID != *cfg.Cloud.SandboxID) {
-		writeError(w, http.StatusUnprocessableEntity, "sandbox_id is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "sandbox_id is locked by config")
 		return
 	}
 	if locked["mirror_enabled"] && cfg.Cloud.MirrorEnabled != nil &&
-		body.MirrorEnabled != *cfg.Cloud.MirrorEnabled {
-		writeError(w, http.StatusUnprocessableEntity, "mirror_enabled is pinned by config")
+		body.MirrorEnabled != nil && *body.MirrorEnabled != *cfg.Cloud.MirrorEnabled {
+		writeError(w, http.StatusUnprocessableEntity, "mirror_enabled is locked by config")
 		return
 	}
 
@@ -92,7 +92,12 @@ func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
 	// update (e.g. toggling mirror_enabled on a connected sandbox) should
 	// not require re-typing the token or sandbox ID.
 	apiToken, sandboxID := body.APIToken, body.SandboxID
-	mirror := body.MirrorEnabled
+	var mirror bool
+	if body.MirrorEnabled != nil {
+		mirror = *body.MirrorEnabled
+	} else if existing, _ := s.Store.CloudGet(r.Context()); existing != nil {
+		mirror = existing.MirrorEnabled
+	}
 	if apiToken == "" || sandboxID == 0 {
 		if existing, _ := s.Store.CloudGet(r.Context()); existing != nil {
 			if apiToken == "" {
@@ -106,7 +111,7 @@ func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
 	c := &store.CloudConnection{
 		APIToken: apiToken, SandboxID: sandboxID, MirrorEnabled: mirror,
 	}
-	applyCloudCfg(c, cfg.Cloud)
+	config.OverlayCloud(c, cfg.Cloud)
 	if c.APIToken == "" || c.SandboxID == 0 {
 		writeError(w, http.StatusUnprocessableEntity, "api_token and sandbox_id are required")
 		return
@@ -180,7 +185,7 @@ func (s *Server) relayShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tmp := *rc
-	applyRelayCfg(&tmp, cfg.Relay)
+	config.OverlayRelay(&tmp, cfg.Relay)
 	writeJSON(w, http.StatusOK, s.relayWire(&tmp))
 }
 
@@ -205,42 +210,42 @@ func (s *Server) relayUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	if locked["host"] && body.Host != "" &&
 		(cfg.Relay.Host == nil || body.Host != *cfg.Relay.Host) {
-		writeError(w, http.StatusUnprocessableEntity, "host is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "host is locked by config")
 		return
 	}
 	if locked["port"] && body.Port != 0 &&
 		(cfg.Relay.Port == nil || body.Port != *cfg.Relay.Port) {
-		writeError(w, http.StatusUnprocessableEntity, "port is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "port is locked by config")
 		return
 	}
 	if locked["username"] && body.Username != "" &&
 		(cfg.Relay.Username == nil || body.Username != *cfg.Relay.Username) {
-		writeError(w, http.StatusUnprocessableEntity, "username is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "username is locked by config")
 		return
 	}
 	if locked["password"] && body.Password != "" &&
 		(cfg.Relay.Password == nil || body.Password != *cfg.Relay.Password) {
-		writeError(w, http.StatusUnprocessableEntity, "password is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "password is locked by config")
 		return
 	}
 	if locked["auth"] && body.Auth != "" &&
 		(cfg.Relay.Auth == nil || body.Auth != *cfg.Relay.Auth) {
-		writeError(w, http.StatusUnprocessableEntity, "auth is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "auth is locked by config")
 		return
 	}
 	if locked["tls"] && body.TLS != "" &&
 		(cfg.Relay.TLS == nil || body.TLS != *cfg.Relay.TLS) {
-		writeError(w, http.StatusUnprocessableEntity, "tls is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "tls is locked by config")
 		return
 	}
 	if locked["override_from"] && body.OverrideFrom != "" &&
 		(cfg.Relay.OverrideFrom == nil || body.OverrideFrom != *cfg.Relay.OverrideFrom) {
-		writeError(w, http.StatusUnprocessableEntity, "override_from is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "override_from is locked by config")
 		return
 	}
 	if locked["return_path"] && body.ReturnPath != "" &&
 		(cfg.Relay.ReturnPath == nil || body.ReturnPath != *cfg.Relay.ReturnPath) {
-		writeError(w, http.StatusUnprocessableEntity, "return_path is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "return_path is locked by config")
 		return
 	}
 
@@ -289,7 +294,7 @@ func (s *Server) relayUpdate(w http.ResponseWriter, r *http.Request) {
 		AutoRelayEnabled: body.AutoRelayEnabled,
 		OverrideFrom:     body.OverrideFrom, ReturnPath: body.ReturnPath,
 	}
-	applyRelayCfg(rc, cfg.Relay)
+	config.OverlayRelay(rc, cfg.Relay)
 	if err := s.Store.RelayUpsert(r.Context(), rc); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -389,7 +394,7 @@ func (s *Server) webhookShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tmp := *wc
-	applyWebhookCfg(&tmp, cfg.Webhook)
+	config.OverlayWebhook(&tmp, cfg.Webhook)
 	writeJSON(w, http.StatusOK, s.webhookWire(&tmp))
 }
 
@@ -415,12 +420,12 @@ func (s *Server) webhookUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	if locked["url"] && body.URL != "" &&
 		(cfg.Webhook.URL == nil || body.URL != *cfg.Webhook.URL) {
-		writeError(w, http.StatusUnprocessableEntity, "url is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "url is locked by config")
 		return
 	}
 	if locked["secret"] && body.Secret != nil &&
 		(cfg.Webhook.Secret == nil || *body.Secret != *cfg.Webhook.Secret) {
-		writeError(w, http.StatusUnprocessableEntity, "secret is pinned by config")
+		writeError(w, http.StatusUnprocessableEntity, "secret is locked by config")
 		return
 	}
 
@@ -452,7 +457,7 @@ func (s *Server) webhookUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wc := &store.WebhookConnection{URL: url, Secret: secret, Enabled: body.Enabled}
-	applyWebhookCfg(wc, cfg.Webhook)
+	config.OverlayWebhook(wc, cfg.Webhook)
 	if err := s.Store.WebhookUpsert(r.Context(), wc); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

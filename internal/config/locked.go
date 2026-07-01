@@ -1,6 +1,6 @@
 package config
 
-// CloudLocked reports which cloud fields are pinned by the loaded YAML.
+// CloudLocked reports which cloud fields are locked by the loaded YAML.
 func CloudLocked(c Cloud) map[string]bool {
 	return map[string]bool{
 		"api_token":      c.APIToken != nil,
@@ -9,7 +9,7 @@ func CloudLocked(c Cloud) map[string]bool {
 	}
 }
 
-// RelayLocked reports which relay fields are pinned by the loaded YAML.
+// RelayLocked reports which relay fields are locked by the loaded YAML.
 func RelayLocked(r Relay) map[string]bool {
 	return map[string]bool{
 		"host":               r.Host != nil,
@@ -24,7 +24,7 @@ func RelayLocked(r Relay) map[string]bool {
 	}
 }
 
-// WebhookLocked reports which webhook fields are pinned by the loaded YAML.
+// WebhookLocked reports which webhook fields are locked by the loaded YAML.
 func WebhookLocked(w Webhook) map[string]bool {
 	return map[string]bool{
 		"url":     w.URL != nil,

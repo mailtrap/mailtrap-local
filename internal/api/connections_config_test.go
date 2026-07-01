@@ -39,7 +39,7 @@ func testServerWithConfig(t *testing.T, yamlBody string) *httptest.Server {
 	return httptest.NewServer(srv.Router())
 }
 
-func TestCloudConnectionPinnedByConfig(t *testing.T) {
+func TestCloudConnectionLockedByConfig(t *testing.T) {
 	httpSrv := testServerWithConfig(t, `
 cloud:
   api_token: pinned-tok
@@ -90,7 +90,7 @@ func TestCloudConnectionUnlockedUpdate(t *testing.T) {
 	assert.Equal(t, "••••tok", *out.APITokenHint)
 }
 
-func TestCloudConnectionPinnedFieldRejected(t *testing.T) {
+func TestCloudConnectionLockedFieldRejected(t *testing.T) {
 	httpSrv := testServerWithConfig(t, `
 cloud:
   sandbox_id: 99
@@ -109,7 +109,7 @@ cloud:
 	_ = resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	// attempt to change pinned sandbox_id
+	// attempt to change locked sandbox_id
 	req, err = http.NewRequest(http.MethodPut, httpSrv.URL+"/api/v1/cloud_connection",
 		bytes.NewReader(mustJSON(t, map[string]any{
 			"api_token":  "tok",
@@ -122,7 +122,7 @@ cloud:
 	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 }
 
-func TestCloudConnectionPinnedMirrorRejected(t *testing.T) {
+func TestCloudConnectionLockedMirrorRejected(t *testing.T) {
 	httpSrv := testServerWithConfig(t, `
 cloud:
   mirror_enabled: true
@@ -141,4 +141,31 @@ cloud:
 	require.NoError(t, err)
 	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+}
+
+func TestCloudConnectionLockedMirrorOmittedAllowed(t *testing.T) {
+	// When mirror_enabled is locked, the FE omits it from the PUT body.
+	// Omitted must not be treated as false (regression: zero-value bool).
+	httpSrv := testServerWithConfig(t, `
+cloud:
+  mirror_enabled: true
+`)
+	defer httpSrv.Close()
+
+	req, err := http.NewRequest(http.MethodPut, httpSrv.URL+"/api/v1/cloud_connection",
+		bytes.NewReader(mustJSON(t, map[string]any{
+			"api_token":  "tok",
+			"sandbox_id": 1,
+		})))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var out cloudWire
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&out))
+	assert.True(t, out.MirrorEnabled)
+	assert.True(t, out.Locked["mirror_enabled"])
 }
