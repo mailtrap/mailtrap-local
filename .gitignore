@@ -50,3 +50,6 @@ cmd/mailtrap-local/dist/*
 
 # Per-machine AI tooling state — never committed.
 .claude/
+
+# Local capture temp (global capture-readme-media skill)
+/tmp/
