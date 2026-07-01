@@ -22,8 +22,6 @@ Browse caught messages, preview rendered HTML, and inspect client compatibility 
 
 **[▶ Watch quick tour](docs/images/demo.webm)** — browse the inbox, open a message, switch between HTML preview and HTML Check.
 
-(GitHub README does not inline-play repo-local videos; the link above opens the WebM in GitHub's file viewer.)
-
 ## What it is *not*
 
 - **Not a team tool.** No user accounts, no authentication, no multi-tenancy, no shared sandboxes, no API tokens, no RBAC.
