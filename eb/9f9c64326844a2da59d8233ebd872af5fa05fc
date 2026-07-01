@@ -1,0 +1,26 @@
+.gitignore
+  s_08e61f27593426::t_820007359b3276 55
+  s_08e61f27593426::t_a5488470249634 53
+  s_08e61f27593426::t_3ad8ca470c6201 54
+README.md
+  s_08e61f27593426::t_b0ee338eaadb2f 3-4,15-25
+  s_08e61f27593426::t_48144a6a0d74d3 43
+  s_08e61f27593426::t_0b1690ca2bebfb 148-150
+  s_08e61f27593426::t_8d89d2d6fb50a7 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "eb9f9c64326844a2da59d8233ebd872af5fa05fc",
+  "prompts": {},
+  "sessions": {
+    "s_08e61f27593426": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f4d037f3-24d6-4c03-9b56-2cd4874fc644",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
