@@ -32,6 +32,8 @@
 package config
 
 import (
+	"errors"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -115,7 +117,7 @@ func (l *Loader) Reload() *Loaded {
 	if path != "" {
 		data, err := os.ReadFile(path) //nolint:gosec // path from user config or XDG default
 		if err != nil {
-			if !os.IsNotExist(err) {
+			if !errors.Is(err, fs.ErrNotExist) {
 				slog.Warn("config read failed", slog.String("path", path), slog.Any("err", err))
 			}
 		} else {
