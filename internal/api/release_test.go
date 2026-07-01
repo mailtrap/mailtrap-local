@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -109,7 +110,13 @@ func TestSendToCloudNoConnection(t *testing.T) {
 
 func TestSendToCloudUpstreamFailure(t *testing.T) {
 	t.Parallel()
-	_, ts := newTestServer(t)
+	srv, ts := newTestServer(t)
+	cloudStub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(cloudStub.Close)
+	srv.CloudBaseURL = cloudStub.URL
+
 	putCloud(t, ts.URL)
 	id := ingestSample(t, ts.URL, "CloudFail", "a@x.test", "b@y.test", "test")
 

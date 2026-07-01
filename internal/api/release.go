@@ -90,6 +90,9 @@ func (s *Server) sendToCloud(w http.ResponseWriter, r *http.Request) {
 	atts, _ := s.Store.LoadAttachments(r.Context(), m.ID)
 
 	cl := cloud.NewClient(conn.APIToken, conn.SandboxID)
+	if s.CloudBaseURL != "" {
+		cl.BaseURL = s.CloudBaseURL
+	}
 	if err := cl.Send(r.Context(), m, inline, atts); err != nil {
 		writeError(w, http.StatusBadGateway, err.Error())
 		return
