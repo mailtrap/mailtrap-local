@@ -20,7 +20,7 @@ Browse caught messages, preview rendered HTML, and inspect client compatibility 
 |---|---|---|
 | ![Inbox with message list and HTML preview](docs/images/inbox.png) | ![HTML Check tab with market support and issue breakdown](docs/images/message-html-check.png) | ![Empty inbox with SMTP code samples for Node.js, Python, Ruby, and more](docs/images/code-samples.png) |
 
-**[▶ Watch quick tour](docs/images/demo.webm)** — browse the inbox, open a message, switch between HTML preview and HTML Check.
+![Quick tour — browse the inbox, open a message, switch between HTML preview and HTML Check](docs/images/demo.gif)
 
 ## What it is *not*
 
@@ -145,7 +145,7 @@ mailtrap-local/
 ├── frontend/                # React + Vite SPA (built into cmd/mailtrap-local/dist/)
 ├── docs/
 │   ├── api/openapi.yaml    # API spec (embedded + served at /api/v1/openapi.yaml)
-│   └── images/             # README screenshots + demo screencast
+│   └── images/             # README screenshots + demo GIF
 ├── scripts/build.sh         # frontend build + go build → bin/mailtrap-local
 ├── Dockerfile               # multi-stage source build (Node → Go → distroless)
 ├── Dockerfile.goreleaser    # release-time wrapper (goreleaser-built binary → distroless)
