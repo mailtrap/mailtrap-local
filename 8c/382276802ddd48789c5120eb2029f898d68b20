@@ -1,0 +1,20 @@
+internal/config/config.go
+  s_385bde0dd5b51f::t_6f604fa0f67c30 120
+  s_385bde0dd5b51f::t_f8ecaafd5fe96c 35-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "8c382276802ddd48789c5120eb2029f898d68b20",
+  "prompts": {},
+  "sessions": {
+    "s_385bde0dd5b51f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "06638df5-eca8-4d09-9961-691fbe0c79ec",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
