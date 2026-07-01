@@ -1,0 +1,59 @@
+cmd/mailtrap-local/openapi.yaml
+  s_1a25a3e2b9dbd7::t_214b654695202e 480,533,613
+  s_1a25a3e2b9dbd7::t_c3c831d97150df 1031,1113,1163
+  s_1a25a3e2b9dbd7::t_bd8d8ea8d2bca0 1023,1104,1155
+internal/api/connections_config_test.go
+  s_1a25a3e2b9dbd7::t_061fab09fabd4c 42
+  s_1a25a3e2b9dbd7::t_7e0742f63484a3 145-171
+  s_1a25a3e2b9dbd7::t_70ba3a46c4fba5 112
+  s_1a25a3e2b9dbd7::t_ad562c80832ea3 125
+  s_1a25a3e2b9dbd7::t_a190afee4981de 93
+internal/config/locked.go
+  s_1a25a3e2b9dbd7::t_cb7ede4c7ba625 3
+  s_1a25a3e2b9dbd7::t_c3bd15dc74a56b 12
+  s_1a25a3e2b9dbd7::t_6a51f78ada3782 27
+docs/api/openapi.yaml
+  s_1a25a3e2b9dbd7::t_44bea65d022d59 1023,1104,1155
+  s_1a25a3e2b9dbd7::t_5d73f0f8e52fa4 1031,1113,1163
+  s_1a25a3e2b9dbd7::t_4c261a0d5d63d1 480,533,613
+internal/api/connections.go
+  s_1a25a3e2b9dbd7::t_0f43c6ab6bca23 218
+  s_1a25a3e2b9dbd7::t_e806e5882771e8 248
+  s_1a25a3e2b9dbd7::t_50deb1f8bb6514 68,76,81,85-86,95-100
+  s_1a25a3e2b9dbd7::t_ccf68a2cc4074c 188
+  s_1a25a3e2b9dbd7::t_513919b83188a2 423
+  s_1a25a3e2b9dbd7::t_3451feb9a89909 297
+  s_1a25a3e2b9dbd7::t_ff45f27e8d54c9 233
+  s_1a25a3e2b9dbd7::t_aafb4e39daec0c 57
+  s_1a25a3e2b9dbd7::t_89d82fcd8d6355 460
+  s_1a25a3e2b9dbd7::t_aa60acf05543f3 213
+  s_1a25a3e2b9dbd7::t_7c07a97ac47e4c 238
+  s_1a25a3e2b9dbd7::t_289af38792e108 428
+  s_1a25a3e2b9dbd7::t_75d445256aaf18 228
+  s_1a25a3e2b9dbd7::t_92ab339d24040e 397
+  s_1a25a3e2b9dbd7::t_bf16d15a41fb25 223
+  s_1a25a3e2b9dbd7::t_d732a607afd1a3 114
+  s_1a25a3e2b9dbd7::t_7975168d5df3c6 243
+internal/config/overlay.go
+  s_1a25a3e2b9dbd7::t_1204e8a6911848 1-60
+internal/jobs/jobs.go
+  s_1a25a3e2b9dbd7::t_32b081c5e15fb3 381-382
+internal/api/config_pins.go
+  s_1a25a3e2b9dbd7::t_6e8ab819353a84 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "ed0ba2cf0adae2f21e689055f500c4e9edf1eb3b",
+  "prompts": {},
+  "sessions": {
+    "s_1a25a3e2b9dbd7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f71c1320-4b9b-434c-b015-5a0ce84aa93a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
