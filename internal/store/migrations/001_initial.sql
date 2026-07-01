@@ -1,3 +1,97 @@
--- Baseline: tables come from schema.sql (idempotent CREATE IF NOT EXISTS).
--- This migration records version 1 for DBs that predate schema_version.
-SELECT 1;
+-- Baseline schema. Idempotent CREATE IF NOT EXISTS for upgrades from
+-- pre-migration DBs that already have these tables.
+
+CREATE TABLE IF NOT EXISTS messages (
+  id              TEXT    PRIMARY KEY,
+  smtp_from       TEXT    NOT NULL DEFAULT '',
+  smtp_to         TEXT    NOT NULL DEFAULT '[]',  -- JSON array of strings
+  message_id      TEXT    NOT NULL DEFAULT '',
+  from_name       TEXT    NOT NULL DEFAULT '',
+  from_address    TEXT    NOT NULL DEFAULT '',
+  to_addresses    TEXT    NOT NULL DEFAULT '[]',  -- JSON array of {Name,Address}
+  cc_addresses    TEXT    NOT NULL DEFAULT '[]',
+  bcc_addresses   TEXT    NOT NULL DEFAULT '[]',
+  reply_to        TEXT    NOT NULL DEFAULT '[]',
+  return_path     TEXT    NOT NULL DEFAULT '',
+  subject         TEXT    NOT NULL DEFAULT '',
+  date            TEXT,                           -- RFC3339Nano, nullable
+  category        TEXT,                           -- nullable
+  text_body       TEXT    NOT NULL DEFAULT '',
+  html            TEXT    NOT NULL DEFAULT '',
+  raw             BLOB    NOT NULL,
+  size            INTEGER NOT NULL DEFAULT 0,
+  snippet         TEXT    NOT NULL DEFAULT '',
+  recipients_text TEXT    NOT NULL DEFAULT '',    -- denormalized for LIKE search
+  list_unsubscribe TEXT,                          -- JSON, nullable
+  read_at         TEXT,                           -- RFC3339Nano, NULL = unread
+  created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_messages_created   ON messages (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_message_id ON messages (message_id);
+CREATE INDEX IF NOT EXISTS idx_messages_read       ON messages (read_at);
+CREATE INDEX IF NOT EXISTS idx_messages_category   ON messages (category);
+
+CREATE TABLE IF NOT EXISTS attachments (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  message_id       TEXT    NOT NULL,
+  part_id          TEXT    NOT NULL DEFAULT '',
+  filename         TEXT    NOT NULL DEFAULT '',
+  content_type     TEXT    NOT NULL DEFAULT '',
+  content_id       TEXT    NOT NULL DEFAULT '',
+  disposition      TEXT    NOT NULL DEFAULT 'attachment',
+  size             INTEGER NOT NULL DEFAULT 0,
+  content          BLOB,
+  checksum_md5     TEXT    NOT NULL DEFAULT '',
+  checksum_sha1    TEXT    NOT NULL DEFAULT '',
+  checksum_sha256  TEXT    NOT NULL DEFAULT '',
+  created_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_attachments_message ON attachments (message_id);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
+  subject, from_name, from_address, recipients_text, snippet, text_body, category,
+  content='messages', content_rowid='rowid',
+  tokenize='unicode61 remove_diacritics 2'
+);
+
+CREATE TABLE IF NOT EXISTS cloud_connections (
+  id              INTEGER PRIMARY KEY CHECK (id = 1),
+  api_token       TEXT    NOT NULL,
+  sandbox_id      INTEGER NOT NULL,
+  mirror_enabled  INTEGER NOT NULL DEFAULT 0,
+  created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE TABLE IF NOT EXISTS relay_connections (
+  id                  INTEGER PRIMARY KEY CHECK (id = 1),
+  host                TEXT    NOT NULL,
+  port                INTEGER NOT NULL DEFAULT 587,
+  username            TEXT,
+  password            TEXT,
+  auth                TEXT    NOT NULL DEFAULT 'plain',  -- plain | login | none | cram_md5
+  tls                 TEXT    NOT NULL DEFAULT 'auto',   -- auto | ssl | off | always | never
+  auto_relay_enabled  INTEGER NOT NULL DEFAULT 0,
+  override_from       TEXT,
+  return_path         TEXT,
+  created_at          TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at          TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE TABLE IF NOT EXISTS webhook_connections (
+  id           INTEGER PRIMARY KEY CHECK (id = 1),
+  url          TEXT    NOT NULL,
+  secret       TEXT,
+  enabled      INTEGER NOT NULL DEFAULT 0,
+  created_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
+
+CREATE TABLE IF NOT EXISTS schema_version (
+  version INTEGER NOT NULL
+);

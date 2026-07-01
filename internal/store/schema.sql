@@ -1,5 +1,10 @@
--- mailtrap-local schema. Single SQLite file. Single-tenant by design —
--- no account_id / org_id / sandbox_id scoping anywhere.
+-- mailtrap-local schema dump (not loaded at runtime — migrations apply
+-- the live schema). Single SQLite file. Single-tenant by design — no
+-- account_id / org_id / sandbox_id scoping anywhere.
+--
+-- Schema version: 1 — keep in sync with the latest migration (Rails-
+-- style). When bumping a migration, update this dump and the INSERT
+-- below so a manual schema load skips already-applied migrations.
 
 CREATE TABLE IF NOT EXISTS messages (
   id              TEXT    PRIMARY KEY,
@@ -112,3 +117,5 @@ CREATE TABLE IF NOT EXISTS webhook_connections (
 CREATE TABLE IF NOT EXISTS schema_version (
   version INTEGER NOT NULL
 );
+
+INSERT INTO schema_version(version) VALUES (1);

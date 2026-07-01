@@ -44,7 +44,7 @@ func loadMigrations() ([]migration, error) {
 	return out, nil
 }
 
-// runMigrations applies numbered migrations after schema.sql bootstrap.
+// runMigrations applies numbered migrations from internal/store/migrations/.
 // Add new files as migrations/NNN_description.sql (NNN zero-padded).
 func (s *Store) runMigrations() error {
 	migs, err := loadMigrations()
@@ -59,23 +59,41 @@ func (s *Store) runMigrations() error {
 		if m.version <= cur {
 			continue
 		}
+		tx, err := s.db.Begin()
+		if err != nil {
+			return wrapErr(err, "begin migration tx")
+		}
 		for _, stmt := range splitStatements(m.sql) {
 			stmt = strings.TrimSpace(stmt)
 			if stmt == "" {
 				continue
 			}
-			if _, err := s.db.Exec(stmt); err != nil {
+			if _, err := tx.Exec(stmt); err != nil {
+				_ = tx.Rollback()
 				return fmt.Errorf("migration %03d: %w\n  in stmt: %s", m.version, err, stmt)
 			}
 		}
-		if err := s.setSchemaVersion(m.version); err != nil {
+		if err := setSchemaVersionTx(tx, m.version); err != nil {
+			_ = tx.Rollback()
 			return fmt.Errorf("migration %03d set version: %w", m.version, err)
+		}
+		if err := tx.Commit(); err != nil {
+			return wrapErr(err, "commit migration tx")
 		}
 	}
 	return nil
 }
 
 func (s *Store) schemaVersion() (int, error) {
+	var exists int
+	if err := s.db.QueryRow(
+		`SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='schema_version'`,
+	).Scan(&exists); err != nil {
+		return 0, wrapErr(err, "check schema_version table")
+	}
+	if exists == 0 {
+		return 0, nil
+	}
 	var v int
 	err := s.db.QueryRow(`SELECT version FROM schema_version LIMIT 1`).Scan(&v)
 	if err != nil {
@@ -88,9 +106,15 @@ func (s *Store) schemaVersion() (int, error) {
 }
 
 func (s *Store) setSchemaVersion(v int) error {
-	if _, err := s.db.Exec(`DELETE FROM schema_version`); err != nil {
+	return setSchemaVersionTx(s.db, v)
+}
+
+func setSchemaVersionTx(exec interface {
+	Exec(query string, args ...any) (sql.Result, error)
+}, v int) error {
+	if _, err := exec.Exec(`DELETE FROM schema_version`); err != nil {
 		return wrapErr(err, "clear schema version")
 	}
-	_, err := s.db.Exec(`INSERT INTO schema_version(version) VALUES (?)`, v)
+	_, err := exec.Exec(`INSERT INTO schema_version(version) VALUES (?)`, v)
 	return wrapErr(err, "set schema version")
 }

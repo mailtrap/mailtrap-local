@@ -78,7 +78,7 @@ routes, update **both** `docs/api/openapi.yaml` and the embedded copy at
 4. Make sure `golangci-lint`, the full test suite (Go + frontend), and `go vet` pass locally.
 5. Write a clear description: what changed, why, and how you verified it.
 
-**Schema changes:** add a numbered file under `internal/store/migrations/` (e.g. `002_add_foo.sql`) and keep `schema.sql` in sync for fresh installs. Do not edit old migration files after release.
+**Schema changes:** add a numbered file under `internal/store/migrations/` (e.g. `002_add_foo.sql`). Runtime schema comes from migrations only. Keep `internal/store/schema.sql` in sync as a human-readable dump: update the tables/indexes and bump the `Schema version:` comment plus the trailing `INSERT INTO schema_version` so a manual load matches Rails' `schema.rb` version stamp. Do not edit old migration files after release.
 
 ## Security
 
