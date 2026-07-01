@@ -1,0 +1,24 @@
+internal/api/release_test.go
+  s_795f979fb181b3::t_09532bbad66547 8
+  s_795f979fb181b3::t_c5b4bf5b901b1a 113-119
+internal/api/release.go
+  s_795f979fb181b3::t_e3f5c841a8a7d9 93-95
+internal/api/api.go
+  s_795f979fb181b3::t_01ff7307935051 40-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "15385bf06f81efcdac0eadcda66a9a75ce03f4e4",
+  "prompts": {},
+  "sessions": {
+    "s_795f979fb181b3": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "911cfa1b-1813-458d-9e91-c51a018a291c",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
