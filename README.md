@@ -1,7 +1,5 @@
 # mailtrap-local
 
-[![CI](https://github.com/mailtrap/mailtrap-local/actions/workflows/ci.yml/badge.svg)](https://github.com/mailtrap/mailtrap-local/actions/workflows/ci.yml)
-
 A local **email sandbox + catcher** for **individual developers**. Runs on your laptop, catches every email your app sends, and gives you a web sandbox to browse, search, and inspect them in. One self-contained binary. Open source. MIT-licensed.
 
 ## What it does
@@ -11,16 +9,6 @@ A local **email sandbox + catcher** for **individual developers**. Runs on your 
 - **REST API on `127.0.0.1:3550`** — JSON over HTTP; existing API clients only need a host override.
 - **Validation tools:** HTML email-client compatibility check across major mail clients.
 - **Workflow:** categories, message release to production SMTP, outbound webhooks, sendmail-replacement binary mode.
-
-## Screenshots
-
-Browse caught messages, preview rendered HTML, and inspect client compatibility — all offline, on your machine.
-
-| Inbox + HTML preview | HTML Check | Getting started (code samples) |
-|---|---|---|
-| ![Inbox with message list and HTML preview](docs/images/inbox.png) | ![HTML Check tab with market support and issue breakdown](docs/images/message-html-check.png) | ![Empty inbox with SMTP code samples for Node.js, Python, Ruby, and more](docs/images/code-samples.png) |
-
-![Quick tour — browse the inbox, open a message, switch between HTML preview and HTML Check](docs/images/demo.gif)
 
 ## What it is *not*
 
@@ -38,7 +26,7 @@ Browse caught messages, preview rendered HTML, and inspect client compatibility 
 | Storage | SQLite via [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite) (pure Go — no CGo) |
 | Web UI | React 19 + Linaria + Radix UI + Vite, embedded into the binary at build time via `//go:embed` |
 | Realtime | Plain WebSocket (`/cable`) |
-| Distribution | `brew install`, `docker run`, single static binary (macOS + Linux; Windows not yet) |
+| Distribution | `brew install`, `docker run`, single static binary |
 
 ## Quick start
 
@@ -143,9 +131,7 @@ mailtrap-local/
 │   ├── cloud/               # Mailtrap sandbox API client
 │   └── config/              # YAML config loader
 ├── frontend/                # React + Vite SPA (built into cmd/mailtrap-local/dist/)
-├── docs/
-│   ├── api/openapi.yaml    # API spec (embedded + served at /api/v1/openapi.yaml)
-│   └── images/             # README screenshots + demo GIF
+├── docs/api/openapi.yaml    # API spec (embedded + served at /api/v1/openapi.yaml)
 ├── scripts/build.sh         # frontend build + go build → bin/mailtrap-local
 ├── Dockerfile               # multi-stage source build (Node → Go → distroless)
 ├── Dockerfile.goreleaser    # release-time wrapper (goreleaser-built binary → distroless)
