@@ -1,0 +1,35 @@
+internal/api/messages.go
+  s_297efc20f3206c::t_e25ea2c7e8258a 6
+  s_297efc20f3206c::t_07b77720ded5f2 115-123
+internal/store/connections.go
+  s_297efc20f3206c::t_c35b87fd5ef512 99-101
+  s_297efc20f3206c::t_c48b4ed3f71940 159-161
+  s_297efc20f3206c::t_c54f5e9ea2c1a4 219-221
+  s_297efc20f3206c::t_6df23894dc0e41 7
+cmd/mailtrap-local/main.go
+  s_297efc20f3206c::t_5b8d2c7efcf483 274-275,279-284,288-289
+  s_297efc20f3206c::t_04daa12a43e2b9 172-182
+internal/jobs/jobs.go
+  s_297efc20f3206c::t_0b78a04e670723 218-219
+  s_297efc20f3206c::t_e7beef46f6637b 241
+  s_297efc20f3206c::t_ef61e933d992d2 260-261
+  s_297efc20f3206c::t_760661ff8c8224 196-197
+  s_297efc20f3206c::t_1a7cfde22b4f8f 290-291,299-300
+  s_297efc20f3206c::t_00b043f4be1858 278-281
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "b19c4c88bafa925ad26d865905d9a59627014b73",
+  "prompts": {},
+  "sessions": {
+    "s_297efc20f3206c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c25dc794-51e0-46b5-8a25-6f2510f4b67a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
