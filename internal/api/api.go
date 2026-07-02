@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mailtrap/mailtrap-local/internal/config"
 	"github.com/mailtrap/mailtrap-local/internal/live"
 	"github.com/mailtrap/mailtrap-local/internal/relay"
 	"github.com/mailtrap/mailtrap-local/internal/store"
@@ -27,6 +28,7 @@ type Server struct {
 	Hub      *live.Hub
 	Relay    *relay.Client
 	Webhook  *webhook.Client
+	Config   *config.Loader
 	Frontend fs.FS // production: embedded SPA dist; dev: nil (Vite serves it)
 	OpenAPI  []byte
 

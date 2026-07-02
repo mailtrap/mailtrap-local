@@ -477,7 +477,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CloudConnectionState'
         '422':
-          description: Validation failure (missing/invalid token, sandbox id, etc.).
+          description: Validation failure (missing/invalid token, sandbox id, or field locked by config).
           content:
             application/json:
               schema:
@@ -530,7 +530,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/RelayConnectionState'
         '422':
-          description: Validation failure.
+          description: Validation failure (missing host, or field locked by config).
           content:
             application/json:
               schema:
@@ -610,7 +610,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/WebhookConnectionState'
         '422':
-          description: Validation failure.
+          description: Validation failure (missing/invalid URL, or field locked by config).
           content:
             application/json:
               schema:
@@ -1016,6 +1016,23 @@ components:
           nullable: true
         mirror_enabled:
           type: boolean
+        api_token_hint:
+          type: string
+          nullable: true
+          description: |
+            `"from config"` when locked by YAML, `••••` plus the last four characters
+            when stored in the DB, null when unset.
+        locked:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: |
+            Per-field lock state (`api_token`, `sandbox_id`, `mirror_enabled`).
+            `true` means the value is locked by the config file.
+        config_path:
+          type: string
+          nullable: true
+          description: Absolute path of the loaded config file, or null when none exists.
 
     RelayConnectionInput:
       type: object
@@ -1074,6 +1091,30 @@ components:
           nullable: true
         auto_relay_enabled:
           type: boolean
+        override_from:
+          type: string
+          nullable: true
+        return_path:
+          type: string
+          nullable: true
+        password_hint:
+          type: string
+          nullable: true
+          description: |
+            `"from config"` when locked by YAML, `••••` plus the last two characters
+            when stored in the DB, null when unset.
+        locked:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: |
+            Per-field lock state (`host`, `port`, `username`, `password`, `auth`,
+            `tls`, `auto_relay_enabled`, `override_from`, `return_path`).
+            `true` means the value is locked by the config file.
+        config_path:
+          type: string
+          nullable: true
+          description: Absolute path of the loaded config file, or null when none exists.
 
     WebhookConnectionInput:
       type: object
@@ -1110,7 +1151,20 @@ components:
         secret_hint:
           type: string
           nullable: true
-          description: Last 2 characters of the saved secret, prefixed with bullets — `••••XX`.
+          description: |
+            `"from config"` when locked by YAML, last two characters prefixed with
+            `••••` when stored in the DB, null when unset.
+        locked:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: |
+            Per-field lock state (`url`, `secret`, `enabled`).
+            `true` means the value is locked by the config file.
+        config_path:
+          type: string
+          nullable: true
+          description: Absolute path of the loaded config file, or null when none exists.
 
     IngestPayload:
       type: object

@@ -378,34 +378,8 @@ func withRetry(ctx context.Context, fn func() error) error {
 }
 
 func overlayRelay(db *store.RelayConnection, cfg config.Relay) *store.RelayConnection {
-	out := *db // copy
-	if cfg.Host != nil {
-		out.Host = *cfg.Host
-	}
-	if cfg.Port != nil {
-		out.Port = *cfg.Port
-	}
-	if cfg.Username != nil {
-		out.Username = *cfg.Username
-	}
-	if cfg.Password != nil {
-		out.Password = *cfg.Password
-	}
-	if cfg.Auth != nil {
-		out.Auth = *cfg.Auth
-	}
-	if cfg.TLS != nil {
-		out.TLS = *cfg.TLS
-	}
-	if cfg.AutoRelayEnabled != nil {
-		out.AutoRelayEnabled = *cfg.AutoRelayEnabled
-	}
-	if cfg.OverrideFrom != nil {
-		out.OverrideFrom = *cfg.OverrideFrom
-	}
-	if cfg.ReturnPath != nil {
-		out.ReturnPath = *cfg.ReturnPath
-	}
+	out := *db
+	config.OverlayRelay(&out, cfg)
 	return &out
 }
 

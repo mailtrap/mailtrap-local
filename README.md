@@ -168,7 +168,7 @@ Optional YAML config at `$XDG_CONFIG_HOME/mailtrap-local/config.yml` (or `~/.con
 - `relay` — outbound SMTP relay credentials for the "Release" button.
 - `webhook` — outbound webhook URL + signing secret.
 
-Values support `${ENV_VAR}` interpolation. Settings configured via the UI live in the SQLite DB and override the file values.
+Values support `${ENV_VAR}` interpolation. Keys present in the config file override the equivalent values stored in the SQLite DB; pinned fields are read-only in the UI.
 
 ## Tests
 
