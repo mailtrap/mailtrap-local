@@ -47,6 +47,7 @@ func TestExtractCategory(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			env, err := enmime.ReadEnvelope(strings.NewReader(tc.raw))
 			require.NoError(t, err)
 			got := extractCategory(env)
@@ -79,6 +80,7 @@ func TestExpandListenAddrs(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.in, func(t *testing.T) {
+			t.Parallel()
 			got := expandListenAddrs(tc.in)
 			require.Equal(t, tc.want, got)
 		})
@@ -91,7 +93,7 @@ func TestExpandListenAddrs(t *testing.T) {
 func TestEndToEndIngest(t *testing.T) {
 	st, err := store.OpenMemory()
 	require.NoError(t, err)
-	defer st.Close()
+	defer func() { _ = st.Close() }()
 
 	var afterInsertID string
 	srv := &Server{
@@ -101,12 +103,12 @@ func TestEndToEndIngest(t *testing.T) {
 		AfterInsert: func(id string) { afterInsertID = id },
 	}
 	require.NoError(t, srv.Start())
-	defer srv.Close()
+	defer func() { srv.Close() }()
 
 	addr := srv.Addrs()[0]
 	c, err := smtp.Dial(addr)
 	require.NoError(t, err)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	require.NoError(t, c.Hello("test"))
 	require.NoError(t, c.Mail("sender@example.test"))
@@ -143,11 +145,11 @@ func TestEndToEndIngest(t *testing.T) {
 // sending DATA without bytes.
 func TestRejectEmptyData(t *testing.T) {
 	st, _ := store.OpenMemory()
-	defer st.Close()
+	defer func() { _ = st.Close() }()
 
 	srv := &Server{Listen: "127.0.0.1:0", Store: st}
 	require.NoError(t, srv.Start())
-	defer srv.Close()
+	defer func() { srv.Close() }()
 
 	addr := srv.Addrs()[0]
 	c, err := smtp.Dial(addr)
@@ -159,7 +161,7 @@ func TestRejectEmptyData(t *testing.T) {
 	// Close immediately — empty body.
 	_ = w.Close()
 	_ = c.Quit()
-	c.Close()
+	_ = c.Close()
 
 	res, err := st.List(context.Background(), store.ListOpts{Limit: 10})
 	require.NoError(t, err)

@@ -25,7 +25,7 @@ import (
 // to clean up the spec) breaks this test.
 func TestOpenAPIDrift(t *testing.T) {
 	st, _ := store.OpenMemory()
-	defer st.Close()
+	defer func() { _ = st.Close() }()
 	srv := &Server{
 		Store:   st,
 		Hub:     live.NewHub(),
@@ -33,7 +33,8 @@ func TestOpenAPIDrift(t *testing.T) {
 		Webhook: webhook.NewClient(),
 	}
 
-	r := srv.Router().(*chi.Mux)
+	r, ok := srv.Router().(*chi.Mux)
+	require.True(t, ok)
 	routerPaths := map[string]bool{}
 	walk := func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
 		// Strip chi's regex constraints; openapi uses {name} placeholders.
@@ -86,7 +87,8 @@ func TestOpenAPIDrift(t *testing.T) {
 		}
 	}
 
-	assert.Emptyf(t, missingFromSpec, "router paths missing from openapi.yaml — add them or extend the test omit list:\n  %v",
+	assert.Emptyf(t, missingFromSpec,
+		"router paths missing from openapi.yaml — add them or extend omit list:\n  %v",
 		missingFromSpec)
 	assert.Emptyf(t, extraInSpec, "openapi.yaml documents paths the router doesn't serve:\n  %v",
 		extraInSpec)

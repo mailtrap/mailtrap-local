@@ -13,6 +13,8 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/store"
 )
 
+const releaseTimeout = 30 * time.Second
+
 // release handles POST /api/v1/message/:id/release. Body { to: [...] }.
 // Forwards through the configured SMTP relay.
 func (s *Server) release(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +52,7 @@ func (s *Server) release(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), releaseTimeout)
 	defer cancel()
 	// rewriteTo=true: this is a manual release, so the delivered copy
 	// should read as addressed to whoever the user released it to.

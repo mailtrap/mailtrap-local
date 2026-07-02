@@ -1,7 +1,7 @@
 name: ci
 
 # Runs on every push and PR. Four jobs that run in parallel:
-#   - go    — gofmt, go vet, go test (every package, race detector on)
+#   - go    — golangci-lint, go vet, go test (every package, race detector on)
 #   - frontend — TypeScript build + ESLint + vitest
 #   - build — `scripts/build.sh` smoke (proves the embed pipeline still works)
 #   - docker — builds the image and boots it on its DEFAULT CMD (proves
@@ -31,17 +31,11 @@ jobs:
           go-version: '1.26'
           cache: true
 
-      # gofmt is non-destructive but the diff format is the cheapest CI
-      # signal we have. Anything that needs `go fmt ./...` to land cleanly
-      # fails here before tests waste the runner's time.
-      - name: gofmt
-        run: |
-          unformatted=$(gofmt -l $(find . -type f -name '*.go' -not -path './frontend/*'))
-          if [ -n "$unformatted" ]; then
-            echo "::error::gofmt found unformatted files:"
-            echo "$unformatted"
-            exit 1
-          fi
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.11.4
+          args: --timeout 10m0s ./cmd/... ./internal/...
 
       - name: go vet
         run: go vet ./cmd/... ./internal/...

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -9,6 +8,8 @@ import (
 
 	"github.com/mailtrap/mailtrap-local/internal/store"
 )
+
+const secretMaskVisible = 2
 
 // ---------------------------------------------------------------------
 // Cloud connection
@@ -230,7 +231,8 @@ func (s *Server) relayTest(w http.ResponseWriter, r *http.Request) {
 		body.TLS = "auto"
 	}
 
-	if err := s.Relay.Probe(context.Background(), body.Host, body.Port, body.Username, body.Password, body.Auth, body.TLS); err != nil {
+	if err := s.Relay.Probe(r.Context(), body.Host, body.Port,
+		body.Username, body.Password, body.Auth, body.TLS); err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error()})
 		return
 	}
@@ -256,7 +258,7 @@ func toWebhookWire(w *store.WebhookConnection) webhookWire {
 	}
 	var hint *string
 	if w.Secret != "" {
-		s := "••••" + lastN(w.Secret, 2)
+		s := "••••" + lastN(w.Secret, secretMaskVisible)
 		hint = &s
 	}
 	return webhookWire{

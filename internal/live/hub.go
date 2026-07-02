@@ -42,7 +42,7 @@ const (
 // queue overflows, the subscriber is dropped from the broadcast set
 // and Close is called.
 type Subscriber interface {
-	Send([]byte) error
+	Send(msg []byte) error
 	Close() error
 }
 
@@ -106,20 +106,34 @@ func (h *Hub) Unsubscribe(s Subscriber) {
 // BroadcastCreated fans out a "created" event with the given JSON-
 // encoded MessageSummary payload.
 func (h *Hub) BroadcastCreated(summaryJSON json.RawMessage) {
-	frame, _ := json.Marshal(struct {
+	frame, err := json.Marshal(struct {
 		Type    string          `json:"type"`
 		Message json.RawMessage `json:"message"`
 	}{Type: "created", Message: summaryJSON})
+	if err != nil {
+		return
+	}
 	h.broadcast(frame)
 }
 
 // BroadcastDestroyed fans out a "destroyed" event for the given ID.
 func (h *Hub) BroadcastDestroyed(id string) {
-	frame, _ := json.Marshal(struct {
+	frame, err := json.Marshal(struct {
 		Type string `json:"type"`
 		ID   string `json:"id"`
 	}{Type: "destroyed", ID: id})
+	if err != nil {
+		return
+	}
 	h.broadcast(frame)
+}
+
+// Count returns the current subscriber count (useful for tests + a
+// future ops endpoint).
+func (h *Hub) Count() int {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return len(h.subs)
 }
 
 func (h *Hub) broadcast(frame []byte) {
@@ -170,7 +184,7 @@ func (h *Hub) dropSlow(w *subWorker) {
 // Subscriber. Exits on stop close or on a Send error. Always Close()s
 // the Subscriber on exit.
 func (h *Hub) runWriter(w *subWorker) {
-	defer w.sub.Close()
+	defer func() { _ = w.sub.Close() }()
 	for {
 		select {
 		case <-w.stop:
@@ -191,12 +205,4 @@ func (h *Hub) runWriter(w *subWorker) {
 			}
 		}
 	}
-}
-
-// Count returns the current subscriber count (useful for tests + a
-// future ops endpoint).
-func (h *Hub) Count() int {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	return len(h.subs)
 }

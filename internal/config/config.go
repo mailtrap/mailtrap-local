@@ -44,14 +44,14 @@ var envRefRe = regexp.MustCompile(`\A\$\{([A-Z_][A-Z0-9_]*)\}\z`)
 
 // Storage is the pinnable subset of the storage section.
 type Storage struct {
-	MaxMessages *int `yaml:"max_messages"`
+	MaxMessages *int `yaml:"max_messages"` //nolint:tagliatelle // config.yml uses snake_case
 }
 
 // Cloud is the pinnable subset of the cloud section.
 type Cloud struct {
-	APIToken      *string `yaml:"api_token"`
-	SandboxID     *int64  `yaml:"sandbox_id"`
-	MirrorEnabled *bool   `yaml:"mirror_enabled"`
+	APIToken      *string `yaml:"api_token"`      //nolint:tagliatelle // config.yml uses snake_case
+	SandboxID     *int64  `yaml:"sandbox_id"`     //nolint:tagliatelle // config.yml uses snake_case
+	MirrorEnabled *bool   `yaml:"mirror_enabled"` //nolint:tagliatelle // config.yml uses snake_case
 }
 
 // Relay is the pinnable subset of the relay section.
@@ -62,9 +62,9 @@ type Relay struct {
 	Password         *string `yaml:"password"`
 	Auth             *string `yaml:"auth"`
 	TLS              *string `yaml:"tls"`
-	AutoRelayEnabled *bool   `yaml:"auto_relay_enabled"`
-	OverrideFrom     *string `yaml:"override_from"`
-	ReturnPath       *string `yaml:"return_path"`
+	AutoRelayEnabled *bool   `yaml:"auto_relay_enabled"` //nolint:tagliatelle // config.yml uses snake_case
+	OverrideFrom     *string `yaml:"override_from"`      //nolint:tagliatelle // config.yml uses snake_case
+	ReturnPath       *string `yaml:"return_path"`        //nolint:tagliatelle // config.yml uses snake_case
 }
 
 // Webhook is the pinnable subset of the webhook section.
@@ -112,7 +112,7 @@ func (l *Loader) Reload() *Loaded {
 
 	path := resolvePath()
 	if path != "" {
-		if data, err := os.ReadFile(path); err == nil {
+		if data, err := os.ReadFile(path); err == nil { //nolint:gosec // path from user config or XDG default
 			out.SourcePath = path
 			parse(data, out)
 		}

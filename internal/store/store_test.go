@@ -91,7 +91,7 @@ func TestGetNotFound(t *testing.T) {
 	s := newTestStore(t)
 
 	_, err := s.Get(context.Background(), "nonexistent")
-	assert.ErrorIs(t, err, ErrNotFound)
+	require.ErrorIs(t, err, ErrNotFound)
 }
 
 func TestList(t *testing.T) {
@@ -193,6 +193,7 @@ func TestSearchMultiTokenAnd(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			res, err := s.Search(ctx, SearchOpts{Query: tc.query, Limit: 50})
 			require.NoError(t, err)
 			got := len(res.Messages)
@@ -252,6 +253,7 @@ func TestSearchPrefixMatch(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			res, err := s.Search(ctx, SearchOpts{Query: tc.query, Limit: 50})
 			require.NoError(t, err)
 			got := len(res.Messages)
@@ -294,7 +296,7 @@ func TestConnectionsCRUD(t *testing.T) {
 	assert.True(t, c.MirrorEnabled)
 	_ = s.CloudDelete(ctx)
 	_, err = s.CloudGet(ctx)
-	assert.ErrorIs(t, err, ErrNotFound)
+	require.ErrorIs(t, err, ErrNotFound)
 
 	// Relay
 	require.NoError(t, s.RelayUpsert(ctx, &RelayConnection{

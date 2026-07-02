@@ -21,6 +21,8 @@ import (
 //go:embed schema.sql
 var schemaFS embed.FS
 
+const sqlitePoolSize = 8
+
 // Store wraps a *sql.DB opened against SQLite. Safe for concurrent use.
 // SQLite is single-writer, so we let database/sql's connection pool
 // serialize writes naturally; reads scale across the pool.
@@ -71,8 +73,8 @@ func Open(path string) (*Store, error) {
 		db.SetMaxIdleConns(1)
 	} else {
 		// SQLite is single-writer; over-provisioning hurts.
-		db.SetMaxOpenConns(8)
-		db.SetMaxIdleConns(8)
+		db.SetMaxOpenConns(sqlitePoolSize)
+		db.SetMaxIdleConns(sqlitePoolSize)
 	}
 
 	if err := db.PingContext(context.Background()); err != nil {
@@ -92,7 +94,7 @@ func Open(path string) (*Store, error) {
 func OpenMemory() (*Store, error) { return Open(":memory:") }
 
 // Close releases the underlying connection pool.
-func (s *Store) Close() error { return s.db.Close() }
+func (s *Store) Close() error { return wrapErr(s.db.Close(), "close store") }
 
 // DB exposes the raw handle for low-level operations / tests.
 func (s *Store) DB() *sql.DB { return s.db }
@@ -133,18 +135,38 @@ func (s *Store) applySchema() error {
 // every messages row change and rebuild that row's tokens.
 var ftsTriggers = []string{
 	`CREATE TRIGGER IF NOT EXISTS messages_ai AFTER INSERT ON messages BEGIN
-		INSERT INTO messages_fts (rowid, subject, from_name, from_address, recipients_text, snippet, text_body, category)
-		VALUES (new.rowid, new.subject, new.from_name, new.from_address, new.recipients_text, new.snippet, new.text_body, COALESCE(new.category, ''));
+		INSERT INTO messages_fts (
+			rowid, subject, from_name, from_address, recipients_text,
+			snippet, text_body, category)
+		VALUES (
+			new.rowid, new.subject, new.from_name, new.from_address,
+			new.recipients_text, new.snippet, new.text_body,
+			COALESCE(new.category, ''));
 	END`,
 	`CREATE TRIGGER IF NOT EXISTS messages_ad AFTER DELETE ON messages BEGIN
-		INSERT INTO messages_fts (messages_fts, rowid, subject, from_name, from_address, recipients_text, snippet, text_body, category)
-		VALUES ('delete', old.rowid, old.subject, old.from_name, old.from_address, old.recipients_text, old.snippet, old.text_body, COALESCE(old.category, ''));
+		INSERT INTO messages_fts (
+			messages_fts, rowid, subject, from_name, from_address,
+			recipients_text, snippet, text_body, category)
+		VALUES (
+			'delete', old.rowid, old.subject, old.from_name, old.from_address,
+			old.recipients_text, old.snippet, old.text_body,
+			COALESCE(old.category, ''));
 	END`,
 	`CREATE TRIGGER IF NOT EXISTS messages_au AFTER UPDATE ON messages BEGIN
-		INSERT INTO messages_fts (messages_fts, rowid, subject, from_name, from_address, recipients_text, snippet, text_body, category)
-		VALUES ('delete', old.rowid, old.subject, old.from_name, old.from_address, old.recipients_text, old.snippet, old.text_body, COALESCE(old.category, ''));
-		INSERT INTO messages_fts (rowid, subject, from_name, from_address, recipients_text, snippet, text_body, category)
-		VALUES (new.rowid, new.subject, new.from_name, new.from_address, new.recipients_text, new.snippet, new.text_body, COALESCE(new.category, ''));
+		INSERT INTO messages_fts (
+			messages_fts, rowid, subject, from_name, from_address,
+			recipients_text, snippet, text_body, category)
+		VALUES (
+			'delete', old.rowid, old.subject, old.from_name, old.from_address,
+			old.recipients_text, old.snippet, old.text_body,
+			COALESCE(old.category, ''));
+		INSERT INTO messages_fts (
+			rowid, subject, from_name, from_address, recipients_text,
+			snippet, text_body, category)
+		VALUES (
+			new.rowid, new.subject, new.from_name, new.from_address,
+			new.recipients_text, new.snippet, new.text_body,
+			COALESCE(new.category, ''));
 	END`,
 }
 
@@ -159,20 +181,20 @@ var ftsTriggers = []string{
 func (s *Store) backfillFTSIfNeeded() error {
 	var msgCount int
 	if err := s.db.QueryRow(`SELECT COUNT(*) FROM messages`).Scan(&msgCount); err != nil {
-		return err
+		return wrapErr(err, "count messages")
 	}
 	if msgCount == 0 {
 		return nil
 	}
 	var indexed int
 	if err := s.db.QueryRow(`SELECT COUNT(*) FROM messages_fts_docsize`).Scan(&indexed); err != nil {
-		return err
+		return wrapErr(err, "count fts indexed")
 	}
 	if indexed >= msgCount {
 		return nil
 	}
 	_, err := s.db.Exec(`INSERT INTO messages_fts(messages_fts) VALUES('rebuild')`)
-	return err
+	return wrapErr(err, "rebuild fts")
 }
 
 // splitStatements splits a multi-statement SQL string on `;` boundaries.

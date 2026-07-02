@@ -38,7 +38,7 @@ func newTestServer(t *testing.T) (*Server, *httptest.Server) {
 // ingestSample posts a message via /api/v1/ingest and returns its ID.
 func ingestSample(t *testing.T, base string, subject, fromAddr, toAddr, category string) string {
 	t.Helper()
-	payload, _ := json.Marshal(store.IngestPayload{
+	payload := mustJSON(t, store.IngestPayload{
 		SMTPFrom:  fromAddr,
 		SMTPTo:    []string{toAddr},
 		MessageID: "<msg-" + subject + "@test>",
@@ -53,7 +53,7 @@ func ingestSample(t *testing.T, base string, subject, fromAddr, toAddr, category
 	})
 	resp, err := http.Post(base+"/api/v1/ingest", "application/json", bytes.NewReader(payload))
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusCreated {
 		body, _ := io.ReadAll(resp.Body)
 		require.FailNow(t, "ingest status", "%d: %s", resp.StatusCode, body)
@@ -68,7 +68,7 @@ func getJSON(t *testing.T, url string, v any) int {
 	t.Helper()
 	resp, err := http.Get(url)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if v != nil {
 		_ = json.NewDecoder(resp.Body).Decode(v)
 	}
@@ -78,6 +78,13 @@ func getJSON(t *testing.T, url string, v any) int {
 // ---------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------
+
+func mustJSON(t *testing.T, v any) []byte {
+	t.Helper()
+	b, err := json.Marshal(v)
+	require.NoError(t, err)
+	return b
+}
 
 func TestListEndpointEnvelope(t *testing.T) {
 	t.Parallel()
@@ -122,7 +129,7 @@ func TestRawHeadersEndpoints(t *testing.T) {
 	resp, err := http.Get(ts.URL + "/api/v1/message/" + id + "/raw")
 	require.NoError(t, err)
 	body, _ := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	assert.Contains(t, string(body), "Subject: Subject Test")
 	assert.Contains(t, resp.Header.Get("Content-Disposition"), "inline")
 
@@ -158,31 +165,31 @@ func TestDeleteAndReadToggle(t *testing.T) {
 	id2 := ingestSample(t, ts.URL, "b", "a@x", "b@y", "")
 	_ = ingestSample(t, ts.URL, "c", "a@x", "b@y", "")
 
-	body, _ := json.Marshal(map[string]any{"read": true})
+	body := mustJSON(t, map[string]any{"read": true})
 	req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/messages", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	var listResp MessagesResponse
 	getJSON(t, ts.URL+"/api/v1/messages", &listResp)
 	assert.Equal(t, 0, listResp.Unread)
 
-	delBody, _ := json.Marshal(map[string]any{"ids": []string{id1, id2}})
+	delBody := mustJSON(t, map[string]any{"ids": []string{id1, id2}})
 	req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", bytes.NewReader(delBody))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = http.DefaultClient.Do(req)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	getJSON(t, ts.URL+"/api/v1/messages", &listResp)
 	assert.Equal(t, 1, listResp.Total)
 
-	allBody, _ := json.Marshal(map[string]any{"all": true})
+	allBody := mustJSON(t, map[string]any{"all": true})
 	req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", bytes.NewReader(allBody))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = http.DefaultClient.Do(req)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	getJSON(t, ts.URL+"/api/v1/messages", &listResp)
 	assert.Equal(t, 0, listResp.Total)
 }
@@ -238,6 +245,7 @@ func TestDeleteMessagesRequiresExplicitSignal(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
 			var req *http.Request
 			if c.body == nil {
 				req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/messages", nil)
@@ -249,7 +257,7 @@ func TestDeleteMessagesRequiresExplicitSignal(t *testing.T) {
 			}
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			assert.Equal(t, c.wantSC, resp.StatusCode)
 			raw, _ := io.ReadAll(resp.Body)
 			assert.Contains(t, string(raw), c.wantMsg)
@@ -272,7 +280,7 @@ func TestDocsRedirect(t *testing.T) {
 	}
 	resp, err := c.Get(ts.URL + "/api/v1")
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusFound, resp.StatusCode)
 	assert.Equal(t, "https://docs.mailtrap.io/", resp.Header.Get("Location"))
 }
@@ -284,7 +292,7 @@ func TestOpenAPIYAML(t *testing.T) {
 
 	resp, err := http.Get(ts.URL + "/api/v1/openapi.yaml")
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Contains(t, resp.Header.Get("Content-Type"), "yaml")
 	body, _ := io.ReadAll(resp.Body)
@@ -295,25 +303,25 @@ func TestConnectionsCRUD(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	body, _ := json.Marshal(map[string]any{
+	body := mustJSON(t, map[string]any{
 		"api_token": "tok", "sandbox_id": 9001, "mirror_enabled": true,
 	})
 	req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/cloud_connection", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := http.DefaultClient.Do(req)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	var cloud map[string]any
 	getJSON(t, ts.URL+"/api/v1/cloud_connection", &cloud)
 	assert.Equal(t, true, cloud["connected"])
 
-	body, _ = json.Marshal(map[string]any{
+	body = mustJSON(t, map[string]any{
 		"url": "https://hooks.example.com/x", "secret": "shh", "enabled": true,
 	})
 	req, _ = http.NewRequest(http.MethodPut, ts.URL+"/api/v1/webhook_connection", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ = http.DefaultClient.Do(req)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	var wh map[string]any
 	getJSON(t, ts.URL+"/api/v1/webhook_connection", &wh)
@@ -328,7 +336,7 @@ func TestRelayConnectionCRUD(t *testing.T) {
 	_, ts := newTestServer(t)
 
 	put := func(payload map[string]any) *http.Response {
-		body, _ := json.Marshal(payload)
+		body := mustJSON(t, payload)
 		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/relay_connection", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp, _ := http.DefaultClient.Do(req)
@@ -339,23 +347,23 @@ func TestRelayConnectionCRUD(t *testing.T) {
 		"host": "smtp.example.com", "port": 587, "username": "u", "password": "p",
 		"auto_relay_enabled": true,
 	})
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var relay map[string]any
 	getJSON(t, ts.URL+"/api/v1/relay_connection", &relay)
 	assert.Equal(t, true, relay["connected"])
 	assert.Equal(t, "smtp.example.com", relay["host"])
-	assert.Equal(t, float64(587), relay["port"])
+	assert.InEpsilon(t, float64(587), relay["port"], 0)
 
 	// Partial update preserves password when omitted.
 	resp = put(map[string]any{"host": "smtp.example.com", "auto_relay_enabled": false})
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	req, _ := http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/relay_connection", nil)
 	resp, _ = http.DefaultClient.Do(req)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	getJSON(t, ts.URL+"/api/v1/relay_connection", &relay)
 	assert.Equal(t, false, relay["connected"])
 }
@@ -364,17 +372,17 @@ func TestWebhookConnectionDestroy(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	body, _ := json.Marshal(map[string]any{
+	body := mustJSON(t, map[string]any{
 		"url": "https://hooks.example.com/x", "enabled": true,
 	})
 	req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/webhook_connection", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := http.DefaultClient.Do(req)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	req, _ = http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/webhook_connection", nil)
 	resp, _ = http.DefaultClient.Do(req)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	var wh map[string]any
 	getJSON(t, ts.URL+"/api/v1/webhook_connection", &wh)
@@ -386,7 +394,7 @@ func TestCloudUpdatePreservesCredentialsOnPartialUpdate(t *testing.T) {
 	_, ts := newTestServer(t)
 
 	put := func(payload map[string]any) *http.Response {
-		body, _ := json.Marshal(payload)
+		body := mustJSON(t, payload)
 		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/cloud_connection", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		resp, _ := http.DefaultClient.Do(req)
@@ -394,25 +402,25 @@ func TestCloudUpdatePreservesCredentialsOnPartialUpdate(t *testing.T) {
 	}
 
 	resp := put(map[string]any{"api_token": "tok", "sandbox_id": 9001, "mirror_enabled": false})
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	resp = put(map[string]any{"mirror_enabled": true})
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var cloud map[string]any
 	getJSON(t, ts.URL+"/api/v1/cloud_connection", &cloud)
 	assert.Equal(t, true, cloud["mirror_enabled"])
-	assert.Equal(t, float64(9001), cloud["sandbox_id"])
+	assert.InEpsilon(t, float64(9001), cloud["sandbox_id"], 0)
 
 	req, _ := http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/cloud_connection", nil)
 	r, err := http.DefaultClient.Do(req)
 	if r != nil {
-		r.Body.Close()
+		_ = r.Body.Close()
 	}
 	require.NoError(t, err)
 	resp = put(map[string]any{"mirror_enabled": true})
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 }
 
@@ -432,7 +440,7 @@ func TestSecurityHeadersNosniff(t *testing.T) {
 	_, ts := newTestServer(t)
 	resp, err := http.Get(ts.URL + "/api/v1/messages")
 	require.NoError(t, err)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	assert.Equal(t, "nosniff", resp.Header.Get("X-Content-Type-Options"))
 }
 
@@ -445,7 +453,7 @@ func TestCORSEchoesOnlyLoopbackOrigins(t *testing.T) {
 		req.Header.Set("Origin", origin)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		return resp.Header.Get("Access-Control-Allow-Origin")
 	}
 
@@ -458,7 +466,7 @@ func TestPartServedAsSanitizedAttachmentWithCSP(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	payload, _ := json.Marshal(store.IngestPayload{
+	payload := mustJSON(t, store.IngestPayload{
 		SMTPFrom: "a@x", SMTPTo: []string{"b@y"},
 		From:    &store.Address{Address: "a@x"},
 		To:      []store.Address{{Address: "b@y"}},
@@ -476,11 +484,11 @@ func TestPartServedAsSanitizedAttachmentWithCSP(t *testing.T) {
 	require.NoError(t, err)
 	var created struct{ ID string }
 	_ = json.NewDecoder(resp.Body).Decode(&created)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	r, err := http.Get(ts.URL + "/api/v1/message/" + created.ID + "/part/1")
 	require.NoError(t, err)
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	cd := r.Header.Get("Content-Disposition")
 	assert.True(t, strings.HasPrefix(cd, "attachment;"))

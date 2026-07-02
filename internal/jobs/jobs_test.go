@@ -59,10 +59,12 @@ func waitFor(t *testing.T, deadline time.Duration, fn func() bool) {
 // Tests
 // ---------------------------------------------------------------------
 
+var errTransient = errors.New("transient")
+
 func TestAfterIngestBroadcastsCreated(t *testing.T) {
 	t.Parallel()
 	s, _ := store.OpenMemory()
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	var b stubBroadcasts
 	d := &Dispatcher{
@@ -84,7 +86,7 @@ func TestAfterIngestBroadcastsCreated(t *testing.T) {
 func TestCloudMirrorNoOpWithoutConnection(t *testing.T) {
 	t.Parallel()
 	s, _ := store.OpenMemory()
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	d := &Dispatcher{
 		Store: s, Config: config.NewLoader(),
@@ -107,7 +109,7 @@ func TestCloudMirrorNoOpWithoutConnection(t *testing.T) {
 func TestWebhookDeliveryHitsURL(t *testing.T) {
 	t.Parallel()
 	s, _ := store.OpenMemory()
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	var hits atomic.Int32
 	var lastBody []byte
@@ -146,7 +148,7 @@ func TestWebhookDeliveryHitsURL(t *testing.T) {
 func TestWebhookDeliveryNoOpWhenDisabled(t *testing.T) {
 	t.Parallel()
 	s, _ := store.OpenMemory()
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	var hits atomic.Int32
 	receiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -180,9 +182,8 @@ func TestWebhookDeliveryNoOpWhenDisabled(t *testing.T) {
 // Not parallel — uses t.Setenv to drive the config Loader.
 func TestRetentionEvictsOldest(t *testing.T) {
 	s, _ := store.OpenMemory()
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
-	cap := 2
 	cfg := config.NewLoader()
 	// Fake a config with max_messages=2 by reaching into the loader's
 	// cache. The Loader doesn't expose Set, so just inject via Reload
@@ -191,7 +192,6 @@ func TestRetentionEvictsOldest(t *testing.T) {
 	// can't (Loaded is opaque); so insert n messages above cap, run
 	// retention, and verify by direct SQL count.
 	_ = cfg
-	_ = cap
 
 	// Workaround: drive enforceRetention directly with the desired cap
 	// inline. We can do that by setting MAILTRAP_LOCAL_CONFIG to a
@@ -209,7 +209,7 @@ func TestRetentionEvictsOldest(t *testing.T) {
 		SerializeSummary:   func(*store.Message) ([]byte, error) { return []byte("{}"), nil },
 	}
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		ingest(t, s, "msg")
 	}
 
@@ -233,7 +233,7 @@ func writeFile(path, content string) error {
 func TestShutdownHappyPath(t *testing.T) {
 	t.Parallel()
 	s, _ := store.OpenMemory()
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	var hits atomic.Int32
 	receiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -274,7 +274,7 @@ func TestShutdownHappyPath(t *testing.T) {
 func TestShutdownReturnsDeadlineExceeded(t *testing.T) {
 	t.Parallel()
 	s, _ := store.OpenMemory()
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	// A side-effect hook that ignores cancellation and blocks forever —
 	// a stand-in for a genuinely unresponsive job. The normal jobs all
@@ -314,11 +314,11 @@ func TestWithRetryReturnsImmediatelyWhenContextCanceled(t *testing.T) {
 	cancel()
 
 	calls := 0
-	err := withRetry(ctx, 3, func() error {
+	err := withRetry(ctx, func() error {
 		calls++
-		return errors.New("transient")
+		return errTransient
 	})
-	assert.ErrorIs(t, err, context.Canceled)
+	require.ErrorIs(t, err, context.Canceled)
 	assert.Equal(t, 0, calls)
 }
 
@@ -331,12 +331,12 @@ func TestWithRetryAbortsBackoffOnCancel(t *testing.T) {
 
 	calls := 0
 	start := time.Now()
-	err := withRetry(ctx, 3, func() error {
+	err := withRetry(ctx, func() error {
 		calls++
 		cancel() // cancel during the first attempt
-		return errors.New("transient")
+		return errTransient
 	})
-	assert.ErrorIs(t, err, context.Canceled)
+	require.ErrorIs(t, err, context.Canceled)
 	assert.Equal(t, 1, calls)
 	// Would be ~500ms+ if the backoff slept; the cancellable select makes
 	// it near-instant.
@@ -349,7 +349,7 @@ func TestWithRetryAbortsBackoffOnCancel(t *testing.T) {
 // evicted without any ingest activity.
 func TestRetentionLoopRunsOnStart(t *testing.T) {
 	s, _ := store.OpenMemory()
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	tmp := t.TempDir() + "/config.yml"
 	require.NoError(t, writeFile(tmp, "storage:\n  max_messages: 2\n"))
@@ -367,7 +367,7 @@ func TestRetentionLoopRunsOnStart(t *testing.T) {
 
 	// Pre-populate over the cap. Retention hasn't run yet because we
 	// haven't called Start.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		ingest(t, s, "msg")
 	}
 	res, _ := s.List(context.Background(), store.ListOpts{Limit: 50})
@@ -393,7 +393,7 @@ func TestRetentionLoopRunsOnStart(t *testing.T) {
 func TestShutdownWithoutStartIsNoop(t *testing.T) {
 	t.Parallel()
 	s, _ := store.OpenMemory()
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 	d := &Dispatcher{
 		Store: s, Config: config.NewLoader(),
 		Relay: &relay.Client{}, Webhook: webhook.NewClient(),

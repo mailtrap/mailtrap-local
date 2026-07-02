@@ -140,13 +140,17 @@ func (s *Server) ingest(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(map[string]string{"ID": id})
+	if err := json.NewEncoder(w).Encode(map[string]string{"ID": id}); err != nil {
+		return
+	}
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		return
+	}
 }
 
 func writeError(w http.ResponseWriter, code int, msg string) {
