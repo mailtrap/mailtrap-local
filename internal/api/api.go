@@ -38,6 +38,11 @@ type Server struct {
 	Frontend fs.FS // production: embedded SPA dist; dev: nil (Vite serves it)
 	OpenAPI  []byte
 
+	// CloudBaseURL overrides the Mailtrap Send API endpoint. Production
+	// leaves it empty (defaults to sandbox.api.mailtrap.io); tests point
+	// it at an httptest stub so handlers never call the real API.
+	CloudBaseURL string
+
 	// OnIngest fires after a successful POST /api/v1/ingest. Wired by
 	// main.go to trigger the dispatcher (cloud mirror / relay mirror /
 	// webhook delivery / retention / live broadcast).
