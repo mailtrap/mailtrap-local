@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/fs"
 	"net"
 	"net/http"
@@ -19,6 +21,9 @@ import (
 const (
 	defaultLimit = 50
 	maxLimit     = 200
+
+	// maxRequestBodyBytes matches smtpd defaultMaxMessageBytes (25 MB).
+	maxRequestBodyBytes = 25 * 1024 * 1024
 )
 
 // Server is the HTTP layer. Holds every dependency the handlers reach
@@ -93,18 +98,18 @@ func (s *Server) Router() http.Handler {
 		})
 
 		// Cloud connection (singleton CRUD)
-		r.Get("/cloud_connection", s.cloudShow)
+		r.Get("/cloud_connection", s.storedConnectionShowHandler(storedConnectionCloud))
 		r.Put("/cloud_connection", s.cloudUpdate)
 		r.Delete("/cloud_connection", s.cloudDestroy)
 
 		// Relay connection (singleton CRUD + test)
-		r.Get("/relay_connection", s.relayShow)
+		r.Get("/relay_connection", s.storedConnectionShowHandler(storedConnectionRelay))
 		r.Put("/relay_connection", s.relayUpdate)
 		r.Delete("/relay_connection", s.relayDestroy)
 		r.Post("/relay_connection/test", s.relayTest)
 
 		// Webhook connection (singleton CRUD + test)
-		r.Get("/webhook_connection", s.webhookShow)
+		r.Get("/webhook_connection", s.storedConnectionShowHandler(storedConnectionWebhook))
 		r.Put("/webhook_connection", s.webhookUpdate)
 		r.Delete("/webhook_connection", s.webhookDestroy)
 		r.Post("/webhook_connection/test", s.webhookTest)
@@ -128,8 +133,7 @@ func (s *Server) Router() http.Handler {
 // the live `created` broadcast via the wired callback (set in main.go).
 func (s *Server) ingest(w http.ResponseWriter, r *http.Request) {
 	var p store.IngestPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		writeError(w, http.StatusBadRequest, "decode payload: "+err.Error())
+	if err := decodeJSON(w, r, &p); err != nil {
 		return
 	}
 	id, err := s.Store.Insert(r.Context(), &p)
@@ -157,6 +161,22 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 
 func writeError(w http.ResponseWriter, code int, msg string) {
 	writeJSON(w, code, ErrorResponse{Error: msg})
+}
+
+// decodeJSON reads and unmarshals the request body, capped at
+// maxRequestBodyBytes (same limit as SMTP ingest).
+func decodeJSON(w http.ResponseWriter, r *http.Request, v any) error {
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			writeError(w, http.StatusRequestEntityTooLarge, "request body too large")
+			return fmt.Errorf("request body too large: %w", err)
+		}
+		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+		return fmt.Errorf("decode json: %w", err)
+	}
+	return nil
 }
 
 func parseInt(s string, def int) int {

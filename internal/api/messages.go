@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/mail"
@@ -217,8 +216,7 @@ func (s *Server) updateRead(w http.ResponseWriter, r *http.Request) {
 		IDs  []string `json:"ids"`
 	}
 	if r.ContentLength != 0 {
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeError(w, http.StatusBadRequest, "decode body: "+err.Error())
+		if err := decodeJSON(w, r, &body); err != nil {
 			return
 		}
 	}
@@ -253,8 +251,7 @@ func (s *Server) destroyMessages(w http.ResponseWriter, r *http.Request) {
 			"DELETE /api/v1/messages requires a JSON body: {\"ids\":[...]} or {\"all\":true}")
 		return
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "decode body: "+err.Error())
+	if err := decodeJSON(w, r, &body); err != nil {
 		return
 	}
 	ids := nonBlank(body.IDs)

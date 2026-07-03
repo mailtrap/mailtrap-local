@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -22,8 +21,7 @@ func (s *Server) release(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		To []string `json:"to"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+	if err := decodeJSON(w, r, &body); err != nil {
 		return
 	}
 	tos := nonBlank(body.To)

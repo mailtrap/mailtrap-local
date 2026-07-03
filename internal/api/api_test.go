@@ -233,7 +233,7 @@ func TestDeleteMessagesRequiresExplicitSignal(t *testing.T) {
 			body:    []byte(`{"ids": ["abc",`),
 			setCT:   true,
 			wantSC:  http.StatusBadRequest,
-			wantMsg: "decode body",
+			wantMsg: "decode:",
 		},
 		{
 			name:    "all: false (typo where user meant true)",
