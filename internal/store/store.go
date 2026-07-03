@@ -8,7 +8,6 @@ package store
 import (
 	"context"
 	"database/sql"
-	"embed"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -17,9 +16,6 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/secrets"
 	_ "modernc.org/sqlite" // pure-Go SQLite driver (driver name: "sqlite")
 )
-
-//go:embed schema.sql
-var schemaFS embed.FS
 
 const sqlitePoolSize = 8
 
@@ -100,21 +96,10 @@ func (s *Store) Close() error { return wrapErr(s.db.Close(), "close store") }
 func (s *Store) DB() *sql.DB { return s.db }
 
 func (s *Store) applySchema() error {
-	raw, err := schemaFS.ReadFile("schema.sql")
-	if err != nil {
-		return fmt.Errorf("read schema: %w", err)
+	if err := s.runMigrations(); err != nil {
+		return fmt.Errorf("migrate: %w", err)
 	}
-	// CREATE TABLE / INDEX / VIRTUAL TABLE statements are idempotent
-	// (IF NOT EXISTS).
-	for _, stmt := range splitStatements(string(raw)) {
-		if strings.TrimSpace(stmt) == "" {
-			continue
-		}
-		if _, err := s.db.Exec(stmt); err != nil {
-			return fmt.Errorf("apply schema: %w\n  in stmt: %s", err, stmt)
-		}
-	}
-	// FTS triggers live here (not schema.sql) because splitStatements
+	// FTS triggers live in Go (not migration SQL) because splitStatements
 	// doesn't understand BEGIN...END.
 	for _, t := range ftsTriggers {
 		if _, err := s.db.Exec(t); err != nil {

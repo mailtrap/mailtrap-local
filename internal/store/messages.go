@@ -120,11 +120,26 @@ func (s *Store) Insert(ctx context.Context, p *IngestPayload) (string, error) {
 		from = *p.From
 	}
 
-	toJSON := mustMarshal(p.To)
-	ccJSON := mustMarshal(p.Cc)
-	bccJSON := mustMarshal(p.Bcc)
-	replyToJSON := mustMarshal(p.ReplyTo)
-	smtpToJSON := mustMarshal(p.SMTPTo)
+	toJSON, err := marshalJSON(p.To)
+	if err != nil {
+		return "", fmt.Errorf("marshal to: %w", err)
+	}
+	ccJSON, err := marshalJSON(p.Cc)
+	if err != nil {
+		return "", fmt.Errorf("marshal cc: %w", err)
+	}
+	bccJSON, err := marshalJSON(p.Bcc)
+	if err != nil {
+		return "", fmt.Errorf("marshal bcc: %w", err)
+	}
+	replyToJSON, err := marshalJSON(p.ReplyTo)
+	if err != nil {
+		return "", fmt.Errorf("marshal reply_to: %w", err)
+	}
+	smtpToJSON, err := marshalJSON(p.SMTPTo)
+	if err != nil {
+		return "", fmt.Errorf("marshal smtp_to: %w", err)
+	}
 
 	var dateStr *string
 	if p.Date != "" {
@@ -518,18 +533,16 @@ func newID() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b[:]), nil
 }
 
-func mustMarshal(v any) string {
+func marshalJSON(v any) (string, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
-		// If our own data fails to round-trip through JSON, that's a
-		// programmer bug — panic loudly rather than silently corrupt rows.
-		panic(fmt.Sprintf("store: marshal: %v (value=%v)", err, v))
+		return "", fmt.Errorf("marshal json: %w", err)
 	}
 	if len(b) == 0 {
-		return "[]"
+		return "[]", nil
 	}
 	if string(b) == "null" {
-		return "[]"
+		return "[]", nil
 	}
-	return string(b)
+	return string(b), nil
 }

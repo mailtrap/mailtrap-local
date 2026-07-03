@@ -1,10 +1,5 @@
--- mailtrap-local schema dump (not loaded at runtime — migrations apply
--- the live schema). Single SQLite file. Single-tenant by design — no
--- account_id / org_id / sandbox_id scoping anywhere.
---
--- Schema version: 1 — keep in sync with the latest migration (Rails-
--- style). When bumping a migration, update this dump and the INSERT
--- below so a manual schema load skips already-applied migrations.
+-- Baseline schema. Idempotent CREATE IF NOT EXISTS for upgrades from
+-- pre-migration DBs that already have these tables.
 
 CREATE TABLE IF NOT EXISTS messages (
   id              TEXT    PRIMARY KEY,
@@ -58,28 +53,12 @@ CREATE TABLE IF NOT EXISTS attachments (
 
 CREATE INDEX IF NOT EXISTS idx_attachments_message ON attachments (message_id);
 
--- Full-text search index over messages. External-content
--- (content='messages', content_rowid='rowid') means rows live in the
--- messages table and this index just stores tokens, keeping disk usage
--- reasonable. Trigger-driven sync lives in Go (see store.go) because
--- our splitStatements helper doesn't grok BEGIN...END trigger blocks.
 CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
   subject, from_name, from_address, recipients_text, snippet, text_body, category,
   content='messages', content_rowid='rowid',
   tokenize='unicode61 remove_diacritics 2'
 );
 
--- Singleton connection tables. The app writes at most one row per
--- table — effective config merges (config-file overlay, the single
--- DB row).
-
--- Singleton connection tables. `CHECK (id = 1)` makes the
--- "at most one row" invariant load-bearing in the database, not just
--- in the Go code. The matching upserts in internal/store/connections.go
--- always write id=1 explicitly. (Existing DBs migrated from an earlier
--- schema kept their original AUTOINCREMENT IDs and miss the CHECK
--- because `CREATE TABLE IF NOT EXISTS` is a no-op — fine, the code-
--- side invariant still holds.)
 CREATE TABLE IF NOT EXISTS cloud_connections (
   id              INTEGER PRIMARY KEY CHECK (id = 1),
   api_token       TEXT    NOT NULL,
@@ -113,9 +92,6 @@ CREATE TABLE IF NOT EXISTS webhook_connections (
   updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
--- Applied migration versions (one row, version 0 when empty).
 CREATE TABLE IF NOT EXISTS schema_version (
   version INTEGER NOT NULL
 );
-
-INSERT INTO schema_version(version) VALUES (1);
