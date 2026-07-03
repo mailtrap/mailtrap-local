@@ -536,7 +536,7 @@ func newID() (string, error) {
 func marshalJSON(v any) (string, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("marshal json: %w", err)
 	}
 	if len(b) == 0 {
 		return "[]", nil

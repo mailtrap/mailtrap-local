@@ -14,6 +14,8 @@ import (
 //go:embed migrations/*.sql
 var migrationsFS embed.FS
 
+const migrationFilenameParts = 2
+
 type migration struct {
 	version int
 	sql     string
@@ -29,7 +31,7 @@ func loadMigrations() ([]migration, error) {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".sql") {
 			continue
 		}
-		prefix := strings.SplitN(e.Name(), "_", 2)[0]
+		prefix := strings.SplitN(e.Name(), "_", migrationFilenameParts)[0]
 		ver, err := strconv.Atoi(prefix)
 		if err != nil {
 			return nil, fmt.Errorf("migration filename %q: %w", e.Name(), err)
@@ -105,13 +107,12 @@ func (s *Store) schemaVersion() (int, error) {
 	return v, nil
 }
 
-func (s *Store) setSchemaVersion(v int) error {
-	return setSchemaVersionTx(s.db, v)
-}
-
-func setSchemaVersionTx(exec interface {
-	Exec(query string, args ...any) (sql.Result, error)
-}, v int) error {
+func setSchemaVersionTx(
+	exec interface {
+		Exec(query string, args ...any) (sql.Result, error)
+	},
+	v int,
+) error {
 	if _, err := exec.Exec(`DELETE FROM schema_version`); err != nil {
 		return wrapErr(err, "clear schema version")
 	}
