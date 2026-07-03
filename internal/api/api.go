@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"net"
 	"net/http"
@@ -97,18 +98,18 @@ func (s *Server) Router() http.Handler {
 		})
 
 		// Cloud connection (singleton CRUD)
-		r.Get("/cloud_connection", s.cloudShow)
+		r.Get("/cloud_connection", s.storedConnectionShowHandler(storedConnectionCloud))
 		r.Put("/cloud_connection", s.cloudUpdate)
 		r.Delete("/cloud_connection", s.cloudDestroy)
 
 		// Relay connection (singleton CRUD + test)
-		r.Get("/relay_connection", s.relayShow)
+		r.Get("/relay_connection", s.storedConnectionShowHandler(storedConnectionRelay))
 		r.Put("/relay_connection", s.relayUpdate)
 		r.Delete("/relay_connection", s.relayDestroy)
 		r.Post("/relay_connection/test", s.relayTest)
 
 		// Webhook connection (singleton CRUD + test)
-		r.Get("/webhook_connection", s.webhookShow)
+		r.Get("/webhook_connection", s.storedConnectionShowHandler(storedConnectionWebhook))
 		r.Put("/webhook_connection", s.webhookUpdate)
 		r.Delete("/webhook_connection", s.webhookDestroy)
 		r.Post("/webhook_connection/test", s.webhookTest)
@@ -170,10 +171,10 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, v any) error {
 		var maxErr *http.MaxBytesError
 		if errors.As(err, &maxErr) {
 			writeError(w, http.StatusRequestEntityTooLarge, "request body too large")
-			return err
+			return fmt.Errorf("request body too large: %w", err)
 		}
 		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
-		return err
+		return fmt.Errorf("decode json: %w", err)
 	}
 	return nil
 }

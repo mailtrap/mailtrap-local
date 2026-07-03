@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -27,34 +28,18 @@ type cloudWire struct {
 func (s *Server) cloudWire(c *store.CloudConnection) cloudWire {
 	cfg := s.connCfg()
 	locked := config.CloudLocked(cfg.Cloud)
-	w := cloudWire{
-		Locked:     locked,
-		ConfigPath: config.SourcePathRef(cfg),
-	}
-	if c == nil {
-		return w
-	}
-	w.Connected = true
-	w.SandboxID = c.SandboxID
-	w.MirrorEnabled = c.MirrorEnabled
-	w.APITokenHint = tokenHint(locked["api_token"], c.APIToken)
-	return w
-}
-
-func (s *Server) cloudShow(w http.ResponseWriter, r *http.Request) {
-	cfg := s.connCfg()
-	c, err := s.Store.CloudGet(r.Context())
-	if errors.Is(err, store.ErrNotFound) {
-		writeJSON(w, http.StatusOK, s.cloudWire(nil))
-		return
-	}
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	tmp := *c
-	config.OverlayCloud(&tmp, cfg.Cloud)
-	writeJSON(w, http.StatusOK, s.cloudWire(&tmp))
+	return storedConnectionWire(cfg, locked, c,
+		func(locked map[string]bool, configPath *string) cloudWire {
+			return cloudWire{Locked: locked, ConfigPath: configPath}
+		},
+		func(w cloudWire, c *store.CloudConnection, locked map[string]bool) cloudWire {
+			w.Connected = true
+			w.SandboxID = c.SandboxID
+			w.MirrorEnabled = c.MirrorEnabled
+			w.APITokenHint = tokenHint(locked["api_token"], c.APIToken)
+			return w
+		},
+	)
 }
 
 func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
@@ -151,40 +136,24 @@ type relayWire struct {
 func (s *Server) relayWire(r *store.RelayConnection) relayWire {
 	cfg := s.connCfg()
 	locked := config.RelayLocked(cfg.Relay)
-	w := relayWire{
-		Locked:     locked,
-		ConfigPath: config.SourcePathRef(cfg),
-	}
-	if r == nil {
-		return w
-	}
-	w.Connected = true
-	w.Host = r.Host
-	w.Port = r.Port
-	w.Username = r.Username
-	w.Auth = r.Auth
-	w.TLS = r.TLS
-	w.AutoRelayEnabled = r.AutoRelayEnabled
-	w.OverrideFrom = r.OverrideFrom
-	w.ReturnPath = r.ReturnPath
-	w.PasswordHint = secretHint(locked["password"], r.Password)
-	return w
-}
-
-func (s *Server) relayShow(w http.ResponseWriter, r *http.Request) {
-	cfg := s.connCfg()
-	rc, err := s.Store.RelayGet(r.Context())
-	if errors.Is(err, store.ErrNotFound) {
-		writeJSON(w, http.StatusOK, s.relayWire(nil))
-		return
-	}
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	tmp := *rc
-	config.OverlayRelay(&tmp, cfg.Relay)
-	writeJSON(w, http.StatusOK, s.relayWire(&tmp))
+	return storedConnectionWire(cfg, locked, r,
+		func(locked map[string]bool, configPath *string) relayWire {
+			return relayWire{Locked: locked, ConfigPath: configPath}
+		},
+		func(w relayWire, r *store.RelayConnection, locked map[string]bool) relayWire {
+			w.Connected = true
+			w.Host = r.Host
+			w.Port = r.Port
+			w.Username = r.Username
+			w.Auth = r.Auth
+			w.TLS = r.TLS
+			w.AutoRelayEnabled = r.AutoRelayEnabled
+			w.OverrideFrom = r.OverrideFrom
+			w.ReturnPath = r.ReturnPath
+			w.PasswordHint = secretHint(locked["password"], r.Password)
+			return w
+		},
+	)
 }
 
 func (s *Server) relayUpdate(w http.ResponseWriter, r *http.Request) {
@@ -364,34 +333,88 @@ type webhookWire struct {
 func (s *Server) webhookWire(wc *store.WebhookConnection) webhookWire {
 	cfg := s.connCfg()
 	locked := config.WebhookLocked(cfg.Webhook)
-	out := webhookWire{
-		Locked:     locked,
-		ConfigPath: config.SourcePathRef(cfg),
-	}
+	configPath := config.SourcePathRef(cfg)
 	if wc == nil {
-		return out
+		return webhookWire{Locked: locked, ConfigPath: configPath}
 	}
-	out.Connected = true
-	out.URL = wc.URL
-	out.Enabled = wc.Enabled
-	out.SecretHint = secretHint(locked["secret"], wc.Secret)
-	return out
+	return webhookWire{
+		Connected:  true,
+		URL:        wc.URL,
+		Enabled:    wc.Enabled,
+		SecretHint: secretHint(locked["secret"], wc.Secret),
+		Locked:     locked,
+		ConfigPath: configPath,
+	}
 }
 
-func (s *Server) webhookShow(w http.ResponseWriter, r *http.Request) {
-	cfg := s.connCfg()
-	wc, err := s.Store.WebhookGet(r.Context())
+func storedConnectionWire[W any, S any](
+	cfg *config.Loaded,
+	locked map[string]bool,
+	stored *S,
+	init func(map[string]bool, *string) W,
+	populate func(W, *S, map[string]bool) W,
+) W {
+	w := init(locked, config.SourcePathRef(cfg))
+	if stored == nil {
+		return w
+	}
+	return populate(w, stored, locked)
+}
+
+func connectionShow[T any](
+	w http.ResponseWriter,
+	r *http.Request,
+	get func(context.Context) (*T, error),
+	overlay func(*T),
+	wire func(*T) any,
+) {
+	c, err := get(r.Context())
 	if errors.Is(err, store.ErrNotFound) {
-		writeJSON(w, http.StatusOK, s.webhookWire(nil))
+		writeJSON(w, http.StatusOK, wire(nil))
 		return
 	}
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	tmp := *wc
-	config.OverlayWebhook(&tmp, cfg.Webhook)
-	writeJSON(w, http.StatusOK, s.webhookWire(&tmp))
+	tmp := *c
+	overlay(&tmp)
+	writeJSON(w, http.StatusOK, wire(&tmp))
+}
+
+type storedConnectionKind int
+
+const (
+	storedConnectionCloud storedConnectionKind = iota
+	storedConnectionRelay
+	storedConnectionWebhook
+)
+
+func (s *Server) storedConnectionShow(w http.ResponseWriter, r *http.Request, kind storedConnectionKind) {
+	cfg := s.connCfg()
+	switch kind {
+	case storedConnectionCloud:
+		connectionShow(w, r, s.Store.CloudGet,
+			func(c *store.CloudConnection) { config.OverlayCloud(c, cfg.Cloud) },
+			func(c *store.CloudConnection) any { return s.cloudWire(c) },
+		)
+	case storedConnectionRelay:
+		connectionShow(w, r, s.Store.RelayGet,
+			func(rc *store.RelayConnection) { config.OverlayRelay(rc, cfg.Relay) },
+			func(rc *store.RelayConnection) any { return s.relayWire(rc) },
+		)
+	case storedConnectionWebhook:
+		connectionShow(w, r, s.Store.WebhookGet,
+			func(wc *store.WebhookConnection) { config.OverlayWebhook(wc, cfg.Webhook) },
+			func(wc *store.WebhookConnection) any { return s.webhookWire(wc) },
+		)
+	}
+}
+
+func (s *Server) storedConnectionShowHandler(kind storedConnectionKind) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.storedConnectionShow(w, r, kind)
+	}
 }
 
 func lastN(s string, n int) string {
