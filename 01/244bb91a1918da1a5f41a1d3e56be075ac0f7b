@@ -1,0 +1,41 @@
+CHANGELOG.md
+  s_7a18622c4680ac::t_dc673a7a11ca44 1-26
+cmd/mailtrap-local/openapi.yaml
+  s_7a18622c4680ac::t_7a2e12302aa778 51-52,688-703,1280-1296
+  s_7a18622c4680ac::t_066515e552d8e8 1297
+frontend/src/api/version.ts
+  s_7a18622c4680ac::t_008a670a7e8bca 1-12
+frontend/src/components/connections/AboutDialog.tsx
+  s_7a18622c4680ac::t_d696bb62e7c8e2 1-4,11-12,18-23,25-37
+  s_7a18622c4680ac::t_2e5df637646d22 67,75-98
+  s_7a18622c4680ac::t_84be0077d92ff4 99-100
+internal/api/api.go
+  s_7a18622c4680ac::t_1ac473b9483e6f 39
+  s_7a18622c4680ac::t_3b298cc5092fe4 77
+docs/api/openapi.yaml
+  s_7a18622c4680ac::t_168ea9d438fc63 51-52
+  s_7a18622c4680ac::t_d4e5a1360f1366 688-703
+  s_7a18622c4680ac::t_8d460a092e6edc 1280-1297
+cmd/mailtrap-local/main.go
+  s_7a18622c4680ac::t_87d8cb433bca00 192-196
+internal/api/version.go
+  s_7a18622c4680ac::t_e12a7571119958 1-25
+internal/api/api_test.go
+  s_7a18622c4680ac::t_1c8369d19a8312 288-303
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "01244bb91a1918da1a5f41a1d3e56be075ac0f7b",
+  "prompts": {},
+  "sessions": {
+    "s_7a18622c4680ac": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "8664c350-207e-4de2-8eb9-4e834dc4b83a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
