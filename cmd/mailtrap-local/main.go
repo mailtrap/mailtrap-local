@@ -189,6 +189,11 @@ func main() {
 		Config:   cfg,
 		Frontend: frontendFS,
 		OpenAPI:  openAPISpec,
+		Build: api.BuildInfo{
+			Version:   version,
+			Commit:    commit,
+			BuildDate: buildDate,
+		},
 		OnIngest: dispatcher.AfterIngest,
 	}
 
