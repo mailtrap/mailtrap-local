@@ -1,13 +1,30 @@
 package api
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+var errTestSecretDetail = errors.New("secret sqlite detail")
+
+func TestWriteInternalErrorHidesDetails(t *testing.T) {
+	t.Parallel()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/messages", nil)
+	writeInternalError(rec, req, errTestSecretDetail)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	var body ErrorResponse
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&body))
+	assert.Equal(t, "internal server error", body.Error)
+	assert.NotContains(t, rec.Body.String(), "sqlite")
+}
 
 func TestParseInt(t *testing.T) {
 	t.Parallel()

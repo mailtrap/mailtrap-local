@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -161,6 +162,11 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 
 func writeError(w http.ResponseWriter, code int, msg string) {
 	writeJSON(w, code, ErrorResponse{Error: msg})
+}
+
+func writeInternalError(w http.ResponseWriter, r *http.Request, err error) {
+	loggerFrom(r.Context()).Error("handler error", slog.Any("err", err))
+	writeError(w, http.StatusInternalServerError, "internal server error")
 }
 
 // decodeJSON reads and unmarshals the request body, capped at

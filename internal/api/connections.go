@@ -100,7 +100,7 @@ func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.Store.CloudUpsert(r.Context(), c); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, s.cloudWire(c))
@@ -108,7 +108,7 @@ func (s *Server) cloudUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) cloudDestroy(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.CloudDelete(r.Context()); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, s.cloudWire(nil))
@@ -262,7 +262,7 @@ func (s *Server) relayUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	config.OverlayRelay(rc, cfg.Relay)
 	if err := s.Store.RelayUpsert(r.Context(), rc); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, s.relayWire(rc))
@@ -270,7 +270,7 @@ func (s *Server) relayUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) relayDestroy(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.RelayDelete(r.Context()); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, s.relayWire(nil))
@@ -374,7 +374,7 @@ func connectionShow[T any](
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	tmp := *c
@@ -477,7 +477,7 @@ func (s *Server) webhookUpdate(w http.ResponseWriter, r *http.Request) {
 	wc := &store.WebhookConnection{URL: url, Secret: secret, Enabled: body.Enabled}
 	config.OverlayWebhook(wc, cfg.Webhook)
 	if err := s.Store.WebhookUpsert(r.Context(), wc); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, s.webhookWire(wc))
@@ -485,7 +485,7 @@ func (s *Server) webhookUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) webhookDestroy(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.WebhookDelete(r.Context()); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, s.webhookWire(nil))
