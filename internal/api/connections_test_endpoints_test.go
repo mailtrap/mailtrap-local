@@ -13,8 +13,8 @@ func TestRelayTestMissingHost(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	resp, body := postJSON(t, ts.URL+"/api/v1/relay_connection/test", map[string]any{})
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	code, body := postJSON(t, ts.URL+"/api/v1/relay_connection/test", map[string]any{})
+	require.Equal(t, http.StatusOK, code)
 
 	var out map[string]any
 	require.NoError(t, json.Unmarshal(body, &out))
@@ -26,10 +26,10 @@ func TestRelayTestUnreachable(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	resp, body := postJSON(t, ts.URL+"/api/v1/relay_connection/test", map[string]any{
+	code, body := postJSON(t, ts.URL+"/api/v1/relay_connection/test", map[string]any{
 		"host": "127.0.0.1", "port": 1,
 	})
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusOK, code)
 
 	var out map[string]any
 	require.NoError(t, json.Unmarshal(body, &out))
@@ -43,10 +43,10 @@ func TestRelayTestUsesSavedPassword(t *testing.T) {
 	_, ts := newTestServer(t)
 	putRelay(t, ts.URL)
 
-	resp, body := postJSON(t, ts.URL+"/api/v1/relay_connection/test", map[string]any{
+	code, body := postJSON(t, ts.URL+"/api/v1/relay_connection/test", map[string]any{
 		"host": "127.0.0.1", "port": 1, "username": "u",
 	})
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusOK, code)
 
 	var out map[string]any
 	require.NoError(t, json.Unmarshal(body, &out))
@@ -57,8 +57,8 @@ func TestWebhookTestMissingURL(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	resp, body := postJSON(t, ts.URL+"/api/v1/webhook_connection/test", map[string]any{})
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	code, body := postJSON(t, ts.URL+"/api/v1/webhook_connection/test", map[string]any{})
+	require.Equal(t, http.StatusOK, code)
 
 	var out map[string]any
 	require.NoError(t, json.Unmarshal(body, &out))
@@ -70,10 +70,10 @@ func TestWebhookTestUnreachable(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	resp, body := postJSON(t, ts.URL+"/api/v1/webhook_connection/test", map[string]any{
+	code, body := postJSON(t, ts.URL+"/api/v1/webhook_connection/test", map[string]any{
 		"url": "http://127.0.0.1:1/nope", "secret": "s",
 	})
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusOK, code)
 
 	var out map[string]any
 	require.NoError(t, json.Unmarshal(body, &out))

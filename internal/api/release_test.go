@@ -14,16 +14,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func postJSON(t *testing.T, url string, body any) (*http.Response, []byte) {
+func postJSON(t *testing.T, url string, body any) (int, []byte) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(string(mustJSON(t, body))))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	b, _ := io.ReadAll(resp.Body)
-	_ = resp.Body.Close()
-	return resp, b
+	defer func() { _ = resp.Body.Close() }()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return resp.StatusCode, b
 }
 
 func putRelay(t *testing.T, base string) {
@@ -59,16 +60,16 @@ func TestReleaseValidation(t *testing.T) {
 	_, ts := newTestServer(t)
 	id := ingestSample(t, ts.URL, "Release", "a@x.test", "b@y.test", "test")
 
-	resp, _ := postJSON(t, ts.URL+"/api/v1/message/"+id+"/release", map[string]any{"to": []string{}})
-	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+	code, _ := postJSON(t, ts.URL+"/api/v1/message/"+id+"/release", map[string]any{"to": []string{}})
+	assert.Equal(t, http.StatusUnprocessableEntity, code)
 }
 
 func TestReleaseNotFound(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	resp, _ := postJSON(t, ts.URL+"/api/v1/message/nope/release", map[string]any{"to": []string{"x@test"}})
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	code, _ := postJSON(t, ts.URL+"/api/v1/message/nope/release", map[string]any{"to": []string{"x@test"}})
+	assert.Equal(t, http.StatusNotFound, code)
 }
 
 func TestReleaseNoRelay(t *testing.T) {
@@ -76,8 +77,8 @@ func TestReleaseNoRelay(t *testing.T) {
 	_, ts := newTestServer(t)
 	id := ingestSample(t, ts.URL, "NoRelay", "a@x.test", "b@y.test", "test")
 
-	resp, _ := postJSON(t, ts.URL+"/api/v1/message/"+id+"/release", map[string]any{"to": []string{"x@test"}})
-	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+	code, _ := postJSON(t, ts.URL+"/api/v1/message/"+id+"/release", map[string]any{"to": []string{"x@test"}})
+	assert.Equal(t, http.StatusServiceUnavailable, code)
 }
 
 func TestReleaseRelayFailure(t *testing.T) {
@@ -86,8 +87,8 @@ func TestReleaseRelayFailure(t *testing.T) {
 	putRelay(t, ts.URL)
 	id := ingestSample(t, ts.URL, "RelayFail", "a@x.test", "b@y.test", "test")
 
-	resp, body := postJSON(t, ts.URL+"/api/v1/message/"+id+"/release", map[string]any{"to": []string{"x@test"}})
-	assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
+	code, body := postJSON(t, ts.URL+"/api/v1/message/"+id+"/release", map[string]any{"to": []string{"x@test"}})
+	assert.Equal(t, http.StatusBadGateway, code)
 	assert.Contains(t, string(body), "SMTP relay failed")
 }
 
@@ -95,8 +96,8 @@ func TestSendToCloudNotFound(t *testing.T) {
 	t.Parallel()
 	_, ts := newTestServer(t)
 
-	resp, _ := postJSON(t, ts.URL+"/api/v1/message/nope/send_to_cloud", nil)
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	code, _ := postJSON(t, ts.URL+"/api/v1/message/nope/send_to_cloud", nil)
+	assert.Equal(t, http.StatusNotFound, code)
 }
 
 func TestSendToCloudNoConnection(t *testing.T) {
@@ -104,8 +105,8 @@ func TestSendToCloudNoConnection(t *testing.T) {
 	_, ts := newTestServer(t)
 	id := ingestSample(t, ts.URL, "NoCloud", "a@x.test", "b@y.test", "test")
 
-	resp, _ := postJSON(t, ts.URL+"/api/v1/message/"+id+"/send_to_cloud", nil)
-	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+	code, _ := postJSON(t, ts.URL+"/api/v1/message/"+id+"/send_to_cloud", nil)
+	assert.Equal(t, http.StatusServiceUnavailable, code)
 }
 
 func TestSendToCloudUpstreamFailure(t *testing.T) {
@@ -120,8 +121,8 @@ func TestSendToCloudUpstreamFailure(t *testing.T) {
 	putCloud(t, ts.URL)
 	id := ingestSample(t, ts.URL, "CloudFail", "a@x.test", "b@y.test", "test")
 
-	resp, _ := postJSON(t, ts.URL+"/api/v1/message/"+id+"/send_to_cloud", nil)
-	assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
+	code, _ := postJSON(t, ts.URL+"/api/v1/message/"+id+"/send_to_cloud", nil)
+	assert.Equal(t, http.StatusBadGateway, code)
 }
 
 func TestHTMLCheckNotFound(t *testing.T) {
