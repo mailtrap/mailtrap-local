@@ -33,6 +33,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -162,7 +163,7 @@ func parse(data []byte, out *Loaded) error {
 		Webhook Webhook `yaml:"webhook"`
 	}
 	if err := yaml.Unmarshal(data, &raw); err != nil {
-		return err
+		return fmt.Errorf("parse yaml: %w", err)
 	}
 	out.Storage = raw.Storage
 	out.Cloud = interpolateCloud(raw.Cloud)
