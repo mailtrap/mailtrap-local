@@ -32,6 +32,10 @@
 package config
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -105,16 +109,23 @@ func (l *Loader) Get() *Loaded {
 }
 
 // Reload re-reads the config file from disk and replaces the cache.
-// Always succeeds — IO errors are logged via the returned Loaded's
-// SourcePath being empty (the same shape as "no file found").
+// Always succeeds — a missing file yields an empty Loaded; read/parse
+// failures are logged and leave pinned fields unset.
 func (l *Loader) Reload() *Loaded {
 	out := &Loaded{}
 
 	path := resolvePath()
 	if path != "" {
-		if data, err := os.ReadFile(path); err == nil { //nolint:gosec // path from user config or XDG default
+		data, err := os.ReadFile(path) //nolint:gosec // path from user config or XDG default
+		if err != nil {
+			if !errors.Is(err, fs.ErrNotExist) {
+				slog.Warn("config read failed", slog.String("path", path), slog.Any("err", err))
+			}
+		} else {
 			out.SourcePath = path
-			parse(data, out)
+			if err := parse(data, out); err != nil {
+				slog.Warn("config parse failed", slog.String("path", path), slog.Any("err", err))
+			}
 		}
 	}
 
@@ -144,7 +155,7 @@ func resolvePath() string {
 
 // parse fills `out` from raw YAML bytes. ${ENV} interpolation is
 // applied during decode.
-func parse(data []byte, out *Loaded) {
+func parse(data []byte, out *Loaded) error {
 	var raw struct {
 		Storage Storage `yaml:"storage"`
 		Cloud   Cloud   `yaml:"cloud"`
@@ -152,12 +163,13 @@ func parse(data []byte, out *Loaded) {
 		Webhook Webhook `yaml:"webhook"`
 	}
 	if err := yaml.Unmarshal(data, &raw); err != nil {
-		return
+		return fmt.Errorf("parse yaml: %w", err)
 	}
 	out.Storage = raw.Storage
 	out.Cloud = interpolateCloud(raw.Cloud)
 	out.Relay = interpolateRelay(raw.Relay)
 	out.Webhook = interpolateWebhook(raw.Webhook)
+	return nil
 }
 
 func interpolateString(p *string) *string {
