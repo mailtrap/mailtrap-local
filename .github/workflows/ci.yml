@@ -1,7 +1,7 @@
 name: ci
 
 # Runs on every push and PR. Four jobs that run in parallel:
-#   - go    — golangci-lint, go vet, go test (every package, race detector on)
+#   - go    — golangci-lint, go vet, govulncheck, go test (every package, race on)
 #   - frontend — TypeScript build + ESLint + vitest
 #   - build — `scripts/build.sh` smoke (proves the embed pipeline still works)
 #   - docker — builds the image and boots it on its DEFAULT CMD (proves
@@ -39,6 +39,11 @@ jobs:
 
       - name: go vet
         run: go vet ./cmd/... ./internal/...
+
+      # govulncheck v1.4.0 panics on Go 1.26 during symbol-level SSA analysis
+      # (golang/go#80059); v1.3.0 is fine until x/vuln picks up the x/tools fix.
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.3.0 ./cmd/... ./internal/...
 
       # `-count=1` disables the test cache so flaky tests can't pass via
       # cached green from a previous run. `-race` catches concurrency
