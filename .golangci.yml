@@ -1,0 +1,71 @@
+version: "2"
+formatters:
+  enable:
+    - goimports
+    - gofumpt
+linters:
+  default: all
+  disable:
+    # Deferred for later (complexity / context churn):
+    - cyclop
+    - funlen
+    - nestif
+    - gocognit
+    - gocyclo
+    - noctx
+
+    # Too noisy for now:
+    - varnamelen
+    - exhaustruct
+    - noinlineerr
+
+    # Intentionally off:
+    - ireturn
+    - godot
+    - godoclint
+    - testpackage
+    - nlreturn
+    - wsl_v5
+    - godox
+    - gochecknoglobals
+    - paralleltest
+    - musttag
+    - depguard
+    - wsl
+  settings:
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+    dupl:
+      threshold: 75
+    lll:
+      line-length: 120
+      tab-width: 2
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+    unparam:
+      check-exported: true
+    errorlint:
+      errorf: true
+    forbidigo:
+      forbid:
+        - pattern: ^logrus\..+$
+          msg: use log/slog for structured logging
+    sloglint:
+      key-naming-case: snake
+    embeddedstructfieldcheck:
+      forbid-mutex: true
+  exclusions:
+    rules:
+      - path: (.+)_test.go
+        linters:
+          - dupl
+          - gosec
+          - perfsprint
+          - wrapcheck
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

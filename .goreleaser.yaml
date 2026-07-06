@@ -6,7 +6,7 @@
 #   3. GHCR               — ghcr.io/mailtrap/mailtrap-local:{version,latest}
 #   4. Docker Hub         — mailtrap/mailtrap-local:{version,latest}
 #
-# Repos are PRIVATE during the closed-tester phase. The releaser needs:
+# The releaser needs:
 #   - GITHUB_TOKEN with write to mailtrap/mailtrap-local + mailtrap/homebrew-local
 #   - DOCKERHUB_USERNAME + DOCKERHUB_TOKEN for the docker push
 #   - ghcr.io auth via GITHUB_TOKEN (free, no extra secret)
@@ -76,9 +76,8 @@ snapshot:
   version_template: "{{ incpatch .Version }}-next-{{ .ShortCommit }}"
 
 changelog:
-  # Curated changelog lives in mailtrap-local-docs/CHANGELOG.md (private);
-  # the release notes here are just the commit log of what changed since
-  # the last tag — useful for testers triaging regressions.
+  # Curated notes live in CHANGELOG.md; goreleaser also groups commits
+  # since the last tag into the GitHub release body.
   sort: asc
   use: git
   groups:
@@ -101,10 +100,7 @@ release:
   github:
     owner: mailtrap
     name: mailtrap-local
-  # Closed-tester phase: every release is a draft until manually promoted
-  # so testers see it but the public-facing "Latest release" badge stays
-  # blank until the co-founder green-lights publication.
-  draft: true
+  draft: false
   prerelease: auto
   header: |
     ## mailtrap-local {{ .Tag }}

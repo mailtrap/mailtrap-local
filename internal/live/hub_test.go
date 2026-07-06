@@ -30,7 +30,7 @@ func (f *fakeSubscriber) Send(b []byte) error {
 		<-f.blockSend
 	}
 	if f.failOnSend {
-		return errors.New("send: simulated failure")
+		return errSimulatedSendFailure
 	}
 	f.mu.Lock()
 	// Copy: callers may reuse the buffer.
@@ -75,6 +75,8 @@ func waitFor(t *testing.T, deadline time.Duration, msg string, fn func() bool) {
 	}
 	require.Fail(t, fmt.Sprintf("waitFor timed out after %v: %s", deadline, msg))
 }
+
+var errSimulatedSendFailure = errors.New("send: simulated failure")
 
 func TestHubSubscribeAndCount(t *testing.T) {
 	t.Parallel()
@@ -203,7 +205,7 @@ func TestSlowSubscriberDoesNotStallOthers(t *testing.T) {
 	// must receive every frame.
 	const N = queueSize + 32
 	start := time.Now()
-	for i := 0; i < N; i++ {
+	for range N {
 		h.BroadcastDestroyed("x")
 	}
 	elapsed := time.Since(start)
@@ -232,8 +234,8 @@ func TestBroadcastConcurrent(t *testing.T) {
 	const subscribers = 25
 	const broadcasts = 100
 
-	var subs []*fakeSubscriber
-	for i := 0; i < subscribers; i++ {
+	subs := make([]*fakeSubscriber, 0, subscribers)
+	for range subscribers {
 		s := &fakeSubscriber{}
 		subs = append(subs, s)
 		h.Subscribe(s)
@@ -241,7 +243,7 @@ func TestBroadcastConcurrent(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(broadcasts)
-	for i := 0; i < broadcasts; i++ {
+	for range broadcasts {
 		go func() {
 			defer wg.Done()
 			h.BroadcastCreated(json.RawMessage(`{"id":"x"}`))

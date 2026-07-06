@@ -5,7 +5,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -114,7 +113,7 @@ func TestDeliverTransientErrorOn5xx(t *testing.T) {
 	err := c.Deliver(context.Background(), srv.URL, "", []byte(`{}`))
 	require.Error(t, err)
 	var perm *PermanentError
-	assert.False(t, errors.As(err, &perm))
+	assert.NotErrorAs(t, err, &perm)
 }
 
 func TestDeliverNetworkErrorIsTransient(t *testing.T) {
@@ -123,7 +122,7 @@ func TestDeliverNetworkErrorIsTransient(t *testing.T) {
 	err := c.Deliver(context.Background(), "http://127.0.0.1:1/x", "", []byte(`{}`))
 	require.Error(t, err)
 	var perm *PermanentError
-	assert.False(t, errors.As(err, &perm))
+	assert.NotErrorAs(t, err, &perm)
 }
 
 func TestDeliverInvalidURLReturnsError(t *testing.T) {

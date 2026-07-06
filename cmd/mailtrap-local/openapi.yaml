@@ -48,6 +48,8 @@ tags:
     description: Configure outbound webhook delivery on every captured message.
   - name: internal
     description: Endpoints consumed only by the bundled Go smtpd sidecar — not part of the public surface.
+  - name: meta
+    description: Build identity and other non-domain metadata.
 
 paths:
 
@@ -477,7 +479,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CloudConnectionState'
         '422':
-          description: Validation failure (missing/invalid token, sandbox id, etc.).
+          description: Validation failure (missing/invalid token, sandbox id, or field locked by config).
           content:
             application/json:
               schema:
@@ -530,7 +532,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/RelayConnectionState'
         '422':
-          description: Validation failure.
+          description: Validation failure (missing host, or field locked by config).
           content:
             application/json:
               schema:
@@ -610,7 +612,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/WebhookConnectionState'
         '422':
-          description: Validation failure.
+          description: Validation failure (missing/invalid URL, or field locked by config).
           content:
             application/json:
               schema:
@@ -682,6 +684,22 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+
+  # ---- Build identity --------------------------------------------------
+
+  /api/v1/version:
+    get:
+      tags: [meta]
+      summary: Build identity
+      description: Returns the running binary's version, source commit, and build timestamp.
+      operationId: getVersion
+      responses:
+        '200':
+          description: Build metadata for the running server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
 
   # ---- Internal ingest -------------------------------------------------
 
@@ -1016,6 +1034,23 @@ components:
           nullable: true
         mirror_enabled:
           type: boolean
+        api_token_hint:
+          type: string
+          nullable: true
+          description: |
+            `"from config"` when locked by YAML, `••••` plus the last four characters
+            when stored in the DB, null when unset.
+        locked:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: |
+            Per-field lock state (`api_token`, `sandbox_id`, `mirror_enabled`).
+            `true` means the value is locked by the config file.
+        config_path:
+          type: string
+          nullable: true
+          description: Absolute path of the loaded config file, or null when none exists.
 
     RelayConnectionInput:
       type: object
@@ -1074,6 +1109,30 @@ components:
           nullable: true
         auto_relay_enabled:
           type: boolean
+        override_from:
+          type: string
+          nullable: true
+        return_path:
+          type: string
+          nullable: true
+        password_hint:
+          type: string
+          nullable: true
+          description: |
+            `"from config"` when locked by YAML, `••••` plus the last two characters
+            when stored in the DB, null when unset.
+        locked:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: |
+            Per-field lock state (`host`, `port`, `username`, `password`, `auth`,
+            `tls`, `auto_relay_enabled`, `override_from`, `return_path`).
+            `true` means the value is locked by the config file.
+        config_path:
+          type: string
+          nullable: true
+          description: Absolute path of the loaded config file, or null when none exists.
 
     WebhookConnectionInput:
       type: object
@@ -1110,7 +1169,20 @@ components:
         secret_hint:
           type: string
           nullable: true
-          description: Last 2 characters of the saved secret, prefixed with bullets — `••••XX`.
+          description: |
+            `"from config"` when locked by YAML, last two characters prefixed with
+            `••••` when stored in the DB, null when unset.
+        locked:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: |
+            Per-field lock state (`url`, `secret`, `enabled`).
+            `true` means the value is locked by the config file.
+        config_path:
+          type: string
+          nullable: true
+          description: Absolute path of the loaded config file, or null when none exists.
 
     IngestPayload:
       type: object
@@ -1204,6 +1276,24 @@ components:
           type: string
           format: byte
           description: Base64-encoded part bytes.
+
+    VersionResponse:
+      type: object
+      description: Build metadata for the running mailtrap-local binary.
+      required: [version, commit, build_date]
+      properties:
+        version:
+          type: string
+          description: Semantic version or dev sentinel when built without ldflags.
+          example: "0.1.0"
+        commit:
+          type: string
+          description: Git commit SHA baked in at build time.
+          example: abc1234
+        build_date:
+          type: string
+          description: UTC build timestamp baked in at build time.
+          example: "2026-07-03T10:00:00Z"
 
     Error:
       type: object

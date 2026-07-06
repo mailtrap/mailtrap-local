@@ -11,6 +11,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/mail"
@@ -20,7 +21,15 @@ import (
 	"strings"
 )
 
+var (
+	errBSNotSupported      = errors.New("-bs (SMTP-on-stdin mode) not supported")
+	errSendmailUnsupported = errors.New("sendmail option not supported")
+)
+
 const (
+	defaultSendmailMaxBytes = 50 * 1024 * 1024
+	optValueNextOffset      = 2
+
 	exitOK       = 0
 	exitUsage    = 64 // EX_USAGE
 	exitDataErr  = 65 // EX_DATAERR
@@ -58,20 +67,17 @@ func parseSendmailArgs(argv []string) (sendmailArgs, error) {
 		case arg == "-v":
 			a.verbose = true
 		case arg == "-bs":
-			return a, fmt.Errorf("-bs (SMTP-on-stdin mode) not supported")
+			return a, errBSNotSupported
 		case arg == "-bp", arg == "-bd", arg == "-bv", arg == "-bt":
-			return a, fmt.Errorf("%s not supported by mailtrap-local sendmail", arg)
+			return a, fmt.Errorf("%w: %s", errSendmailUnsupported, arg)
 		case strings.HasPrefix(arg, "-f"):
-			v, next, err := optValue(argv, i, "-f")
-			if err != nil {
-				return a, err
-			}
+			v, next := optValue(argv, i, "-f")
 			a.sender = v
 			i = next
 			continue
 		case len(arg) >= 2 && arg[0] == '-' && isAcceptIgnorePrefix(arg[:2]):
 			// Accept and discard. Consume a separate value if needed.
-			_, next, _ := optValue(argv, i, arg[:2])
+			_, next := optValue(argv, i, arg[:2])
 			i = next
 			continue
 		case strings.HasPrefix(arg, "-"):
@@ -98,15 +104,15 @@ func isAcceptIgnorePrefix(p string) bool {
 
 // optValue returns the value for a glued or space-separated option, plus
 // the index of the next unprocessed argv element.
-func optValue(argv []string, i int, prefix string) (string, int, error) {
+func optValue(argv []string, i int, prefix string) (string, int) {
 	arg := argv[i]
 	if len(arg) > len(prefix) {
-		return arg[len(prefix):], i + 1, nil
+		return arg[len(prefix):], i + 1
 	}
 	if i+1 >= len(argv) {
-		return "", i + 1, nil
+		return "", i + 1
 	}
-	return argv[i+1], i + 2, nil
+	return argv[i+1], i + optValueNextOffset
 }
 
 // extractHeaderRecipients pulls envelope recipients from To/Cc/Bcc headers
@@ -183,7 +189,7 @@ type sendmailConfig struct {
 func defaultSendmailConfig() sendmailConfig {
 	return sendmailConfig{
 		smtpAddr: envOr("MAILTRAP_LOCAL_SMTP_ADDR", "127.0.0.1:3535"),
-		maxBytes: 50 * 1024 * 1024,
+		maxBytes: defaultSendmailMaxBytes,
 	}
 }
 
@@ -194,17 +200,17 @@ func defaultSendmailConfig() sendmailConfig {
 func sendmailMain(cfg sendmailConfig, argv []string, stdin io.Reader, stderr io.Writer) int {
 	a, err := parseSendmailArgs(argv)
 	if err != nil {
-		fmt.Fprintf(stderr, "mailtrap-local sendmail: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "mailtrap-local sendmail: %v\n", err)
 		return exitUsage
 	}
 
 	raw, err := io.ReadAll(io.LimitReader(stdin, cfg.maxBytes))
 	if err != nil {
-		fmt.Fprintf(stderr, "mailtrap-local sendmail: read stdin: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "mailtrap-local sendmail: read stdin: %v\n", err)
 		return exitIOErr
 	}
 	if len(raw) == 0 {
-		fmt.Fprintf(stderr, "mailtrap-local sendmail: empty message on stdin\n")
+		_, _ = fmt.Fprintf(stderr, "mailtrap-local sendmail: empty message on stdin\n")
 		return exitDataErr
 	}
 
@@ -216,19 +222,19 @@ func sendmailMain(cfg sendmailConfig, argv []string, stdin io.Reader, stderr io.
 	rcpts := append([]string{}, a.recipients...)
 	if a.readRecipientsFromHeaders {
 		if parseErr != nil {
-			fmt.Fprintf(stderr, "mailtrap-local sendmail: -t requires parseable headers: %v\n", parseErr)
+			_, _ = fmt.Fprintf(stderr, "mailtrap-local sendmail: -t requires parseable headers: %v\n", parseErr)
 			return exitDataErr
 		}
 		headerRcpts, err := extractHeaderRecipients(msg)
 		if err != nil {
-			fmt.Fprintf(stderr, "mailtrap-local sendmail: %v\n", err)
+			_, _ = fmt.Fprintf(stderr, "mailtrap-local sendmail: %v\n", err)
 			return exitDataErr
 		}
 		rcpts = append(rcpts, headerRcpts...)
 	}
 	rcpts = dedupeStrings(rcpts)
 	if len(rcpts) == 0 {
-		fmt.Fprintf(stderr, "mailtrap-local sendmail: no recipients (use -t or pass addresses as args)\n")
+		_, _ = fmt.Fprintf(stderr, "mailtrap-local sendmail: no recipients (use -t or pass addresses as args)\n")
 		return exitUsage
 	}
 
@@ -242,11 +248,11 @@ func sendmailMain(cfg sendmailConfig, argv []string, stdin io.Reader, stderr io.
 
 	body := normalizeCRLF(raw)
 	if err := smtp.SendMail(cfg.smtpAddr, nil, sender, rcpts, body); err != nil {
-		fmt.Fprintf(stderr, "mailtrap-local sendmail: send to %s: %v\n", cfg.smtpAddr, err)
+		_, _ = fmt.Fprintf(stderr, "mailtrap-local sendmail: send to %s: %v\n", cfg.smtpAddr, err)
 		return exitTempFail
 	}
 	if a.verbose {
-		fmt.Fprintf(stderr, "mailtrap-local sendmail: delivered %d byte(s) to %d recipient(s) via %s\n",
+		_, _ = fmt.Fprintf(stderr, "mailtrap-local sendmail: delivered %d byte(s) to %d recipient(s) via %s\n",
 			len(body), len(rcpts), cfg.smtpAddr)
 	}
 	return exitOK

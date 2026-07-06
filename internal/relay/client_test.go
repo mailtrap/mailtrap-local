@@ -19,6 +19,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func assertContains(t *testing.T, data, sub []byte, msg string, args ...any) {
+	t.Helper()
+	assert.True(t, bytes.Contains(data, sub), append([]any{msg}, args...)...)
+}
+
+func assertNotContains(t *testing.T, data, sub []byte, msg string, args ...any) {
+	t.Helper()
+	assert.False(t, bytes.Contains(data, sub), append([]any{msg}, args...)...)
+}
+
 // ---------------------------------------------------------------------
 // Test SMTP harness — emersion/go-smtp listening on a random loopback
 // port. Records every transaction so tests can assert envelope sender,
@@ -26,9 +36,8 @@ import (
 // ---------------------------------------------------------------------
 
 type captureBackend struct {
-	mu   sync.Mutex
-	tx   []capturedTx
-	auth bool
+	mu sync.Mutex
+	tx []capturedTx
 }
 
 type capturedTx struct {
@@ -52,10 +61,12 @@ func (s *captureSession) Mail(from string, _ *smtp.MailOptions) error {
 	s.from = from
 	return nil
 }
+
 func (s *captureSession) Rcpt(to string, _ *smtp.RcptOptions) error {
 	s.to = append(s.to, to)
 	return nil
 }
+
 func (s *captureSession) Data(r io.Reader) error {
 	raw, err := io.ReadAll(r)
 	if err != nil {
@@ -72,9 +83,9 @@ func (s *captureSession) Logout() error { return nil }
 
 // startServer spawns the SMTP listener and returns its host:port plus
 // the capture backend.
-func startServer(t *testing.T) (host string, port int, be *captureBackend) {
+func startServer(t *testing.T) (string, int, *captureBackend) {
 	t.Helper()
-	be = &captureBackend{}
+	be := &captureBackend{}
 	server := smtp.NewServer(be)
 	server.Domain = "test"
 	server.AllowInsecureAuth = true
@@ -88,7 +99,8 @@ func startServer(t *testing.T) (host string, port int, be *captureBackend) {
 		_ = server.Close()
 		_ = l.Close()
 	})
-	addr := l.Addr().(*net.TCPAddr)
+	addr, ok := l.Addr().(*net.TCPAddr)
+	require.True(t, ok)
 	return "127.0.0.1", addr.Port, be
 }
 
@@ -213,8 +225,10 @@ func TestForwardOverridesFromHeaderAndStashesOriginal(t *testing.T) {
 	c := &Client{}
 	require.NoError(t, c.Forward(context.Background(), conn, newMsg(), []string{"r@y.test"}, false))
 	tx := be.firstTx(t)
-	assert.True(t, bytes.Contains(tx.data, []byte("From: noreply@verified.test")), "From header NOT rewritten; data:\n%s", tx.data)
-	assert.True(t, bytes.Contains(tx.data, []byte("X-Original-From: original@x.test")), "X-Original-From missing; data:\n%s", tx.data)
+	assertContains(t, tx.data, []byte("From: noreply@verified.test"),
+		"From header NOT rewritten; data:\n%s", tx.data)
+	assertContains(t, tx.data, []byte("X-Original-From: original@x.test"),
+		"X-Original-From missing; data:\n%s", tx.data)
 	// Envelope sender (MAIL FROM) is independent of From-header
 	// rewriting — it follows ReturnPath if set, else the original.
 	assert.Equal(t, "original@x.test", tx.from)
@@ -233,7 +247,8 @@ func TestForwardOverridesFromHeaderWithLFOnlyRaw(t *testing.T) {
 	c := &Client{}
 	require.NoError(t, c.Forward(context.Background(), conn, m, []string{"r@y.test"}, false))
 	tx := be.firstTx(t)
-	assert.True(t, bytes.Contains(tx.data, []byte("From: noreply@verified.test")), "From header NOT rewritten on LF-only raw; data:\n%s", tx.data)
+	assertContains(t, tx.data, []byte("From: noreply@verified.test"),
+		"From header NOT rewritten on LF-only raw; data:\n%s", tx.data)
 }
 
 func TestForwardReturnPathRewritesEnvelopeSender(t *testing.T) {
@@ -247,7 +262,8 @@ func TestForwardReturnPathRewritesEnvelopeSender(t *testing.T) {
 	assert.Equal(t, "bounces@verified.test", tx.from)
 	// The DATA From: header is NOT rewritten by ReturnPath — only by
 	// OverrideFrom.
-	assert.True(t, bytes.Contains(tx.data, []byte("From: original@x.test")), "From header should remain unchanged; got:\n%s", tx.data)
+	assertContains(t, tx.data, []byte("From: original@x.test"),
+		"From header should remain unchanged; got:\n%s", tx.data)
 }
 
 // rewriteTo=true (manual Release) rewrites the To: header to the
@@ -264,7 +280,8 @@ func TestForwardRewriteToRewritesHeaderAndStashesOriginal(t *testing.T) {
 	tx := be.firstTx(t)
 	assert.Equal(t, []string{"new@y.test"}, tx.to)
 	assert.True(t, bytes.Contains(tx.data, []byte("To: new@y.test")), "To header NOT rewritten; data:\n%s", tx.data)
-	assert.True(t, bytes.Contains(tx.data, []byte("X-Original-To: dropped@x.test")), "X-Original-To missing; data:\n%s", tx.data)
+	assertContains(t, tx.data, []byte("X-Original-To: dropped@x.test"),
+		"X-Original-To missing; data:\n%s", tx.data)
 }
 
 // rewriteTo=false (auto-relay / default) must leave the To: header alone.
@@ -276,8 +293,10 @@ func TestForwardWithoutRewriteToPreservesHeader(t *testing.T) {
 		[]string{"new@y.test"}, false,
 	))
 	tx := be.firstTx(t)
-	assert.True(t, bytes.Contains(tx.data, []byte("To: dropped@x.test")), "To header should be preserved when rewriteTo=false; data:\n%s", tx.data)
-	assert.False(t, bytes.Contains(tx.data, []byte("X-Original-To:")), "X-Original-To should not be added when rewriteTo=false; data:\n%s", tx.data)
+	assertContains(t, tx.data, []byte("To: dropped@x.test"),
+		"To header should be preserved when rewriteTo=false; data:\n%s", tx.data)
+	assertNotContains(t, tx.data, []byte("X-Original-To:"),
+		"X-Original-To should not be added when rewriteTo=false; data:\n%s", tx.data)
 }
 
 func TestForwardRewriteToJoinsMultipleRecipients(t *testing.T) {
@@ -288,7 +307,8 @@ func TestForwardRewriteToJoinsMultipleRecipients(t *testing.T) {
 		[]string{"a@y.test", "b@y.test"}, true,
 	))
 	tx := be.firstTx(t)
-	assert.True(t, bytes.Contains(tx.data, []byte("To: a@y.test, b@y.test")), "To header should list both recipients; data:\n%s", tx.data)
+	assertContains(t, tx.data, []byte("To: a@y.test, b@y.test"),
+		"To header should list both recipients; data:\n%s", tx.data)
 }
 
 // ---------------------------------------------------------------------
@@ -311,8 +331,10 @@ func TestRewriteFromHeaderDoesNotStackOriginalFrom(t *testing.T) {
 		"X-Original-From: stale@x\r\n" +
 		"To: t@y\r\n\r\nbody\r\n")
 	out := rewriteFromHeader(in, "new@x", "orig@x")
-	assert.Equal(t, 1, bytes.Count(out, []byte("X-Original-From:")), "X-Original-From count (must replace, not stack)\n%s", out)
-	assert.True(t, bytes.Contains(out, []byte("X-Original-From: orig@x")), "X-Original-From should reflect orig@x, not stale@x\n%s", out)
+	assert.Equal(t, 1, bytes.Count(out, []byte("X-Original-From:")),
+		"X-Original-From count (must replace, not stack)\n%s", out)
+	assertContains(t, out, []byte("X-Original-From: orig@x"),
+		"X-Original-From should reflect orig@x, not stale@x\n%s", out)
 }
 
 func TestRewriteFromHeaderTouchesOnlyFirstFromOccurrence(t *testing.T) {
@@ -353,10 +375,11 @@ func TestRewriteToHeaderCollapsesFoldedOriginal(t *testing.T) {
 	in := []byte("To: a@y,\r\n b@y,\r\n c@y\r\nSubject: hi\r\n\r\nbody\r\n")
 	out := rewriteToHeader(in, "new@z")
 	if bytes.Contains(out, []byte("b@y")) && !bytes.Contains(out, []byte("X-Original-To:")) {
-		assert.Fail(t, "folded continuation leaked into headers: %s", out)
+		assert.Failf(t, "folded continuation leaked into headers", "%s", out)
 	}
 	assert.True(t, bytes.Contains(out, []byte("To: new@z")), "To not replaced: %s", out)
-	assert.True(t, bytes.Contains(out, []byte("X-Original-To: a@y, b@y, c@y")), "folded original not collapsed into X-Original-To: %s", out)
+	assertContains(t, out, []byte("X-Original-To: a@y, b@y, c@y"),
+		"folded original not collapsed into X-Original-To: %s", out)
 	assert.True(t, bytes.Contains(out, []byte("Subject: hi")), "Subject header lost: %s", out)
 }
 
@@ -365,15 +388,18 @@ func TestRewriteToHeaderAddsWhenAbsent(t *testing.T) {
 	in := []byte("From: f@x\r\nSubject: hi\r\n\r\nbody\r\n")
 	out := rewriteToHeader(in, "new@z")
 	assert.True(t, bytes.Contains(out, []byte("To: new@z")), "To header not added when absent: %s", out)
-	assert.False(t, bytes.Contains(out, []byte("X-Original-To:")), "X-Original-To should not be added when no original To existed: %s", out)
+	assertNotContains(t, out, []byte("X-Original-To:"),
+		"X-Original-To should not be added when no original To existed: %s", out)
 }
 
 func TestRewriteToHeaderDoesNotStackOriginal(t *testing.T) {
 	t.Parallel()
 	in := []byte("To: old@y\r\nX-Original-To: stale@y\r\nSubject: hi\r\n\r\nbody\r\n")
 	out := rewriteToHeader(in, "new@z")
-	assert.Equal(t, 1, bytes.Count(out, []byte("X-Original-To:")), "X-Original-To count (must replace, not stack)\n%s", out)
-	assert.True(t, bytes.Contains(out, []byte("X-Original-To: old@y")), "X-Original-To should reflect old@y, not stale@y\n%s", out)
+	assert.Equal(t, 1, bytes.Count(out, []byte("X-Original-To:")),
+		"X-Original-To count (must replace, not stack)\n%s", out)
+	assertContains(t, out, []byte("X-Original-To: old@y"),
+		"X-Original-To should reflect old@y, not stale@y\n%s", out)
 }
 
 func TestRewriteToHeaderLFOnly(t *testing.T) {
@@ -446,5 +472,7 @@ func TestHarnessSmokeViaStdlibClient(t *testing.T) {
 }
 
 // silence unused-helper lint
-var _ = parsePort
-var _ = errors.New
+var (
+	_ = parsePort
+	_ = errors.New
+)

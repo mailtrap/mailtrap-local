@@ -4,13 +4,9 @@ name: release
 #   1. Re-stages embed inputs (frontend build + openapi.yaml) via the
 #      `before:` hooks in .goreleaser.yaml.
 #   2. Cross-compiles the binary for darwin/linux × amd64/arm64.
-#   3. Publishes a DRAFT GitHub release with .tar.gz archives + checksums.
-#   4. Pushes images to ghcr.io/mailtrap/mailtrap-local + docker.io/mailtrap/mailtrap-local
-#      (private during the closed-tester phase — see release ops doc).
+#   3. Publishes a GitHub release with .tar.gz archives + checksums.
+#   4. Pushes images to ghcr.io/mailtrap/mailtrap-local + docker.io/mailtrap/mailtrap-local.
 #   5. Commits an updated Formula/mailtrap-local.rb to mailtrap/homebrew-local.
-#
-# The release stays draft until manually promoted from the GitHub UI —
-# that's the gate the co-founder uses to bless a build for testers.
 
 on:
   push:

@@ -1,5 +1,7 @@
 # mailtrap-local
 
+[![CI](https://github.com/mailtrap/mailtrap-local/actions/workflows/ci.yml/badge.svg)](https://github.com/mailtrap/mailtrap-local/actions/workflows/ci.yml)
+
 A local **email sandbox + catcher** for **individual developers**. Runs on your laptop, catches every email your app sends, and gives you a web sandbox to browse, search, and inspect them in. One self-contained binary. Open source. MIT-licensed.
 
 ## What it does
@@ -9,6 +11,16 @@ A local **email sandbox + catcher** for **individual developers**. Runs on your 
 - **REST API on `127.0.0.1:3550`** — JSON over HTTP; existing API clients only need a host override.
 - **Validation tools:** HTML email-client compatibility check across major mail clients.
 - **Workflow:** categories, message release to production SMTP, outbound webhooks, sendmail-replacement binary mode.
+
+## Screenshots
+
+Browse caught messages, preview rendered HTML, and inspect client compatibility — all offline, on your machine.
+
+| Inbox + HTML preview | HTML Check | Getting started (code samples) |
+|---|---|---|
+| ![Inbox with message list and HTML preview](docs/images/inbox.png) | ![HTML Check tab with market support and issue breakdown](docs/images/message-html-check.png) | ![Empty inbox with SMTP code samples for Node.js, Python, Ruby, and more](docs/images/code-samples.png) |
+
+![Quick tour — browse the inbox, open a message, switch between HTML preview and HTML Check](docs/images/demo.gif)
 
 ## What it is *not*
 
@@ -26,7 +38,7 @@ A local **email sandbox + catcher** for **individual developers**. Runs on your 
 | Storage | SQLite via [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite) (pure Go — no CGo) |
 | Web UI | React 19 + tailwindcss + Radix UI + Vite, embedded into the binary at build time via `//go:embed` |
 | Realtime | Plain WebSocket (`/cable`) |
-| Distribution | `brew install`, `docker run`, single static binary |
+| Distribution | `brew install`, `docker run`, single static binary (macOS + Linux; Windows not yet) |
 
 ## Quick start
 
@@ -36,12 +48,6 @@ A local **email sandbox + catcher** for **individual developers**. Runs on your 
 brew tap mailtrap/local
 brew install mailtrap-local
 brew services start mailtrap-local
-```
-
-While the tap is private, point `brew tap` at the SSH URL so it picks up your GitHub credentials:
-
-```sh
-brew tap mailtrap/local git@github.com:mailtrap/homebrew-local.git
 ```
 
 Then open **http://127.0.0.1:3550** and point your app's SMTP client at **127.0.0.1:3535**.
@@ -131,7 +137,9 @@ mailtrap-local/
 │   ├── cloud/               # Mailtrap sandbox API client
 │   └── config/              # YAML config loader
 ├── frontend/                # React + Vite SPA (built into cmd/mailtrap-local/dist/)
-├── docs/api/openapi.yaml    # API spec (embedded + served at /api/v1/openapi.yaml)
+├── docs/
+│   ├── api/openapi.yaml    # API spec (embedded + served at /api/v1/openapi.yaml)
+│   └── images/             # README screenshots + demo GIF
 ├── scripts/build.sh         # frontend build + go build → bin/mailtrap-local
 ├── Dockerfile               # multi-stage source build (Node → Go → distroless)
 ├── Dockerfile.goreleaser    # release-time wrapper (goreleaser-built binary → distroless)
@@ -154,7 +162,7 @@ Optional YAML config at `$XDG_CONFIG_HOME/mailtrap-local/config.yml` (or `~/.con
 - `relay` — outbound SMTP relay credentials for the "Release" button.
 - `webhook` — outbound webhook URL + signing secret.
 
-Values support `${ENV_VAR}` interpolation. Settings configured via the UI live in the SQLite DB and override the file values.
+Values support `${ENV_VAR}` interpolation. Keys present in the config file override the equivalent values stored in the SQLite DB; pinned fields are read-only in the UI.
 
 ## Tests
 

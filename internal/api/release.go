@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -13,6 +12,8 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/store"
 )
 
+const releaseTimeout = 30 * time.Second
+
 // release handles POST /api/v1/message/:id/release. Body { to: [...] }.
 // Forwards through the configured SMTP relay.
 func (s *Server) release(w http.ResponseWriter, r *http.Request) {
@@ -20,8 +21,7 @@ func (s *Server) release(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		To []string `json:"to"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+	if err := decodeJSON(w, r, &body); err != nil {
 		return
 	}
 	tos := nonBlank(body.To)
@@ -50,7 +50,7 @@ func (s *Server) release(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), releaseTimeout)
 	defer cancel()
 	// rewriteTo=true: this is a manual release, so the delivered copy
 	// should read as addressed to whoever the user released it to.

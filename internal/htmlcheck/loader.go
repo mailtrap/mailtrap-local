@@ -2,6 +2,7 @@ package htmlcheck
 
 import (
 	"embed"
+	"fmt"
 	"regexp"
 	"sync"
 
@@ -47,16 +48,16 @@ type compiledRegexRule struct {
 var (
 	loadOnce sync.Once
 	cached   *loaded
-	loadErr  error
+	errLoad  error
 )
 
 // load returns the parsed config, populating it on first call. Subsequent
 // calls are O(1) — the config is immutable.
 func load() (*loaded, error) {
 	loadOnce.Do(func() {
-		cached, loadErr = parseAll()
+		cached, errLoad = parseAll()
 	})
-	return cached, loadErr
+	return cached, errLoad
 }
 
 func parseAll() (*loaded, error) {
@@ -71,11 +72,11 @@ func parseAll() (*loaded, error) {
 	// ----- HTML rules -----
 	htmlRaw, err := dataFS.ReadFile("data/html.yml")
 	if err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 	var htmlRules []*Rule
 	if err := yaml.Unmarshal(htmlRaw, &htmlRules); err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 	for _, r := range htmlRules {
 		expr, err := xpath.Compile(r.ParserKey)
@@ -91,11 +92,11 @@ func parseAll() (*loaded, error) {
 	// ----- CSS rules -----
 	cssRaw, err := dataFS.ReadFile("data/css.yml")
 	if err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 	var cssRules []*Rule
 	if err := yaml.Unmarshal(cssRaw, &cssRules); err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 	for _, r := range cssRules {
 		switch r.ParserType {
@@ -127,14 +128,14 @@ func parseAll() (*loaded, error) {
 	// ----- Clients (display names) -----
 	clientsRaw, err := dataFS.ReadFile("data/clients.yml")
 	if err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 	var clientsCfg struct {
 		Family   map[string]string `yaml:"family"`
 		Platform map[string]string `yaml:"platform"`
 	}
 	if err := yaml.Unmarshal(clientsRaw, &clientsCfg); err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 	out.familyDisplay = clientsCfg.Family
 	out.platformDisp = clientsCfg.Platform
@@ -142,20 +143,27 @@ func parseAll() (*loaded, error) {
 	// ----- Market shares -----
 	shareRaw, err := dataFS.ReadFile("data/client_market_shares_percent.yml")
 	if err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 	if err := yaml.Unmarshal(shareRaw, &out.marketShare); err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 
 	// ----- Version counts -----
 	countsRaw, err := dataFS.ReadFile("data/client_version_counts.yml")
 	if err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 	if err := yaml.Unmarshal(countsRaw, &out.versionCounts); err != nil {
-		return nil, err
+		return nil, wrapLoadErr(err)
 	}
 
 	return out, nil
+}
+
+func wrapLoadErr(err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("load: %w", err)
 }

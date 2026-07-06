@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -16,9 +17,12 @@ import (
 	"github.com/google/uuid"
 )
 
+var errPostFailed = errors.New("webhook post failed")
+
 const (
-	openTimeout = 5 * time.Second
-	readTimeout = 10 * time.Second
+	webhookBodyPeek = 512
+	openTimeout     = 5 * time.Second
+	readTimeout     = 10 * time.Second
 )
 
 // Client is stateless. One HTTP client is shared across deliveries so
@@ -43,7 +47,7 @@ func (c *Client) Deliver(ctx context.Context, url, secret string, payload []byte
 // SendTestPing fires a synthetic event to the URL; used by the dialog's
 // "Send test" button.
 func (c *Client) SendTestPing(ctx context.Context, url, secret string) error {
-	payload, _ := json.Marshal(map[string]any{
+	payload, err := json.Marshal(map[string]any{
 		"Event":     "test",
 		"Timestamp": time.Now().UTC().Format(time.RFC3339Nano),
 		"ID":        uuid.NewString(),
@@ -51,6 +55,9 @@ func (c *Client) SendTestPing(ctx context.Context, url, secret string) error {
 		"From":      map[string]string{"Name": "mailtrap-local", "Address": "noreply@mailtrap.local"},
 		"To":        []map[string]string{{"Name": "", "Address": "you@example.test"}},
 	})
+	if err != nil {
+		return fmt.Errorf("marshal test ping: %w", err)
+	}
 	return c.post(ctx, url, secret, payload, "test")
 }
 
@@ -62,7 +69,7 @@ func (e *PermanentError) Error() string { return e.Msg }
 func (c *Client) post(ctx context.Context, url, secret string, payload []byte, event string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
-		return err
+		return fmt.Errorf("new request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "mailtrap-local-webhook/1")
@@ -77,15 +84,15 @@ func (c *Client) post(ctx context.Context, url, secret string, payload []byte, e
 	if err != nil {
 		return fmt.Errorf("post %s: %w", url, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		return nil
 	}
-	buf := make([]byte, 512)
+	buf := make([]byte, webhookBodyPeek)
 	n, _ := resp.Body.Read(buf)
 	msg := fmt.Sprintf("POST %s → %d: %s", url, resp.StatusCode, string(buf[:n]))
 	if resp.StatusCode >= 400 && resp.StatusCode < 500 {
 		return &PermanentError{Msg: msg}
 	}
-	return fmt.Errorf("%s", msg)
+	return fmt.Errorf("%w: %s", errPostFailed, msg)
 }

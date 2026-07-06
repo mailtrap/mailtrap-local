@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/fs"
 	"net"
 	"net/http"
@@ -9,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mailtrap/mailtrap-local/internal/config"
 	"github.com/mailtrap/mailtrap-local/internal/live"
 	"github.com/mailtrap/mailtrap-local/internal/relay"
 	"github.com/mailtrap/mailtrap-local/internal/store"
@@ -18,6 +21,9 @@ import (
 const (
 	defaultLimit = 50
 	maxLimit     = 200
+
+	// maxRequestBodyBytes matches smtpd defaultMaxMessageBytes (25 MB).
+	maxRequestBodyBytes = 25 * 1024 * 1024
 )
 
 // Server is the HTTP layer. Holds every dependency the handlers reach
@@ -27,8 +33,10 @@ type Server struct {
 	Hub      *live.Hub
 	Relay    *relay.Client
 	Webhook  *webhook.Client
+	Config   *config.Loader
 	Frontend fs.FS // production: embedded SPA dist; dev: nil (Vite serves it)
 	OpenAPI  []byte
+	Build    BuildInfo
 
 	// OnIngest fires after a successful POST /api/v1/ingest. Wired by
 	// main.go to trigger the dispatcher (cloud mirror / relay mirror /
@@ -66,6 +74,7 @@ func (s *Server) Router() http.Handler {
 		// to the docs site rather than 404'ing them.
 		r.Get("/", s.docsRedirect)
 		r.Get("/openapi.yaml", s.openapiYAML)
+		r.Get("/version", s.version)
 
 		// Internal — same JSON contract the smtpd-as-sidecar used to
 		// post against. Kept as an HTTP endpoint so tests can drive
@@ -91,18 +100,18 @@ func (s *Server) Router() http.Handler {
 		})
 
 		// Cloud connection (singleton CRUD)
-		r.Get("/cloud_connection", s.cloudShow)
+		r.Get("/cloud_connection", s.storedConnectionShowHandler(storedConnectionCloud))
 		r.Put("/cloud_connection", s.cloudUpdate)
 		r.Delete("/cloud_connection", s.cloudDestroy)
 
 		// Relay connection (singleton CRUD + test)
-		r.Get("/relay_connection", s.relayShow)
+		r.Get("/relay_connection", s.storedConnectionShowHandler(storedConnectionRelay))
 		r.Put("/relay_connection", s.relayUpdate)
 		r.Delete("/relay_connection", s.relayDestroy)
 		r.Post("/relay_connection/test", s.relayTest)
 
 		// Webhook connection (singleton CRUD + test)
-		r.Get("/webhook_connection", s.webhookShow)
+		r.Get("/webhook_connection", s.storedConnectionShowHandler(storedConnectionWebhook))
 		r.Put("/webhook_connection", s.webhookUpdate)
 		r.Delete("/webhook_connection", s.webhookDestroy)
 		r.Post("/webhook_connection/test", s.webhookTest)
@@ -126,8 +135,7 @@ func (s *Server) Router() http.Handler {
 // the live `created` broadcast via the wired callback (set in main.go).
 func (s *Server) ingest(w http.ResponseWriter, r *http.Request) {
 	var p store.IngestPayload
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		writeError(w, http.StatusBadRequest, "decode payload: "+err.Error())
+	if err := decodeJSON(w, r, &p); err != nil {
 		return
 	}
 	id, err := s.Store.Insert(r.Context(), &p)
@@ -140,17 +148,37 @@ func (s *Server) ingest(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(map[string]string{"ID": id})
+	if err := json.NewEncoder(w).Encode(map[string]string{"ID": id}); err != nil {
+		return
+	}
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		return
+	}
 }
 
 func writeError(w http.ResponseWriter, code int, msg string) {
 	writeJSON(w, code, ErrorResponse{Error: msg})
+}
+
+// decodeJSON reads and unmarshals the request body, capped at
+// maxRequestBodyBytes (same limit as SMTP ingest).
+func decodeJSON(w http.ResponseWriter, r *http.Request, v any) error {
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			writeError(w, http.StatusRequestEntityTooLarge, "request body too large")
+			return fmt.Errorf("request body too large: %w", err)
+		}
+		writeError(w, http.StatusBadRequest, "decode: "+err.Error())
+		return fmt.Errorf("decode json: %w", err)
+	}
+	return nil
 }
 
 func parseInt(s string, def int) int {

@@ -1,16 +1,39 @@
-import { dialogLead } from './dialogStyles'
+import { useEffect, useState } from 'react'
+import { getVersion, type VersionInfo } from '../../api/version'
+import { isAbortError } from '../../api/client'
+import { dialogLead, fieldHintLink } from './dialogStyles'
 import {
   ConnectionDialogShell,
   DialogActions,
   DialogButton,
 } from './dialogAtoms'
 
+const GITHUB_REPO = 'https://github.com/mailtrap/mailtrap-local'
+
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
+function formatVersionLabel(info: VersionInfo): string {
+  const shortCommit =
+    info.commit.length > 7 ? info.commit.slice(0, 7) : info.commit
+  return `${info.version} (${shortCommit})`
+}
+
 export function AboutDialog({ open, onOpenChange }: Props) {
+  const [versionInfo, setVersionInfo] = useState<VersionInfo | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const ac = new AbortController()
+    void getVersion(ac.signal)
+      .then(setVersionInfo)
+      .catch((e: unknown) => {
+        if (!isAbortError(e)) setVersionInfo(null)
+      })
+    return () => ac.abort()
+  }, [open])
   return (
     <ConnectionDialogShell
       open={open}
@@ -40,12 +63,38 @@ export function AboutDialog({ open, onOpenChange }: Props) {
           href="https://mailtrap.io"
           target="_blank"
           rel="noreferrer"
-          style={{ color: '#4c83ee', textDecoration: 'none' }}
+          className={fieldHintLink}
         >
           mailtrap.io
         </a>{' '}
         is purpose-built for that — and Mailtrap Local mirrors and forwards
         directly into it when you're ready.
+      </p>
+
+      <p className={`${dialogLead} mb-0 text-xs`}>
+        {versionInfo ? (
+          <>
+            Version {formatVersionLabel(versionInfo)}
+            {' · '}
+          </>
+        ) : null}
+        <a
+          href={GITHUB_REPO}
+          target="_blank"
+          rel="noreferrer"
+          className={fieldHintLink}
+        >
+          GitHub
+        </a>
+        {' · '}
+        <a
+          href="https://opensource.org/licenses/MIT"
+          target="_blank"
+          rel="noreferrer"
+          className={fieldHintLink}
+        >
+          MIT License
+        </a>
       </p>
 
       <DialogActions>

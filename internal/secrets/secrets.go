@@ -39,14 +39,26 @@ import (
 const Prefix = "enc:v1:"
 
 // Box is a thread-safe encrypter/decrypter using a single 32-byte key.
+const (
+	keySize     = 32
+	keyDirPerm  = 0o700
+	keyFilePerm = 0o600
+)
+
+var (
+	errKeyWrongSize       = errors.New("secrets: key must be 32 bytes")
+	errCiphertextTooShort = errors.New("secrets: ciphertext too short")
+	errKeyFileWrongSize   = errors.New("secrets: key file wrong size")
+)
+
 type Box struct {
 	gcm cipher.AEAD
 }
 
 // New constructs a Box from a 32-byte key.
 func New(key []byte) (*Box, error) {
-	if len(key) != 32 {
-		return nil, fmt.Errorf("secrets: key must be 32 bytes, got %d", len(key))
+	if len(key) != keySize {
+		return nil, fmt.Errorf("%w: got %d", errKeyWrongSize, len(key))
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -91,7 +103,7 @@ func (b *Box) Decrypt(stored string) (string, error) {
 		return "", fmt.Errorf("secrets: base64: %w", err)
 	}
 	if len(raw) < b.gcm.NonceSize() {
-		return "", errors.New("secrets: ciphertext too short")
+		return "", errCiphertextTooShort
 	}
 	nonce, ct := raw[:b.gcm.NonceSize()], raw[b.gcm.NonceSize():]
 	pt, err := b.gcm.Open(nil, nonce, ct, nil)
@@ -147,9 +159,9 @@ func LoadOrCreateKey(path string) ([]byte, error) {
 	defer keyFileMu.Unlock()
 
 	// Existing key
-	if data, err := os.ReadFile(path); err == nil {
-		if len(data) != 32 {
-			return nil, fmt.Errorf("secrets: %s: expected 32 bytes, got %d", path, len(data))
+	if data, err := os.ReadFile(path); err == nil { //nolint:gosec // path from config or default key location
+		if len(data) != keySize {
+			return nil, fmt.Errorf("%w: %s: got %d", errKeyFileWrongSize, path, len(data))
 		}
 		return data, nil
 	} else if !errors.Is(err, os.ErrNotExist) {
@@ -157,14 +169,14 @@ func LoadOrCreateKey(path string) ([]byte, error) {
 	}
 
 	// Generate a fresh key, persist with strict permissions.
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), keyDirPerm); err != nil {
 		return nil, fmt.Errorf("secrets: mkdir: %w", err)
 	}
-	key := make([]byte, 32)
+	key := make([]byte, keySize)
 	if _, err := rand.Read(key); err != nil {
 		return nil, fmt.Errorf("secrets: rand: %w", err)
 	}
-	if err := os.WriteFile(path, key, 0o600); err != nil {
+	if err := os.WriteFile(path, key, keyFilePerm); err != nil {
 		return nil, fmt.Errorf("secrets: write %s: %w", path, err)
 	}
 	return key, nil

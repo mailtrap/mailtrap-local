@@ -157,7 +157,7 @@ func toWireSummary(m *store.Message, attachmentsCount int) MessageSummary {
 }
 
 func toWireDetail(m *store.Message, inline, attachments []store.Part) MessageDetail {
-	dateStr := ""
+	var dateStr string
 	if m.Date != nil {
 		dateStr = m.Date.UTC().Format(time.RFC3339Nano)
 	} else {
