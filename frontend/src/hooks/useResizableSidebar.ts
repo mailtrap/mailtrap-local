@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const STORAGE_KEY = 'mt-local:sidebar-width'
-export const MIN_SIDEBAR_WIDTH = 350
-export const MAX_SIDEBAR_WIDTH = 720
+const MIN_SIDEBAR_WIDTH = 350
+const MAX_SIDEBAR_WIDTH = 720
 const DEFAULT_SIDEBAR_WIDTH = 360
 
 function clamp(n: number) {

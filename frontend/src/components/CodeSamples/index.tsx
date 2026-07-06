@@ -59,7 +59,7 @@ const menuItemCheckCss =
 const footer =
   'border-t border-border-base bg-surface-base px-3.5 py-1.5 text-left text-xs text-fg-muted'
 
-interface CodeSamplesProps {
+interface Props {
   host?: string
   port?: number
   fromEmail?: string
@@ -71,7 +71,7 @@ export default function CodeSamples({
   port = 3535,
   fromEmail = 'sender@example.test',
   toEmail = 'rcpt@example.test',
-}: CodeSamplesProps) {
+}: Props) {
   // Memoize the SnippetParams object so it doesn't change identity on
   // every render — otherwise the `rendered` useMemo below re-runs each
   // time even when none of host/port/fromEmail/toEmail actually moved.

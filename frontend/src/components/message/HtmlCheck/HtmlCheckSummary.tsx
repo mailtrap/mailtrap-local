@@ -1,6 +1,6 @@
 import {
   type ClientCategory,
-  type HtmlCheckReport,
+  type HtmlCheckSuccess,
 } from '../../../api/messages'
 import {
   filteredFamilySupportStats,
@@ -110,7 +110,7 @@ function MarketSupportDonut({
 }
 
 interface Props {
-  report: Extract<HtmlCheckReport, { status: 'success' }>
+  report: HtmlCheckSuccess
   filters: HtmlCheckFilterState
 }
 

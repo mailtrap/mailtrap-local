@@ -9,7 +9,7 @@ import type {
   MessageSummary,
 } from '../api/messages'
 
-export function makeAddress(over: Partial<Address> = {}): Address {
+function makeAddress(over: Partial<Address> = {}): Address {
   return { name: '', address: 'someone@example.test', ...over }
 }
 

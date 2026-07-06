@@ -40,7 +40,11 @@ const iframeFrameCss = [
 const iframeCss =
   'block h-full w-full rounded-[7px] border border-border-base bg-white'
 
-export default function MessagePreview({ html }: { html: string }) {
+interface Props {
+  html: string
+}
+
+export default function MessagePreview({ html }: Props) {
   const [device, setDevice] = useState<Device>('desktop')
   return (
     <>

@@ -23,7 +23,7 @@ export interface AttachmentSummary {
   }
 }
 
-export interface ListUnsubscribe {
+interface ListUnsubscribe {
   header: string
   links: string[]
   errors: string
@@ -164,7 +164,7 @@ export async function getHeaders(
  * - status="size_limit_exceeded": HTML too big to analyze (`limit` in bytes).
  * - status="error": validator hit an unexpected error.
  */
-export type ClientSupport = 'yes' | 'no' | 'partial'
+type ClientSupport = 'yes' | 'no' | 'partial'
 export type ClientCategory = 'desktop' | 'mobile' | 'web'
 
 export interface HtmlCheckClient {
@@ -203,13 +203,15 @@ export interface HtmlCheckFamily {
   version_counts: { desktop: number; mobile: number; web: number }
 }
 
+export interface HtmlCheckSuccess {
+  status: 'success'
+  market_support_percent: number
+  families: HtmlCheckFamily[]
+  issues: HtmlCheckIssue[]
+}
+
 export type HtmlCheckReport =
-  | {
-      status: 'success'
-      market_support_percent: number
-      families: HtmlCheckFamily[]
-      issues: HtmlCheckIssue[]
-    }
+  | HtmlCheckSuccess
   | { status: 'no_html' }
   | { status: 'size_limit_exceeded'; limit: number }
   | { status: 'error'; msg: string }
@@ -234,7 +236,7 @@ export async function getHtmlCheck(
  *
  * Axios sends the body under `data` for DELETE requests.
  */
-export async function deleteMessages(
+async function deleteMessages(
   body: { ids: string[] } | { all: true },
   signal?: AbortSignal,
 ): Promise<void> {
@@ -258,7 +260,7 @@ export async function deleteAllMessages(signal?: AbortSignal): Promise<void> {
  * PUT /api/v1/messages — read/unread toggle.
  * Pass `ids` to mark specific messages, omit to mark ALL messages.
  */
-export async function setReadStatus(
+async function setReadStatus(
   body: {
     read: boolean
     ids?: string[]

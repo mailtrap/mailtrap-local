@@ -1,8 +1,8 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
 
-export type IconButtonVariant = 'toolbar' | 'header' | 'device'
+type IconButtonVariant = 'toolbar' | 'header' | 'device'
 
-interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: IconButtonVariant
   /** Active state is only meaningful for `device` variant. */
   active?: boolean
@@ -42,7 +42,7 @@ const sizes: Record<IconButtonVariant, string> = {
     'w-8 h-8 data-[active=true]:bg-accent-medium data-[active=true]:text-accent',
 }
 
-export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+export const IconButton = forwardRef<HTMLButtonElement, Props>(
   function IconButton(
     { variant = 'header', active, className, type = 'button', ...rest },
     ref,

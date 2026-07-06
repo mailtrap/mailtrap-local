@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { HtmlCheckClient, HtmlCheckReport } from '../../../api/messages'
+import type { HtmlCheckClient, HtmlCheckSuccess } from '../../../api/messages'
 import Panel from '../../ui/Panel'
 
 const title = 'mt-0 mb-2.5 text-base font-semibold text-fg font-mono'
@@ -73,14 +73,15 @@ function ClientChips({
   )
 }
 
-type Issue = Extract<
-  HtmlCheckReport,
-  { status: 'success' }
->['issues'][number]
+type Issue = HtmlCheckSuccess['issues'][number]
 
 const LINE_LIMIT = 6
 
-export default function IssueCard({ issue }: { issue: Issue }) {
+interface Props {
+  issue: Issue
+}
+
+export default function IssueCard({ issue }: Props) {
   const [showAll, setShowAll] = useState(false)
   const visibleLines =
     showAll || issue.error_lines.length <= LINE_LIMIT
