@@ -66,7 +66,7 @@ interface Props {
   toEmail?: string
 }
 
-export default function CodeSamples({
+export function CodeSamples({
   host = '127.0.0.1',
   port = 3535,
   fromEmail = 'sender@example.test',

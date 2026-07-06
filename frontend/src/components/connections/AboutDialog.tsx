@@ -21,7 +21,7 @@ function formatVersionLabel(info: VersionInfo): string {
   return `${info.version} (${shortCommit})`
 }
 
-export default function AboutDialog({ open, onOpenChange }: Props) {
+export function AboutDialog({ open, onOpenChange }: Props) {
   const [versionInfo, setVersionInfo] = useState<VersionInfo | null>(null)
 
   useEffect(() => {
@@ -34,7 +34,6 @@ export default function AboutDialog({ open, onOpenChange }: Props) {
       })
     return () => ac.abort()
   }, [open])
-
   return (
     <ConnectionDialogShell
       open={open}

@@ -46,7 +46,7 @@ const AUTH_OPTIONS: Array<{ value: RelayConnection['auth']; label: string }> = [
   { value: 'none', label: 'None' },
 ]
 
-export default function RelayConnectDialog({ open, onOpenChange }: Props) {
+export function RelayConnectDialog({ open, onOpenChange }: Props) {
   return (
     <ConnectionDialogShell
       open={open}

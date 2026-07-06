@@ -4,8 +4,8 @@ import {
 } from '../../../api/messages'
 import { clientPassesFilters } from '../../../lib/htmlCheckStats'
 import { EmptyCard } from '../../ui/EmptyCard'
-import HtmlCheckSummary from './HtmlCheckSummary'
-import IssueCard from './IssueCard'
+import { HtmlCheckSummary } from './HtmlCheckSummary'
+import { IssueCard } from './IssueCard'
 
 export interface HtmlCheckFilterState {
   enabledCategories: Record<ClientCategory, boolean>
@@ -18,7 +18,7 @@ export interface HtmlCheckFilterState {
   >
 }
 
-export default function HtmlCheck({
+export function HtmlCheck({
   hasHtml,
   report,
   err,

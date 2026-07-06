@@ -20,6 +20,8 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+
       // Recognise `_`-prefixed locals/args as intentionally unused.
       // Without this, destructuring throwaway tuple members (e.g.
       // `const { key: _k, ...rest }`) trips no-unused-vars.

@@ -44,7 +44,7 @@ interface Props {
   html: string
 }
 
-export default function MessagePreview({ html }: Props) {
+export function MessagePreview({ html }: Props) {
   const [device, setDevice] = useState<Device>('desktop')
   return (
     <>

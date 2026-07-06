@@ -27,7 +27,7 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
-export default function CloudConnectDialog({ open, onOpenChange }: Props) {
+export function CloudConnectDialog({ open, onOpenChange }: Props) {
   return (
     <ConnectionDialogShell
       open={open}

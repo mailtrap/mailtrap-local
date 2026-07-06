@@ -12,7 +12,7 @@ interface Props {
   code: string
 }
 
-export default function HtmlSource({ code }: Props) {
+export function HtmlSource({ code }: Props) {
   return (
     <Highlight theme={themes.vsDark} code={code} language="markup">
       {({ className, style, tokens, getLineProps, getTokenProps }) => (

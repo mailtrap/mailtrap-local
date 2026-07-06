@@ -17,19 +17,19 @@ import { sendMessageToCloud } from '../api/cloud'
 import { releaseMessage } from '../api/relay'
 import { useCloudConnection } from '../hooks/useCloudConnection'
 import { useRelayConnection } from '../hooks/useRelayConnection'
-import TechInfo from '../components/message/TechInfo'
-import HtmlCheck from '../components/message/HtmlCheck'
-import HtmlSource from '../components/message/HtmlSource'
-import MessageHeader from '../components/message/MessageHeader'
-import MessagePreview from '../components/message/MessagePreview'
-import Attachments from '../components/message/Attachments'
+import { TechInfo } from '../components/message/TechInfo'
+import { HtmlCheck } from '../components/message/HtmlCheck'
+import { HtmlSource } from '../components/message/HtmlSource'
+import { MessageHeader } from '../components/message/MessageHeader'
+import { MessagePreview } from '../components/message/MessagePreview'
+import { Attachments } from '../components/message/Attachments'
 import { Strip } from '../components/ui/Strip'
-import CodePane from '../components/message/CodePane'
+import { CodePane } from '../components/message/CodePane'
 import { TabRoot, TabList, Tab, TabPanel } from '../components/message/MessageTabs'
 import { openInNewTab } from '../lib/openInNewTab'
 import { extractApiError, isAbortError } from '../api/client'
 
-export default function MessageView() {
+export function MessageView() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [msg, setMsg] = useState<Message | null>(null)

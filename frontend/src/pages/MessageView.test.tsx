@@ -69,7 +69,7 @@ vi.mock('../api/webhook', async () => ({
 }))
 
 // SUT — imported AFTER the mocks.
-import MessageView from './MessageView'
+import { MessageView } from './MessageView'
 
 beforeEach(() => {
   vi.clearAllMocks()

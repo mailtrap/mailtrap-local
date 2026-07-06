@@ -1,6 +1,6 @@
 import { Button } from '../ui/Button'
 
-export default function DeleteAllPrompt({
+export function DeleteAllPrompt({
   count,
   busy,
   onConfirm,

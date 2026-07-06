@@ -1,7 +1,7 @@
 import { partUrl, type AttachmentSummary } from '../../api/messages'
 import { DownloadIcon } from '../ui/icons'
 import { formatSize } from '../../lib/messageFormatters'
-import Panel from '../ui/Panel'
+import { Panel } from '../ui/Panel'
 
 interface Props {
   messageId: string
@@ -28,7 +28,7 @@ const downloadLink = [
   'text-[12px] font-medium text-accent hover:bg-accent-soft',
 ].join(' ')
 
-export default function Attachments({ messageId, attachments }: Props) {
+export function Attachments({ messageId, attachments }: Props) {
   if (attachments.length === 0) return null
 
   return (

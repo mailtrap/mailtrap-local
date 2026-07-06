@@ -11,7 +11,7 @@ const sizes = {
   ].join(' '),
 }
 
-export default function CategoryBadge({
+export function CategoryBadge({
   size = 'lg',
   className,
   label,

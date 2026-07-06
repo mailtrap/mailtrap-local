@@ -8,7 +8,7 @@ import { type ReactNode } from 'react'
  */
 const base = 'rounded-lg border border-border-base bg-surface-raised'
 
-export default function Panel({
+export function Panel({
   className,
   children,
 }: {

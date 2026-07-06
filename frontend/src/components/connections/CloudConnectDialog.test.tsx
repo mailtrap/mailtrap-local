@@ -56,9 +56,9 @@ vi.mock('../../api/webhook', async () => ({
 }))
 
 // SUTs — imported AFTER the mocks.
-import CloudConnectDialog from './CloudConnectDialog'
-import RelayConnectDialog from './RelayConnectDialog'
-import WebhookConnectDialog from './WebhookConnectDialog'
+import { CloudConnectDialog } from './CloudConnectDialog'
+import { RelayConnectDialog } from './RelayConnectDialog'
+import { WebhookConnectDialog } from './WebhookConnectDialog'
 
 const cloudDisconnected = { connected: false }
 const relayDisconnected = {

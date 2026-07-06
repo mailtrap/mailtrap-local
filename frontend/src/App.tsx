@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
-import Sidebar from './components/sidebar/Sidebar'
-import Sandbox from './pages/Sandbox'
-import MessageView from './pages/MessageView'
+import { Sidebar } from './components/sidebar/Sidebar'
+import { Sandbox } from './pages/Sandbox'
+import { MessageView } from './pages/MessageView'
 import { ConnectionProviders } from './hooks/ConnectionProviders'
 import { useUnreadFaviconBadge } from './hooks/useUnreadFaviconBadge'
 import { useResizableSidebar } from './hooks/useResizableSidebar'
@@ -23,7 +23,7 @@ const resizer = [
 
 const main = 'min-h-0 min-w-0 overflow-y-auto px-8 py-6'
 
-export default function App() {
+export function App() {
   useUnreadFaviconBadge()
   const { width, dragging, onPointerDown } = useResizableSidebar()
 

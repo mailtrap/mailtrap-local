@@ -1,5 +1,5 @@
 import mailtrapLogo from '../assets/mailtrap-logo.svg'
-import CodeSamples from '../components/CodeSamples'
+import { CodeSamples } from '../components/CodeSamples'
 
 const emptyCss =
   'flex min-h-[60vh] flex-col items-stretch py-8 text-fg-muted'
@@ -14,7 +14,7 @@ const emptyCodeCss = [
 
 const emptyHintCss = 'mx-auto mb-7 max-w-[520px] text-center leading-[1.7]'
 
-export default function Sandbox() {
+export function Sandbox() {
   return (
     <div className={emptyCss}>
       <div className={emptyBrandCss}>

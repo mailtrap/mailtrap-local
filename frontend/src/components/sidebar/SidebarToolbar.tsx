@@ -50,7 +50,7 @@ interface Props {
   onCleanAll: () => void
 }
 
-export default function SidebarToolbar({
+export function SidebarToolbar({
   query,
   onQueryChange,
   cloudState,
