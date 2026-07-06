@@ -50,12 +50,6 @@ brew install mailtrap-local
 brew services start mailtrap-local
 ```
 
-While the tap is private, point `brew tap` at the SSH URL so it picks up your GitHub credentials:
-
-```sh
-brew tap mailtrap/local git@github.com:mailtrap/homebrew-local.git
-```
-
 Then open **http://127.0.0.1:3550** and point your app's SMTP client at **127.0.0.1:3535**.
 
 ### Docker
