@@ -1,0 +1,33 @@
+internal/api/api_test.go
+  s_297efc20f3206c::t_3314e9c8837fb1 236
+internal/api/api.go
+  s_297efc20f3206c::t_72da9c936578ac 23-25
+  s_297efc20f3206c::t_a7f8043e356476 165-180
+  s_297efc20f3206c::t_4a529ec27039ba 135
+  s_297efc20f3206c::t_9311eb39fb9301 5
+internal/api/connections.go
+  s_297efc20f3206c::t_12c5b4db6c729b 69,205,321,413,478
+internal/api/messages.go
+  s_297efc20f3206c::t_1c50ad4a7f30ab 254
+  s_297efc20f3206c::t_865aff135a085a 219
+internal/api/body_limits_test.go
+  s_297efc20f3206c::t_4369d515f63459 1-44
+internal/api/release.go
+  s_297efc20f3206c::t_3d86a6d52bc40a 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "9e3daa137f60660e30919af203d7bfd73d749996",
+  "prompts": {},
+  "sessions": {
+    "s_297efc20f3206c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c25dc794-51e0-46b5-8a25-6f2510f4b67a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}

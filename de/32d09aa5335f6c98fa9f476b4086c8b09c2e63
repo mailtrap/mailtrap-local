@@ -1,0 +1,31 @@
+internal/store/schema.sql
+  s_466445e958500c::t_fd72a9b889248e 120-121
+  s_466445e958500c::t_1feebeb785a372 1-7
+internal/store/migrations/001_initial.sql
+  s_466445e958500c::t_601e16acbd5425 1-97
+internal/store/migrations.go
+  s_466445e958500c::t_672e3be3f92ba5 88-96
+  s_466445e958500c::t_de15ec076efcfc 47,62-65,71-72,76-77,80-82,109-115,118
+CONTRIBUTING.md
+  s_466445e958500c::t_70941f575dbdb8 81
+internal/store/migrations_test.go
+  s_466445e958500c::t_ac2acc6a69f976 26-49
+internal/store/store.go
+  s_466445e958500c::t_cb37716b038168 99-100,102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "de32d09aa5335f6c98fa9f476b4086c8b09c2e63",
+  "prompts": {},
+  "sessions": {
+    "s_466445e958500c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1b194ead-79c1-4a82-a9ad-546563462fbe",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}

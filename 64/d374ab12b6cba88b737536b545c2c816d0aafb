@@ -1,0 +1,23 @@
+internal/store/messages.go
+  s_8c0565df0aafe4::t_3c63da5d5918bd 539
+internal/store/migrations.go
+  s_8c0565df0aafe4::t_eb8ebd406211f3 34
+  s_8c0565df0aafe4::t_aedcd3a5ad2621 110-115
+  s_8c0565df0aafe4::t_c46cce92f7ff49 17-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "64d374ab12b6cba88b737536b545c2c816d0aafb",
+  "prompts": {},
+  "sessions": {
+    "s_8c0565df0aafe4": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7267f74b-476e-409e-a0dc-d90e4c9d36d1",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}

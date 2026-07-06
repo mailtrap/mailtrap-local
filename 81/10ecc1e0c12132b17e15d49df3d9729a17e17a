@@ -1,0 +1,24 @@
+internal/config/config_test.go
+  s_297efc20f3206c::t_053564f0984cf3 138-143,147-153
+  s_297efc20f3206c::t_396d95a87c1687 4-5
+internal/config/config.go
+  s_297efc20f3206c::t_630ca713c319d8 35
+  s_297efc20f3206c::t_3fe5fd7fabd4fa 155,163,169
+  s_297efc20f3206c::t_9b6b3a65528b4c 109-110,116-121,123-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "8110ecc1e0c12132b17e15d49df3d9729a17e17a",
+  "prompts": {},
+  "sessions": {
+    "s_297efc20f3206c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "c25dc794-51e0-46b5-8a25-6f2510f4b67a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}

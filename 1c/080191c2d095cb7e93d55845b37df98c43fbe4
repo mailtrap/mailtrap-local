@@ -1,0 +1,33 @@
+internal/api/config_pins.go
+  s_8c0565df0aafe4::t_6d8f74edd574c2 5-6
+  s_8c0565df0aafe4::t_a5311d625f5ad3 22
+internal/api/api.go
+  s_8c0565df0aafe4::t_cd02770002af65 6
+  s_8c0565df0aafe4::t_b3b8a3ea881cfd 101,106,112
+  s_8c0565df0aafe4::t_35108b92f5f9c3 174,177
+internal/api/connections.go
+  s_8c0565df0aafe4::t_3ebd03ac36b388 383,385-417
+  s_8c0565df0aafe4::t_fbae59ededbd4e 348-359,361
+  s_8c0565df0aafe4::t_0c3ce06de09b01 31-42
+  s_8c0565df0aafe4::t_d90d594703731a 4
+  s_8c0565df0aafe4::t_17b02fc58f29d4 139-156
+  s_8c0565df0aafe4::t_53712311252eac 336-344,346
+  s_8c0565df0aafe4::t_15d4ba54c8b5c9 364-371,373,380-382
+  s_8c0565df0aafe4::t_537580973213d9 384
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1c080191c2d095cb7e93d55845b37df98c43fbe4",
+  "prompts": {},
+  "sessions": {
+    "s_8c0565df0aafe4": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7267f74b-476e-409e-a0dc-d90e4c9d36d1",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}

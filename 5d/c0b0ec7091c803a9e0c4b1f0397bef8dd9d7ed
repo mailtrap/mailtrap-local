@@ -1,0 +1,23 @@
+.github/workflows/release.yml
+  s_7a18622c4680ac::t_eddcc01fc7ae20 7-8
+.goreleaser.yaml
+  s_7a18622c4680ac::t_dc0e46432d0f18 103
+  s_7a18622c4680ac::t_9f1cca14bcacf3 9
+  s_7a18622c4680ac::t_0b5a82d8909db0 79-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5dc0b0ec7091c803a9e0c4b1f0397bef8dd9d7ed",
+  "prompts": {},
+  "sessions": {
+    "s_7a18622c4680ac": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "8664c350-207e-4de2-8eb9-4e834dc4b83a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
