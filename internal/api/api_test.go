@@ -285,6 +285,22 @@ func TestDocsRedirect(t *testing.T) {
 	assert.Equal(t, "https://docs.mailtrap.io/", resp.Header.Get("Location"))
 }
 
+func TestVersion(t *testing.T) {
+	t.Parallel()
+	srv, ts := newTestServer(t)
+	srv.Build = BuildInfo{
+		Version:   "0.1.0-test",
+		Commit:    "deadbeef",
+		BuildDate: "2026-07-03T10:00:00Z",
+	}
+
+	var resp VersionResponse
+	assert.Equal(t, 200, getJSON(t, ts.URL+"/api/v1/version", &resp))
+	assert.Equal(t, "0.1.0-test", resp.Version)
+	assert.Equal(t, "deadbeef", resp.Commit)
+	assert.Equal(t, "2026-07-03T10:00:00Z", resp.BuildDate)
+}
+
 func TestOpenAPIYAML(t *testing.T) {
 	t.Parallel()
 	srv, ts := newTestServer(t)

@@ -48,6 +48,8 @@ tags:
     description: Configure outbound webhook delivery on every captured message.
   - name: internal
     description: Endpoints consumed only by the bundled Go smtpd sidecar — not part of the public surface.
+  - name: meta
+    description: Build identity and other non-domain metadata.
 
 paths:
 
@@ -683,6 +685,22 @@ paths:
                 type: object
                 additionalProperties: true
 
+  # ---- Build identity --------------------------------------------------
+
+  /api/v1/version:
+    get:
+      tags: [meta]
+      summary: Build identity
+      description: Returns the running binary's version, source commit, and build timestamp.
+      operationId: getVersion
+      responses:
+        '200':
+          description: Build metadata for the running server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+
   # ---- Internal ingest -------------------------------------------------
 
   /api/v1/ingest:
@@ -1258,6 +1276,24 @@ components:
           type: string
           format: byte
           description: Base64-encoded part bytes.
+
+    VersionResponse:
+      type: object
+      description: Build metadata for the running mailtrap-local binary.
+      required: [version, commit, build_date]
+      properties:
+        version:
+          type: string
+          description: Semantic version or dev sentinel when built without ldflags.
+          example: "0.1.0"
+        commit:
+          type: string
+          description: Git commit SHA baked in at build time.
+          example: abc1234
+        build_date:
+          type: string
+          description: UTC build timestamp baked in at build time.
+          example: "2026-07-03T10:00:00Z"
 
     Error:
       type: object

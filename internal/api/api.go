@@ -36,6 +36,7 @@ type Server struct {
 	Config   *config.Loader
 	Frontend fs.FS // production: embedded SPA dist; dev: nil (Vite serves it)
 	OpenAPI  []byte
+	Build    BuildInfo
 
 	// OnIngest fires after a successful POST /api/v1/ingest. Wired by
 	// main.go to trigger the dispatcher (cloud mirror / relay mirror /
@@ -73,6 +74,7 @@ func (s *Server) Router() http.Handler {
 		// to the docs site rather than 404'ing them.
 		r.Get("/", s.docsRedirect)
 		r.Get("/openapi.yaml", s.openapiYAML)
+		r.Get("/version", s.version)
 
 		// Internal — same JSON contract the smtpd-as-sidecar used to
 		// post against. Kept as an HTTP endpoint so tests can drive
