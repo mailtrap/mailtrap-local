@@ -66,6 +66,42 @@ h3 {
   line-height: 1.21;
 }
 
+/* ---------------------------------------------------------------------
+   Scrollbars — falcon-style: a visible gray thumb floating on the pane
+   background, no track box. `scrollbar-color` covers Firefox and
+   Chromium 121+; the `::-webkit-scrollbar` rules cover Safari (Chromium
+   ignores them once `scrollbar-color` is set, so the thumb color below
+   must match the resting webkit thumb).
+   --------------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-fg-muted) 65%, transparent)
+    transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-fg-muted) 65%, transparent);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-fg-muted);
+}
+
+/* Text selection — the darker accent step keeps ~4.6:1 contrast with
+   --color-fg (plain --color-accent falls below AA against white text). */
+::selection {
+  background: var(--color-accent-hover);
+  color: var(--color-fg);
+}
+
 /* Inline chevron for `<select>` inside dialog `field` blocks. The SVG
    pulls its colour from the embedded `fill=` value because <select> is
    too restrictive a host element for `currentColor`; default state uses
