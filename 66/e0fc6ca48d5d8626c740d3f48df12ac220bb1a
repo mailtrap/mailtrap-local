@@ -1,0 +1,27 @@
+frontend/src/lib/inlineImages.ts
+  s_de50f8a0d402ec::t_f05d35852f5ca5 1-52
+frontend/src/test/fixtures.ts
+  s_de50f8a0d402ec::t_f05d35852f5ca5 8,40-53
+frontend/src/pages/MessageView.tsx
+  s_de50f8a0d402ec::t_f05d35852f5ca5 1,16,148-159,308
+frontend/src/pages/MessageView.test.tsx
+  s_de50f8a0d402ec::t_f05d35852f5ca5 22,238-255
+frontend/src/lib/inlineImages.test.ts
+  s_de50f8a0d402ec::t_f05d35852f5ca5 1-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "66e0fc6ca48d5d8626c740d3f48df12ac220bb1a",
+  "prompts": {},
+  "sessions": {
+    "s_de50f8a0d402ec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff185117-d049-4ddf-9e6e-cd0d5c110ebc",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kyrylo Yevdokymov <kyrylo.yevdokymov@railsware.com>"
+    }
+  }
+}
