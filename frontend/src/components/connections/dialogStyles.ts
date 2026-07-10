@@ -32,7 +32,12 @@ export const content = [
 
 export const contentHeader = 'shrink-0 px-6 pt-[22px]'
 
-export const contentBody = 'min-h-0 overflow-y-auto px-6 pb-5'
+// No bottom padding here — the sticky `actions` row carries it (pb-5).
+// Padding on the scroll container itself would sit BELOW the stuck row
+// (sticky offsets account for margins, so the row can't be pulled into
+// the padding zone with a negative margin) and scrolled content would
+// show through the strip.
+export const contentBody = 'min-h-0 overflow-y-auto px-6'
 
 export const dialogTitle = 'm-0 mb-1.5 text-[17px] font-semibold'
 
@@ -89,12 +94,13 @@ export const errorBox = [
 ].join(' ')
 
 // Bottom button row. Sticky so the buttons stay reachable while
-// contentBody scrolls. -mb-5/pb-5 shift the body's bottom padding onto
-// the opaque row (nothing shows through beneath it when stuck), and
-// mt-2.5 + pt-2 preserve the usual 18px gap above — the margin
-// collapses with the previous sibling's, the padding stays opaque.
+// contentBody scrolls. The row owns the dialog's bottom padding (pb-5,
+// opaque background) so it sticks truly flush with the scrollport
+// bottom and nothing shows through beneath it; mt-2.5 + pt-2 preserve
+// the usual gap above — the margin collapses with the previous
+// sibling's, the padding stays opaque.
 export const actions = [
-  'sticky bottom-0 mt-2.5 -mb-5 flex justify-end gap-2',
+  'sticky bottom-0 mt-2.5 flex justify-end gap-2',
   'bg-surface-raised pt-2 pb-5',
 ].join(' ')
 
