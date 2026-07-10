@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type UIEvent } from 'react'
 import { Link, useMatch, useNavigate } from 'react-router-dom'
 import mailtrapLogo from '../../assets/mailtrap-logo.svg'
 import {
@@ -7,6 +7,7 @@ import {
   markAllRead,
   searchMessages,
   type MessageSummary,
+  type MessagesResponse,
 } from '../../api/messages'
 import { CloudConnectDialog } from '../connections/CloudConnectDialog'
 import { ConnectionErrorBanner } from './ConnectionErrorBanner'
@@ -22,6 +23,23 @@ import { MessageList } from './MessageList'
 import { DeleteAllPrompt } from './DeleteAllPrompt'
 import { extractApiError, isAbortError } from '../../api/client'
 
+const PAGE_SIZE = 100
+// Fetch the next page once the user scrolls within this many pixels of
+// the bottom of the list.
+const SCROLL_THRESHOLD_PX = 200
+
+// Live "created" frames prepend while paging appends from the tail, so
+// a page fetched after a prepend can overlap rows we already hold.
+// Dedupe by id instead of trusting offsets alone.
+function appendUnique(
+  prev: MessageSummary[] | null,
+  page: MessageSummary[],
+): MessageSummary[] {
+  if (!prev) return page
+  const seen = new Set(prev.map((m) => m.id))
+  return [...prev, ...page.filter((m) => !seen.has(m.id))]
+}
+
 export function Sidebar() {
   const navigate = useNavigate()
   // Sidebar lives outside <Routes>, so useMatch instead of useParams.
@@ -29,12 +47,20 @@ export function Sidebar() {
   const activeId = match?.params.id
 
   const [messages, setMessages] = useState<MessageSummary[] | null>(null)
+  // Server-reported totals gate "has more pages". Every page response
+  // resyncs them, so transient drift from live updates self-heals.
+  const [total, setTotal] = useState(0)
   // null = search inactive (show `messages`). [] = search returned zero
   // matches (show "No matches" empty state).
   const [searchResults, setSearchResults] = useState<MessageSummary[] | null>(
     null,
   )
+  const [searchTotal, setSearchTotal] = useState(0)
   const [searching, setSearching] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  // In-flight page fetch. Doubles as the "one page at a time" guard and
+  // the abort handle when a refetch or query change makes it stale.
+  const loadMoreRef = useRef<AbortController | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [cloudOpen, setCloudOpen] = useState(false)
@@ -50,8 +76,15 @@ export function Sidebar() {
     webhookState?.connected === true && webhookState?.enabled === true
 
   const fetchMessages = useCallback((signal?: AbortSignal) => {
-    getMessages({ limit: 100 }, signal)
-      .then((r) => setMessages(r.messages))
+    // A refetch replaces the list from page one, so a pending page
+    // append would land on stale offsets (or resurrect just-deleted
+    // rows after a delete-all). Cancel it first.
+    loadMoreRef.current?.abort()
+    getMessages({ limit: PAGE_SIZE }, signal)
+      .then((r) => {
+        setMessages(r.messages)
+        setTotal(r.total)
+      })
       .catch((e) => {
         if (!isAbortError(e)) setError(String(e))
       })
@@ -61,12 +94,76 @@ export function Sidebar() {
   useEffect(() => {
     const c = new AbortController()
     fetchMessages(c.signal)
-    return () => c.abort()
+    return () => {
+      c.abort()
+      loadMoreRef.current?.abort()
+    }
   }, [fetchMessages])
+
+  const loadPage = (
+    fetchPage: (signal: AbortSignal) => Promise<MessagesResponse>,
+    apply: (r: MessagesResponse) => void,
+  ) => {
+    const controller = new AbortController()
+    loadMoreRef.current = controller
+    setLoadingMore(true)
+    fetchPage(controller.signal)
+      .then((r) => {
+        // The signal is re-checked because our api mocks (and axios in
+        // some paths) can resolve after an abort — a stale page must
+        // never append into a list that has since been replaced.
+        if (!controller.signal.aborted) apply(r)
+      })
+      .catch((e) => {
+        if (!isAbortError(e))
+          setActionError(`Load more failed: ${extractApiError(e)}`)
+      })
+      .finally(() => {
+        if (loadMoreRef.current === controller) loadMoreRef.current = null
+        setLoadingMore(false)
+      })
+  }
+
+  const loadMore = () => {
+    if (loadMoreRef.current) return
+    if (searchResults !== null) {
+      if (searching || searchResults.length >= searchTotal) return
+      const trimmed = query.trim()
+      const start = searchResults.length
+      loadPage(
+        (signal) =>
+          searchMessages({ query: trimmed, start, limit: PAGE_SIZE }, signal),
+        (r) => {
+          setSearchTotal(r.total)
+          setSearchResults((prev) => appendUnique(prev, r.messages))
+        },
+      )
+    } else {
+      if (!messages || messages.length >= total) return
+      const start = messages.length
+      loadPage(
+        (signal) => getMessages({ start, limit: PAGE_SIZE }, signal),
+        (r) => {
+          setTotal(r.total)
+          setMessages((prev) => appendUnique(prev, r.messages))
+        },
+      )
+    }
+  }
+
+  const onListScroll = (e: UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget
+    if (el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_THRESHOLD_PX)
+      loadMore()
+  }
 
   // Live updates: prepend incoming messages, drop deleted ones. The Set
   // guard de-duplicates against an in-flight refetch returning the same row.
   const onMessageCreated = useCallback((m: MessageSummary) => {
+    // The sandbox grew server-side whether or not the row is a dupe of
+    // one an in-flight refetch already returned, so bump the paging
+    // total unconditionally; the next page response resyncs any drift.
+    setTotal((t) => t + 1)
     setMessages((prev) => {
       if (!prev) return [m]
       if (prev.some((x) => x.id === m.id)) return prev
@@ -74,6 +171,7 @@ export function Sidebar() {
     })
   }, [])
   const onMessageDestroyed = useCallback((id: string) => {
+    setTotal((t) => Math.max(0, t - 1))
     setMessages((prev) => (prev ? prev.filter((m) => m.id !== id) : prev))
   }, [])
   useMessagesChannel({
@@ -142,6 +240,7 @@ export function Sidebar() {
     const trimmed = query.trim()
     if (trimmed.length === 0) {
       setSearchResults(null)
+      setSearchTotal(0)
       setSearching(false)
     } else {
       setSearching(true)
@@ -156,8 +255,11 @@ export function Sidebar() {
     if (trimmed.length === 0) return
     const controller = new AbortController()
     const handle = setTimeout(() => {
-      searchMessages({ query: trimmed, limit: 100 }, controller.signal)
-        .then((r) => setSearchResults(r.messages))
+      searchMessages({ query: trimmed, limit: PAGE_SIZE }, controller.signal)
+        .then((r) => {
+          setSearchResults(r.messages)
+          setSearchTotal(r.total)
+        })
         .catch((e) => {
           if (!isAbortError(e)) setError(String(e))
         })
@@ -168,6 +270,9 @@ export function Sidebar() {
     return () => {
       clearTimeout(handle)
       controller.abort()
+      // The query changed (or we unmounted) — a pending "load more" for
+      // the old result set must not append into the new one.
+      loadMoreRef.current?.abort()
     }
   }, [query])
 
@@ -208,11 +313,12 @@ export function Sidebar() {
         </Strip>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto" onScroll={onListScroll}>
         <MessageList
           messages={messages}
           searchResults={searchResults}
           searching={searching}
+          loadingMore={loadingMore}
           query={query}
           activeId={activeId}
           error={error}
