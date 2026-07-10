@@ -6,6 +6,8 @@ import {
   configBanner,
   configBannerCode,
   content,
+  contentBody,
+  contentHeader,
   dialogLead,
   dialogTitle,
   field,
@@ -21,6 +23,11 @@ import { LockedFieldHint } from './LockedFieldHint'
  * paragraph. The actual form body is `children`. Callers mount the
  * body only when `open` so each open cycle gets fresh useState
  * initialisers without a reset-effect (the existing convention).
+ *
+ * The panel is capped at 85vh: the title stays pinned while the lead +
+ * body scroll, and the DialogActions row (sticky, see `actions` in
+ * dialogStyles) stays visible — so every control remains reachable on
+ * short viewports.
  */
 export function ConnectionDialogShell({
   open,
@@ -42,11 +49,15 @@ export function ConnectionDialogShell({
         <Dialog.Content className={content} aria-describedby={undefined}>
           {open && (
             <>
-              <Dialog.Title asChild>
-                <h2 className={dialogTitle}>{title}</h2>
-              </Dialog.Title>
-              <p className={dialogLead}>{lead}</p>
-              {children}
+              <div className={contentHeader}>
+                <Dialog.Title asChild>
+                  <h2 className={dialogTitle}>{title}</h2>
+                </Dialog.Title>
+              </div>
+              <div className={contentBody}>
+                <p className={dialogLead}>{lead}</p>
+                {children}
+              </div>
             </>
           )}
         </Dialog.Content>

@@ -4,8 +4,9 @@
  * AboutDialog). Keeps all dialogs visually locked to the same shell —
  * palette, spacing, and control styles flow from one place.
  *
- * Convention: shells (`content`, `field`, `lockedHint`, `configBanner`)
- * carry only the wrapper's own utilities. Per-element classes
+ * Convention: shells (`content`, `contentHeader`, `contentBody`,
+ * `field`, `lockedHint`, `configBanner`) carry only the wrapper's own
+ * utilities. Per-element classes
  * (`dialogTitle`, `dialogLead`, `fieldLabel`, `fieldInput`, etc.) are
  * applied directly to the elements they style at the dialog callsites.
  * This avoids parent-side `[&_…]:` selectors that route styles through
@@ -16,15 +17,22 @@ import { inputBase } from '../../lib/styles'
 
 export const overlay = 'fixed inset-0 z-50 bg-black/60'
 
-// Dialog shell — positioning + chrome only. Title/lead get their own
-// classes at the callsite.
+// Dialog shell — positioning + chrome only. Height is capped so tall
+// dialogs (e.g. relay with Advanced expanded on a short viewport) never
+// clip past the screen edges: the title (`contentHeader`) stays pinned,
+// the form (`contentBody`) scrolls, and the sticky `actions` row keeps
+// the buttons visible. Padding lives on header/body, not the panel, so
+// the scroll area runs edge to edge.
 export const content = [
   'fixed top-1/2 left-1/2 z-[51] -translate-x-1/2 -translate-y-1/2',
-  'w-[460px] max-w-[calc(100vw-32px)]',
-  'rounded-[10px] border border-border-base bg-surface-raised text-fg',
-  'px-6 pt-[22px] pb-5',
+  'flex max-h-[85vh] w-[460px] max-w-[calc(100vw-32px)] flex-col',
+  'overflow-hidden rounded-[10px] border border-border-base bg-surface-raised text-fg',
   'shadow-[0_20px_60px_rgba(0,0,0,0.5)]',
 ].join(' ')
+
+export const contentHeader = 'shrink-0 px-6 pt-[22px]'
+
+export const contentBody = 'min-h-0 overflow-y-auto px-6 pb-5'
 
 export const dialogTitle = 'm-0 mb-1.5 text-[17px] font-semibold'
 
@@ -80,7 +88,15 @@ export const errorBox = [
   'bg-danger-soft border-danger-border text-danger',
 ].join(' ')
 
-export const actions = 'mt-[18px] flex justify-end gap-2'
+// Bottom button row. Sticky so the buttons stay reachable while
+// contentBody scrolls. -mb-5/pb-5 shift the body's bottom padding onto
+// the opaque row (nothing shows through beneath it when stuck), and
+// mt-2.5 + pt-2 preserve the usual 18px gap above — the margin
+// collapses with the previous sibling's, the padding stays opaque.
+export const actions = [
+  'sticky bottom-0 mt-2.5 -mb-5 flex justify-end gap-2',
+  'bg-surface-raised pt-2 pb-5',
+].join(' ')
 
 // Variant-driven button. Use as `className={btn}` and set
 // `data-variant="primary" | "outline" | "danger-text"` on the element
