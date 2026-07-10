@@ -1,0 +1,20 @@
+frontend/src/components/connections/dialogStyles.ts
+  s_de50f8a0d402ec::t_d81c4014652a9f 97-101,103
+  s_de50f8a0d402ec::t_830cbae3f4c833 35-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "1f9d804f0fd502704bb9c4ca10f6dcd1912e0e43",
+  "prompts": {},
+  "sessions": {
+    "s_de50f8a0d402ec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff185117-d049-4ddf-9e6e-cd0d5c110ebc",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Kyrylo Yevdokymov <kyrylo.yevdokymov@railsware.com>"
+    }
+  }
+}
