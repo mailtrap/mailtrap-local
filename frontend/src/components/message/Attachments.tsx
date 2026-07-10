@@ -1,63 +1,95 @@
 import { partUrl, type AttachmentSummary } from '../../api/messages'
-import { DownloadIcon } from '../ui/icons'
+import {
+  DownloadIcon,
+  FileArchiveIcon,
+  FileIcon,
+  FileImageIcon,
+  FileTextIcon,
+} from '../ui/icons'
 import { formatSize } from '../../lib/messageFormatters'
-import { Panel } from '../ui/Panel'
 
 interface Props {
   messageId: string
   attachments: AttachmentSummary[]
 }
 
-const wrapper = 'mt-4'
-
 const heading =
   'mb-1.5 m-0 inline-flex items-center gap-1.5 text-[13px] font-semibold text-fg'
 
-const list = '[&>li:last-child]:border-b-0'
-
-const row = [
-  'flex items-center gap-3 border-b border-border-base px-3.5 py-2',
-  'text-[13px] text-fg',
+// The whole chip is the download link; the trailing arrow lights up on
+// hover/focus to signal it.
+const chip = [
+  'group flex items-center gap-2.5 rounded-lg border border-border-base bg-surface-raised',
+  'px-3 py-2 outline-none',
+  'hover:border-border-subtle hover:bg-surface-hover',
+  'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ring',
 ].join(' ')
 
-const filename = 'flex-1 min-w-0 truncate font-medium'
-const meta = 'whitespace-nowrap text-fg-muted'
-
-const downloadLink = [
-  'inline-flex items-center gap-1 rounded-md px-2 py-1',
-  'text-[12px] font-medium text-accent hover:bg-accent-soft',
-].join(' ')
+function fileTypeIcon({ content_type, file_name }: AttachmentSummary) {
+  const type = content_type.toLowerCase()
+  const name = file_name.toLowerCase()
+  if (
+    type.startsWith('image/') ||
+    /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/.test(name)
+  ) {
+    return FileImageIcon
+  }
+  if (
+    /\b(zip|gzip|tar|7z|rar|compressed)\b/.test(type) ||
+    /\.(zip|tar|gz|tgz|rar|7z)$/.test(name)
+  ) {
+    return FileArchiveIcon
+  }
+  if (
+    type.startsWith('text/') ||
+    /pdf|msword|wordprocessingml|rtf|spreadsheet|presentation/.test(type) ||
+    /\.(pdf|docx?|txt|md|rtf|csv|xlsx?|pptx?)$/.test(name)
+  ) {
+    return FileTextIcon
+  }
+  return FileIcon
+}
 
 export function Attachments({ messageId, attachments }: Props) {
   if (attachments.length === 0) return null
 
   return (
-    <section className={wrapper}>
+    <section className="mt-4">
       <h3 className={heading}>
         Attachments <span className="text-fg-muted">({attachments.length})</span>
       </h3>
-      <Panel>
-        <ul className={list}>
-          {attachments.map((a) => (
-            <li key={a.part_id} className={row}>
-              <span className={filename} title={a.file_name}>
-                {a.file_name || '(unnamed)'}
-              </span>
-              <span className={meta}>{a.content_type || 'application/octet-stream'}</span>
-              <span className={meta}>{formatSize(a.size)}</span>
+      <ul className="flex flex-wrap gap-2">
+        {attachments.map((a) => {
+          const TypeIcon = fileTypeIcon(a)
+          const name = a.file_name || '(unnamed)'
+          return (
+            <li key={a.part_id}>
               <a
                 href={partUrl(messageId, a.part_id)}
                 download={a.file_name || undefined}
-                className={downloadLink}
-                title="Download"
+                className={chip}
+                title={`Download ${name}`}
               >
-                <DownloadIcon size={14} />
-                Download
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-medium text-accent">
+                  <TypeIcon size={18} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block max-w-[200px] truncate text-[13px] font-medium text-fg">
+                    {name}
+                  </span>
+                  <span className="block text-[12px] text-fg-muted">
+                    {formatSize(a.size)}
+                  </span>
+                </span>
+                <DownloadIcon
+                  size={14}
+                  className="ml-1 shrink-0 text-fg-muted group-hover:text-accent group-focus-visible:text-accent"
+                />
               </a>
             </li>
-          ))}
-        </ul>
-      </Panel>
+          )
+        })}
+      </ul>
     </section>
   )
 }
