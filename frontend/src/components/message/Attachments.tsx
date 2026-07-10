@@ -1,11 +1,5 @@
+import { useEffect, useRef, useState } from 'react'
 import { partUrl, type AttachmentSummary } from '../../api/messages'
-import {
-  DownloadIcon,
-  FileArchiveIcon,
-  FileIcon,
-  FileImageIcon,
-  FileTextIcon,
-} from '../ui/icons'
 import { formatSize } from '../../lib/messageFormatters'
 
 interface Props {
@@ -13,83 +7,74 @@ interface Props {
   attachments: AttachmentSummary[]
 }
 
-const heading =
-  'mb-1.5 m-0 inline-flex items-center gap-1.5 text-[13px] font-semibold text-fg'
+const LIST_ID = 'message-attachments-list'
 
-// The whole chip is the download link; the trailing arrow lights up on
-// hover/focus to signal it.
-const chip = [
-  'group flex items-center gap-2.5 rounded-lg border border-border-base bg-surface-raised',
-  'px-3 py-2 outline-none',
-  'hover:border-border-subtle hover:bg-surface-hover',
-  'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ring',
+const toggleLink =
+  'cursor-pointer whitespace-nowrap text-[13px] text-accent hover:underline'
+
+// Port of the falcon sandbox attachments dropdown: a CSS table anchored
+// under the toggle link, each row a full-width <a download>. Panel and
+// text styling follow SettingsMenu so all overlays read the same. The
+// whitespace/text-align resets undo what the header's right column sets.
+const menuCss = [
+  'absolute right-0 top-full z-40 table overflow-hidden',
+  'min-w-[249px] max-w-[560px]',
+  'whitespace-normal text-left [word-break:break-word]',
+  'rounded-lg border border-border-base bg-surface-raised',
+  'shadow-[0_12px_32px_rgba(0,0,0,0.45)]',
 ].join(' ')
 
-function fileTypeIcon({ content_type, file_name }: AttachmentSummary) {
-  const type = content_type.toLowerCase()
-  const name = file_name.toLowerCase()
-  if (
-    type.startsWith('image/') ||
-    /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/.test(name)
-  ) {
-    return FileImageIcon
-  }
-  if (
-    /\b(zip|gzip|tar|7z|rar|compressed)\b/.test(type) ||
-    /\.(zip|tar|gz|tgz|rar|7z)$/.test(name)
-  ) {
-    return FileArchiveIcon
-  }
-  if (
-    type.startsWith('text/') ||
-    /pdf|msword|wordprocessingml|rtf|spreadsheet|presentation/.test(type) ||
-    /\.(pdf|docx?|txt|md|rtf|csv|xlsx?|pptx?)$/.test(name)
-  ) {
-    return FileTextIcon
-  }
-  return FileIcon
-}
+const rowCss = [
+  'table-row h-[45px] cursor-pointer text-[13px] text-fg',
+  'transition-colors hover:bg-surface-hover',
+].join(' ')
+
+const cellCss = 'table-cell p-2.5 align-middle'
 
 export function Attachments({ messageId, attachments }: Props) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
+  }, [open])
+
   if (attachments.length === 0) return null
 
   return (
-    <section className="mt-4">
-      <h3 className={heading}>
-        Attachments <span className="text-fg-muted">({attachments.length})</span>
-      </h3>
-      <ul className="flex flex-wrap gap-2">
-        {attachments.map((a) => {
-          const TypeIcon = fileTypeIcon(a)
-          const name = a.file_name || '(unnamed)'
-          return (
-            <li key={a.part_id}>
-              <a
-                href={partUrl(messageId, a.part_id)}
-                download={a.file_name || undefined}
-                className={chip}
-                title={`Download ${name}`}
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-medium text-accent">
-                  <TypeIcon size={18} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block max-w-[200px] truncate text-[13px] font-medium text-fg">
-                    {name}
-                  </span>
-                  <span className="block text-[12px] text-fg-muted">
-                    {formatSize(a.size)}
-                  </span>
-                </span>
-                <DownloadIcon
-                  size={14}
-                  className="ml-1 shrink-0 text-fg-muted group-hover:text-accent group-focus-visible:text-accent"
-                />
-              </a>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        className={toggleLink}
+        aria-expanded={open}
+        aria-controls={LIST_ID}
+        onClick={() => setOpen((o) => !o)}
+      >
+        Attachments ({attachments.length})
+      </button>
+      {open && (
+        <div id={LIST_ID} role="list" className={menuCss}>
+          {attachments.map((a) => (
+            <a
+              key={a.part_id}
+              role="listitem"
+              href={partUrl(messageId, a.part_id)}
+              download={a.file_name || undefined}
+              className={rowCss}
+            >
+              <span className={cellCss}>{a.file_name || '(unnamed)'}</span>
+              <span className={`${cellCss} whitespace-nowrap text-fg-muted`}>
+                {formatSize(a.size)}
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
