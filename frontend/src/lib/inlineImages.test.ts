@@ -67,4 +67,13 @@ describe('resolveCidUrls', () => {
     const html = '<p>see cid:something in the spec</p>'
     expect(resolveCidUrls(html, 'msg-1', [makeAttachment()])).toBe(html)
   })
+
+  it('does not rewrite a matching cid mentioned in visible text', () => {
+    const html = '<p>Use cid:logo@example.test in the client setup.</p>'
+    expect(
+      resolveCidUrls(html, 'msg-1', [
+        makeAttachment({ content_id: 'logo@example.test' }),
+      ]),
+    ).toBe(html)
+  })
 })

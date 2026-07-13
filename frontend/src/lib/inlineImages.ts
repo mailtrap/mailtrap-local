@@ -28,17 +28,24 @@ export function resolveCidUrls(
   }
   if (partIdByContentId.size === 0) return html
 
-  // Match cid: URLs where they appear in markup — attribute values
-  // (src/href/background) and CSS url(cid:...) — stopping at the
-  // delimiters that end a URL in either context. Unknown content-ids are
-  // left untouched so we never mangle prose that merely mentions "cid:".
-  return html.replace(/\bcid:([^"'\s<>)]+)/gi, (match, contentId: string) => {
+  const replaceCidUrl = (
+    match: string,
+    prefix: string,
+    contentId: string,
+  ): string => {
     const partId =
       partIdByContentId.get(contentId) ??
       partIdByContentId.get(tryDecodeURIComponent(contentId))
     if (partId === undefined) return match
-    return window.location.origin + partUrl(messageId, partId)
-  })
+    return prefix + window.location.origin + partUrl(messageId, partId)
+  }
+
+  return html
+    .replace(
+      /\b((?:src|href|background)\s*=\s*["']?)cid:([^"'\s<>)]+)/gi,
+      replaceCidUrl,
+    )
+    .replace(/\b(url\(\s*["']?)cid:([^"'\s<>)]+)/gi, replaceCidUrl)
 }
 
 /** cid refs may be percent-encoded in HTML attributes while the API's
