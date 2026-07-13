@@ -114,6 +114,7 @@ export function TechInfo({
           <h3 className={techHeadingCss}>SMTP Transaction Info</h3>
           <InfoTooltip
             label="About SMTP transaction info"
+            description={`${smtpTooltipMail} ${smtpTooltipRcpt}`}
             content={
               <>
                 <p className="m-0">{smtpTooltipMail}</p>
@@ -154,7 +155,11 @@ export function TechInfo({
       <Panel className="mb-4 px-6 py-5">
         <div className={techHeadingRowCss}>
           <h3 className={techHeadingCss}>Email Headers</h3>
-          <InfoTooltip label="About email headers" content={emailHeadersTooltip}>
+          <InfoTooltip
+            label="About email headers"
+            description={emailHeadersTooltip}
+            content={emailHeadersTooltip}
+          >
             <HelpIcon size={14} />
           </InfoTooltip>
         </div>

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { InfoTooltip } from './InfoTooltip'
@@ -6,7 +6,11 @@ import { InfoTooltip } from './InfoTooltip'
 describe('InfoTooltip', () => {
   it('gives the icon trigger an accessible label and description', () => {
     render(
-      <InfoTooltip label="About email headers" content="Header details">
+      <InfoTooltip
+        label="About email headers"
+        description="Header details"
+        content="Header details"
+      >
         <span aria-hidden="true">?</span>
       </InfoTooltip>,
     )
@@ -16,51 +20,62 @@ describe('InfoTooltip', () => {
     ).toHaveAccessibleDescription('Header details')
   })
 
-  it('closes on Escape without bubbling or moving focus', async () => {
+  it('portals its content and closes on Escape without bubbling or moving focus', async () => {
     const user = userEvent.setup()
     let escapeCount = 0
-    render(
+    const { container } = render(
       <div
         onKeyDown={(event) => {
           if (event.key === 'Escape') escapeCount += 1
         }}
       >
-        <InfoTooltip label="About email headers" content="Header details">
+        <InfoTooltip
+          label="About email headers"
+          description="Header details"
+          content="Header details"
+        >
           <span aria-hidden="true">?</span>
         </InfoTooltip>
       </div>,
     )
 
     const trigger = screen.getByRole('button', { name: 'About email headers' })
-    const tooltip = screen.getByRole('tooltip')
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+
     await user.tab()
-    expect(tooltip).toHaveAttribute('data-open', 'true')
+
+    const tooltip = screen.getByRole('tooltip')
+    expect(container).not.toContainElement(tooltip)
 
     await user.keyboard('{Escape}')
 
     expect(escapeCount).toBe(0)
     expect(trigger).toHaveFocus()
-    expect(tooltip).toHaveAttribute('data-open', 'false')
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 
   it('stays open while the pointer moves from its trigger onto its content', async () => {
     const user = userEvent.setup()
     render(
-      <InfoTooltip label="About email headers" content="Header details">
+      <InfoTooltip
+        label="About email headers"
+        description="Header details"
+        content={<span data-testid="tooltip-content">Header details</span>}
+      >
         <span aria-hidden="true">?</span>
       </InfoTooltip>,
     )
 
     const trigger = screen.getByRole('button', { name: 'About email headers' })
-    const tooltip = screen.getByRole('tooltip')
 
     await user.hover(trigger)
-    expect(tooltip).toHaveAttribute('data-open', 'true')
+    const content = screen.getByTestId('tooltip-content')
 
-    await user.hover(tooltip)
-    expect(tooltip).toHaveAttribute('data-open', 'true')
+    await user.hover(content)
+    expect(screen.getByRole('tooltip')).toBeInTheDocument()
 
-    await user.unhover(tooltip)
-    expect(tooltip).toHaveAttribute('data-open', 'false')
+    await user.unhover(content)
+    fireEvent.pointerMove(document.body, { clientX: 100, clientY: 100 })
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 })
