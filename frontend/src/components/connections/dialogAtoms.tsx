@@ -23,11 +23,6 @@ import { LockedFieldHint } from './LockedFieldHint'
  * paragraph. The actual form body is `children`. Callers mount the
  * body only when `open` so each open cycle gets fresh useState
  * initialisers without a reset-effect (the existing convention).
- *
- * The panel is capped at 85vh: the title stays pinned while the lead +
- * body scroll, and the DialogActions row (sticky, see `actions` in
- * dialogStyles) stays visible — so every control remains reachable on
- * short viewports.
  */
 export function ConnectionDialogShell({
   open,
@@ -195,4 +190,3 @@ export function DialogButton({
     </button>
   )
 }
-

@@ -17,12 +17,7 @@ import { inputBase } from '../../lib/styles'
 
 export const overlay = 'fixed inset-0 z-50 bg-black/60'
 
-// Dialog shell — positioning + chrome only. Height is capped so tall
-// dialogs (e.g. relay with Advanced expanded on a short viewport) never
-// clip past the screen edges: the title (`contentHeader`) stays pinned,
-// the form (`contentBody`) scrolls, and the sticky `actions` row keeps
-// the buttons visible. Padding lives on header/body, not the panel, so
-// the scroll area runs edge to edge.
+// Cap dialog height while keeping the title outside the scroll area.
 export const content = [
   'fixed top-1/2 left-1/2 z-[51] -translate-x-1/2 -translate-y-1/2',
   'flex max-h-[85vh] w-[460px] max-w-[calc(100vw-32px)] flex-col',
@@ -32,11 +27,6 @@ export const content = [
 
 export const contentHeader = 'shrink-0 px-6 pt-[22px]'
 
-// No bottom padding here — the sticky `actions` row carries it (pb-5).
-// Padding on the scroll container itself would sit BELOW the stuck row
-// (sticky offsets account for margins, so the row can't be pulled into
-// the padding zone with a negative margin) and scrolled content would
-// show through the strip.
 export const contentBody = 'min-h-0 overflow-y-auto px-6'
 
 export const dialogTitle = 'm-0 mb-1.5 text-[17px] font-semibold'
@@ -93,12 +83,7 @@ export const errorBox = [
   'bg-danger-soft border-danger-border text-danger',
 ].join(' ')
 
-// Bottom button row. Sticky so the buttons stay reachable while
-// contentBody scrolls. The row owns the dialog's bottom padding (pb-5,
-// opaque background) so it sticks truly flush with the scrollport
-// bottom and nothing shows through beneath it; mt-2.5 + pt-2 preserve
-// the usual gap above — the margin collapses with the previous
-// sibling's, the padding stays opaque.
+// Keep actions reachable while the dialog body scrolls.
 export const actions = [
   'sticky bottom-0 mt-2.5 flex justify-end gap-2',
   'bg-surface-raised pt-2 pb-5',
