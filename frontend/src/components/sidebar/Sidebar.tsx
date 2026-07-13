@@ -57,10 +57,12 @@ export function Sidebar() {
   )
   const [searchTotal, setSearchTotal] = useState(0)
   const [searching, setSearching] = useState(false)
+  const [searchRevision, setSearchRevision] = useState(0)
   const [loadingMore, setLoadingMore] = useState(false)
   // In-flight page fetch. Doubles as the "one page at a time" guard and
   // the abort handle when a refetch or query change makes it stale.
   const loadMoreRef = useRef<AbortController | null>(null)
+  const messageIdsRef = useRef(new Set<string>())
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [cloudOpen, setCloudOpen] = useState(false)
@@ -82,6 +84,7 @@ export function Sidebar() {
     loadMoreRef.current?.abort()
     getMessages({ limit: PAGE_SIZE }, signal)
       .then((r) => {
+        messageIdsRef.current = new Set(r.messages.map((m) => m.id))
         setMessages(r.messages)
         setTotal(r.total)
       })
@@ -145,6 +148,7 @@ export function Sidebar() {
         (signal) => getMessages({ start, limit: PAGE_SIZE }, signal),
         (r) => {
           setTotal(r.total)
+          r.messages.forEach((m) => messageIdsRef.current.add(m.id))
           setMessages((prev) => appendUnique(prev, r.messages))
         },
       )
@@ -157,23 +161,35 @@ export function Sidebar() {
       loadMore()
   }
 
-  // Live updates: prepend incoming messages, drop deleted ones. The Set
-  // guard de-duplicates against an in-flight refetch returning the same row.
+  const restartActiveSearch = useCallback(() => {
+    loadMoreRef.current?.abort()
+    setSearchResults([])
+    setSearchTotal(0)
+    setSearching(true)
+    setSearchRevision((revision) => revision + 1)
+  }, [])
+
   const onMessageCreated = useCallback((m: MessageSummary) => {
-    // The sandbox grew server-side whether or not the row is a dupe of
-    // one an in-flight refetch already returned, so bump the paging
-    // total unconditionally; the next page response resyncs any drift.
+    if (messageIdsRef.current.has(m.id)) return
+    messageIdsRef.current.add(m.id)
     setTotal((t) => t + 1)
     setMessages((prev) => {
       if (!prev) return [m]
       if (prev.some((x) => x.id === m.id)) return prev
       return [m, ...prev]
     })
-  }, [])
+
+    if (searchResults !== null) restartActiveSearch()
+  }, [restartActiveSearch, searchResults])
   const onMessageDestroyed = useCallback((id: string) => {
-    setTotal((t) => Math.max(0, t - 1))
+    loadMoreRef.current?.abort()
+
+    const wasLoaded = messageIdsRef.current.delete(id)
+    if (wasLoaded) setTotal((t) => Math.max(0, t - 1))
     setMessages((prev) => (prev ? prev.filter((m) => m.id !== id) : prev))
-  }, [])
+
+    if (searchResults !== null) restartActiveSearch()
+  }, [restartActiveSearch, searchResults])
   useMessagesChannel({
     onCreated: onMessageCreated,
     onDestroyed: onMessageDestroyed,
@@ -243,6 +259,8 @@ export function Sidebar() {
       setSearchTotal(0)
       setSearching(false)
     } else {
+      setSearchResults([])
+      setSearchTotal(0)
       setSearching(true)
     }
   }
@@ -274,7 +292,7 @@ export function Sidebar() {
       // the old result set must not append into the new one.
       loadMoreRef.current?.abort()
     }
-  }, [query])
+  }, [query, searchRevision])
 
   return (
     <aside className="flex min-h-0 flex-col border-r border-border-base">
@@ -295,7 +313,7 @@ export function Sidebar() {
 
       {confirmDeleteAll && (
         <DeleteAllPrompt
-          count={messages?.length ?? 0}
+          count={total}
           busy={busy}
           onConfirm={onConfirmCleanAll}
           onCancel={() => setConfirmDeleteAll(false)}

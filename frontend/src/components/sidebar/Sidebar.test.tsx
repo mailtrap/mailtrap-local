@@ -250,6 +250,29 @@ describe('Sidebar', () => {
     await waitFor(() => expect(deleteAllMessages).toHaveBeenCalled())
   })
 
+  it('does not decrement the total for a destroyed row that was not loaded', async () => {
+    getMessages.mockResolvedValue({
+      ...emptyResp,
+      total: 3,
+      count: 2,
+      messages: [
+        makeSummary({ id: 'a', subject: 'Loaded A' }),
+        makeSummary({ id: 'b', subject: 'Loaded B' }),
+      ],
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<Sidebar />)
+    await screen.findByText('Loaded A')
+
+    act(() => {
+      cableSub?.({ type: 'destroyed', id: 'not-loaded' })
+    })
+    await user.click(screen.getByTitle('Delete all messages'))
+
+    expect(screen.getByText(/Delete all 3 messages\?/i)).toBeInTheDocument()
+  })
+
   it('Mark-all-read sends the markAllRead request', async () => {
     getMessages.mockResolvedValue({
       ...emptyResp,
@@ -300,6 +323,34 @@ describe('Sidebar', () => {
     })
     expect(screen.getByText('Original')).toBeInTheDocument()
     expect(screen.queryByText('Should be ignored')).not.toBeInTheDocument()
+
+    fireEvent.scroll(scrollPane())
+    await act(async () => {})
+    expect(getMessages).toHaveBeenCalledOnce()
+  })
+
+  it('clears previous results as soon as the search query changes', async () => {
+    getMessages.mockResolvedValue(emptyResp)
+    searchMessages.mockResolvedValueOnce({
+      ...emptyResp,
+      total: 1,
+      count: 1,
+      messages: [makeSummary({ id: 'old', subject: 'Old search result' })],
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<Sidebar />)
+    await screen.findByText(/No messages yet/i)
+
+    const input = screen.getByPlaceholderText('Search…')
+    await user.type(input, 'foo')
+    expect(
+      await screen.findByText('Old search result', undefined, { timeout: 1500 }),
+    ).toBeInTheDocument()
+
+    await user.type(input, 'b')
+
+    expect(screen.queryByText('Old search result')).not.toBeInTheDocument()
   })
 
   it('fetches the next page and appends it when scrolled near the bottom', async () => {
@@ -476,6 +527,61 @@ describe('Sidebar', () => {
     expect(messageRows()).toHaveLength(4)
   })
 
+  it('restarts from the shortened offset when a loaded row is destroyed mid-page', async () => {
+    getMessages.mockResolvedValue({
+      ...emptyResp,
+      total: 4,
+      count: 2,
+      messages: [
+        makeSummary({ id: 'a', subject: 'Loaded A' }),
+        makeSummary({ id: 'b', subject: 'Loaded B' }),
+      ],
+    })
+    renderWithProviders(<Sidebar />)
+    await screen.findByText('Loaded A')
+
+    let pageSignal: AbortSignal | undefined
+    getMessages.mockImplementationOnce(
+      (_params: unknown, signal?: AbortSignal) =>
+        new Promise<MessagesResponse>((_resolve, reject) => {
+          pageSignal = signal
+          signal?.addEventListener('abort', () => {
+            const error = new Error('Aborted')
+            error.name = 'AbortError'
+            reject(error)
+          })
+        }),
+    )
+    fireEvent.scroll(scrollPane())
+    await screen.findByRole('status')
+
+    act(() => {
+      cableSub?.({ type: 'destroyed', id: 'b' })
+    })
+    await waitFor(() => expect(pageSignal?.aborted).toBe(true))
+    await waitFor(() =>
+      expect(screen.queryByRole('status')).not.toBeInTheDocument(),
+    )
+
+    getMessages.mockResolvedValueOnce({
+      ...emptyResp,
+      total: 3,
+      count: 2,
+      start: 1,
+      messages: [
+        makeSummary({ id: 'c', subject: 'Shifted C' }),
+        makeSummary({ id: 'd', subject: 'Tail D' }),
+      ],
+    })
+    fireEvent.scroll(scrollPane())
+
+    expect(await screen.findByText('Shifted C')).toBeInTheDocument()
+    expect(screen.getByText('Tail D')).toBeInTheDocument()
+    expect(screen.queryByText('Loaded B')).not.toBeInTheDocument()
+    expect(messageRows()).toHaveLength(3)
+    expect(getMessages.mock.calls[2][0]).toMatchObject({ start: 1 })
+  })
+
   it('paginates search results with a start offset', async () => {
     getMessages.mockResolvedValue(emptyResp)
     searchMessages.mockResolvedValueOnce({
@@ -514,6 +620,49 @@ describe('Sidebar', () => {
       start: 2,
       limit: 100,
     })
+  })
+
+  it('restarts active search from page one after a live mailbox change', async () => {
+    getMessages.mockResolvedValue(emptyResp)
+    searchMessages.mockResolvedValueOnce({
+      ...emptyResp,
+      total: 2,
+      count: 1,
+      messages: [makeSummary({ id: 'old', subject: 'Stale search hit' })],
+    })
+
+    const user = userEvent.setup()
+    renderWithProviders(<Sidebar />)
+    await screen.findByText(/No messages yet/i)
+
+    await user.type(screen.getByPlaceholderText('Search…'), 'welcome')
+    expect(
+      await screen.findByText('Stale search hit', undefined, { timeout: 1500 }),
+    ).toBeInTheDocument()
+
+    searchMessages.mockResolvedValueOnce({
+      ...emptyResp,
+      total: 1,
+      count: 1,
+      messages: [makeSummary({ id: 'new', subject: 'Fresh search hit' })],
+    })
+    act(() => {
+      cableSub?.({
+        type: 'created',
+        message: makeSummary({ id: 'new', subject: 'Fresh search hit' }),
+      })
+    })
+
+    expect(screen.queryByText('Stale search hit')).not.toBeInTheDocument()
+    expect(
+      await screen.findByText('Fresh search hit', undefined, { timeout: 1500 }),
+    ).toBeInTheDocument()
+    expect(searchMessages).toHaveBeenCalledTimes(2)
+    expect(searchMessages.mock.calls[1][0]).toMatchObject({
+      query: 'welcome',
+      limit: 100,
+    })
+    expect(searchMessages.mock.calls[1][0]).not.toHaveProperty('start')
   })
 
   it('discards a stale search page when the query changes mid-flight', async () => {
