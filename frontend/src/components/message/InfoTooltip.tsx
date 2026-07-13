@@ -2,8 +2,9 @@ import * as Tooltip from '@radix-ui/react-tooltip'
 import { useId, type ReactNode } from 'react'
 
 const triggerCss = [
-  'inline-flex items-center border-0 bg-transparent p-0 cursor-help text-fg-muted',
-  'transition-colors hover:text-fg focus:outline-none focus-visible:text-fg',
+  'inline-flex items-center border-0 bg-transparent p-0 cursor-help text-fg-muted outline-none',
+  'transition-colors hover:text-fg focus-visible:text-fg',
+  'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ring',
 ].join(' ')
 
 const contentCss = [

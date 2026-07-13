@@ -20,6 +20,26 @@ describe('InfoTooltip', () => {
     ).toHaveAccessibleDescription('Header details')
   })
 
+  it('uses the shared visible keyboard focus indicator', () => {
+    render(
+      <InfoTooltip
+        label="About email headers"
+        description="Header details"
+        content="Header details"
+      >
+        <span aria-hidden="true">?</span>
+      </InfoTooltip>,
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'About email headers' }),
+    ).toHaveClass(
+      'focus-visible:outline-2',
+      'focus-visible:outline-offset-1',
+      'focus-visible:outline-accent-ring',
+    )
+  })
+
   it('portals its content and closes on Escape without bubbling or moving focus', async () => {
     const user = userEvent.setup()
     let escapeCount = 0
