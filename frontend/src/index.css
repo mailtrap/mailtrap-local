@@ -66,13 +66,7 @@ h3 {
   line-height: 1.21;
 }
 
-/* ---------------------------------------------------------------------
-   Scrollbars — falcon-style: a visible gray thumb floating on the pane
-   background, no track box. `scrollbar-color` covers Firefox and
-   Chromium 121+; the `::-webkit-scrollbar` rules cover Safari (Chromium
-   ignores them once `scrollbar-color` is set, so the thumb color below
-   must match the resting webkit thumb).
-   --------------------------------------------------------------------- */
+/* Minimal, visible scrollbars across supported browsers. */
 * {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--color-fg-muted) 65%, transparent)

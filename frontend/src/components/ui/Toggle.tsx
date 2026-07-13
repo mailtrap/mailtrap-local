@@ -6,10 +6,7 @@ import { forwardRef, type InputHTMLAttributes } from 'react'
  * track + thumb via ::after. Click anywhere on the `<label>` wrapper
  * toggles state.
  *
- * 32×18 track with a 14 thumb — fits inline with 13px dialog labels.
- * All sizes are arbitrary px values, not rem-based spacing utilities:
- * the app root sets `font-size: 14px`, which shrinks rem utilities to
- * 87.5% and throws the thumb off-center inside the px-sized track.
+ * 32×18 track with a 14px thumb — fits inline with 13px dialog labels.
  */
 interface Props
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'children'> {
