@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { HelpIcon, SuccessFilledIcon } from '../ui/icons'
 import type { HeadersMap, Message } from '../../api/messages'
 import { Panel } from '../ui/Panel'
+import { InfoTooltip } from './InfoTooltip'
 
 // Two-column key/value table with zebra striping. Same shell wherever
 // it's used; per-cell classes live alongside the cell elements below.
@@ -39,10 +40,9 @@ const techTableCopyCellCss = [
   'w-[72px] text-right',
 ].join(' ')
 
-const techHeadingCss =
-  'mb-1.5 m-0 inline-flex items-center gap-1.5 text-[15px] font-semibold text-fg'
+const techHeadingRowCss = 'mb-1.5 flex items-center gap-1.5'
 
-const techHelpIconCss = 'cursor-help text-fg-muted'
+const techHeadingCss = 'm-0 text-[15px] font-semibold text-fg'
 
 const techBlurb = 'mb-3.5 m-0 text-[13px] leading-[1.6] text-fg'
 
@@ -56,6 +56,20 @@ const infoRowCss = [
   'flex items-center justify-center gap-1.5 border-b border-border-base',
   'px-3 py-2.5 text-[13px] text-fg',
 ].join(' ')
+
+const smtpTooltipMail =
+  'Each SMTP transaction includes three commands: MAIL, RCPT, and DATA. ' +
+  'MAIL FROM is the originating email address, also used as a bounce address.'
+
+const smtpTooltipRcpt =
+  'RCPT TO shows all the recipients, including Cc and Bcc. The Bcc value is ' +
+  'calculated as the difference between the recipients found in RCPT TO and the ' +
+  'recipients found in email headers.'
+
+const emailHeadersTooltip =
+  'Mailtrap tracks all headers found in the DATA part of your SMTP transaction. ' +
+  'Besides the common To, From, Date, and Subject, email delivery services may ' +
+  'allow using custom headers, e.g. X-Category or X-Tracking.'
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
@@ -96,14 +110,21 @@ export function TechInfo({
   return (
     <>
       <Panel className="mb-4 px-6 py-5">
-        <h3 className={techHeadingCss}>
-          SMTP Transaction Info
-          <HelpIcon
-            className={techHelpIconCss}
-            size={14}
-            title="What is this?"
-          />
-        </h3>
+        <div className={techHeadingRowCss}>
+          <h3 className={techHeadingCss}>SMTP Transaction Info</h3>
+          <InfoTooltip
+            label="About SMTP transaction info"
+            description={`${smtpTooltipMail} ${smtpTooltipRcpt}`}
+            content={
+              <>
+                <p className="m-0">{smtpTooltipMail}</p>
+                <p className="mt-2 mb-0">{smtpTooltipRcpt}</p>
+              </>
+            }
+          >
+            <HelpIcon size={14} />
+          </InfoTooltip>
+        </div>
         <p className={techBlurb}>
           This information is sent with the SMTP transaction itself and is not
           included in the email headers or body. It can be crucial for SMTP
@@ -132,14 +153,16 @@ export function TechInfo({
       </Panel>
 
       <Panel className="mb-4 px-6 py-5">
-        <h3 className={techHeadingCss}>
-          Email Headers
-          <HelpIcon
-            className={techHelpIconCss}
-            size={14}
-            title="What is this?"
-          />
-        </h3>
+        <div className={techHeadingRowCss}>
+          <h3 className={techHeadingCss}>Email Headers</h3>
+          <InfoTooltip
+            label="About email headers"
+            description={emailHeadersTooltip}
+            content={emailHeadersTooltip}
+          >
+            <HelpIcon size={14} />
+          </InfoTooltip>
+        </div>
         <p className={techBlurb}>
           Original values of the headers. When sending a real email, headers
           can be altered by an email service provider or a mail transfer

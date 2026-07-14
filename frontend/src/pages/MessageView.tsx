@@ -18,17 +18,19 @@ import { sendMessageToCloud } from '../api/cloud'
 import { releaseMessage } from '../api/relay'
 import { useCloudConnection } from '../hooks/useCloudConnection'
 import { useRelayConnection } from '../hooks/useRelayConnection'
+import { useMessagesChannel } from '../hooks/useMessagesChannel'
 import { TechInfo } from '../components/message/TechInfo'
 import { HtmlCheck } from '../components/message/HtmlCheck'
 import { HtmlSource } from '../components/message/HtmlSource'
 import { MessageHeader } from '../components/message/MessageHeader'
 import { MessagePreview } from '../components/message/MessagePreview'
-import { Attachments } from '../components/message/Attachments'
 import { Strip } from '../components/ui/Strip'
+import { Button } from '../components/ui/Button'
+import { EmptyCard } from '../components/ui/EmptyCard'
 import { CodePane } from '../components/message/CodePane'
 import { TabRoot, TabList, Tab, TabPanel } from '../components/message/MessageTabs'
 import { openInNewTab } from '../lib/openInNewTab'
-import { extractApiError, isAbortError } from '../api/client'
+import { extractApiError, isAbortError, isNotFoundError } from '../api/client'
 
 export function MessageView() {
   const { id } = useParams<{ id: string }>()
@@ -65,6 +67,10 @@ export function MessageView() {
     setEnabledFamilies(init)
   }
   const [error, setError] = useState<string | null>(null)
+  // The open message no longer exists — a 404 on load, or a live
+  // `destroyed` broadcast (deleted by another client, the API, or
+  // retention eviction). Rendered as a friendly empty state, not an error.
+  const [deleted, setDeleted] = useState(false)
   const [activeTab, setActiveTab] = useState<string | undefined>(undefined)
   const [busy, setBusy] = useState(false)
   const [cloudSent, setCloudSent] = useState(false)
@@ -81,6 +87,7 @@ export function MessageView() {
     setLastId(id)
     setMsg(null)
     setError(null)
+    setDeleted(false)
     setActiveTab(undefined)
     setCloudSent(false)
     setActionError(null)
@@ -120,11 +127,22 @@ export function MessageView() {
         }
       })
       .catch((e) => {
-        if (!isAbortError(e)) setError(String(e))
+        if (isAbortError(e)) return
+        if (isNotFoundError(e)) setDeleted(true)
+        else setError(extractApiError(e))
       })
 
     return () => controller.abort()
   }, [id])
+
+  // Live deletion: if the open message is destroyed elsewhere (another
+  // client, the API, retention), swap to the deleted empty state instead
+  // of leaving a stale view that 404s on the next action.
+  useMessagesChannel({
+    onDestroyed: (destroyedId) => {
+      if (destroyedId === id) setDeleted(true)
+    },
+  })
 
   // Inline images arrive as MIME parts referenced by `cid:` URLs the
   // browser can't resolve — rewrite them to backend part URLs for the
@@ -137,6 +155,7 @@ export function MessageView() {
         : '',
     [msg],
   )
+
   // Auto-dismiss the success strip after a few seconds.
   useEffect(() => {
     if (!actionSuccess) return
@@ -198,7 +217,22 @@ export function MessageView() {
     window.location.assign(rawMessageUrl(id, true))
   }
 
-  if (error) return <p className="text-danger">Error: {error}</p>
+  if (deleted)
+    return (
+      <EmptyCard>
+        <p>This message was deleted or is no longer available.</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-4"
+          onClick={() => navigate('/', { replace: true })}
+        >
+          Back to inbox
+        </Button>
+      </EmptyCard>
+    )
+  if (error)
+    return <p className="text-danger">Failed to load this message: {error}</p>
   if (!msg) return <p className="text-fg-muted">Loading…</p>
 
   const noCount =
@@ -248,8 +282,6 @@ export function MessageView() {
           {actionSuccess}
         </Strip>
       )}
-
-      <Attachments messageId={msg.id} attachments={msg.attachments} />
 
       <TabRoot
         value={activeTab ?? (msg.html ? 'html' : 'text')}

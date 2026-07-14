@@ -6,6 +6,8 @@ import {
   configBanner,
   configBannerCode,
   content,
+  contentBody,
+  contentHeader,
   dialogLead,
   dialogTitle,
   field,
@@ -42,11 +44,15 @@ export function ConnectionDialogShell({
         <Dialog.Content className={content} aria-describedby={undefined}>
           {open && (
             <>
-              <Dialog.Title asChild>
-                <h2 className={dialogTitle}>{title}</h2>
-              </Dialog.Title>
-              <p className={dialogLead}>{lead}</p>
-              {children}
+              <div className={contentHeader}>
+                <Dialog.Title asChild>
+                  <h2 className={dialogTitle}>{title}</h2>
+                </Dialog.Title>
+              </div>
+              <div className={contentBody}>
+                <p className={dialogLead}>{lead}</p>
+                {children}
+              </div>
             </>
           )}
         </Dialog.Content>
@@ -184,4 +190,3 @@ export function DialogButton({
     </button>
   )
 }
-

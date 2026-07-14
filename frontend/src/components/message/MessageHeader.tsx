@@ -10,6 +10,7 @@ import {
   SuccessFilledIcon,
 } from '../ui/icons'
 import { formatAddr, formatDate, formatSize } from '../../lib/messageFormatters'
+import { Attachments } from './Attachments'
 import type { Message } from '../../api/messages'
 import type { CloudConnection } from '../../api/cloud'
 import type { RelayConnection } from '../../api/relay'
@@ -17,7 +18,7 @@ import { CategoryBadge } from '../ui/CategoryBadge'
 
 // 2-col / 3-row grid:
 //   row 1: subject  |  actions
-//   row 2: meta     |  date + size + category
+//   row 2: meta     |  date + size + attachments + category
 //   row 3: "Show Headers" link
 const headerGrid =
   'grid grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 items-start pb-4 border-b border-border-base'
@@ -280,6 +281,7 @@ export function MessageHeader({
         <div>
           {formatDate(msg.date)}, {formatSize(msg.size)}
         </div>
+        <Attachments messageId={msg.id} attachments={msg.attachments} />
         {msg.tags[0] && <CategoryBadge label={msg.tags[0]} />}
       </div>
       <button
