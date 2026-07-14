@@ -16,7 +16,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '../test/render'
-import { makeMessage } from '../test/fixtures'
+import { makeAttachment, makeMessage } from '../test/fixtures'
 
 // ---------------------------------------------------------------------
 // Mocks for everything MessageView reaches for.
@@ -189,6 +189,23 @@ describe('MessageView', () => {
     expect(screen.getByText('plain-text body line')).toBeInTheDocument()
   })
 
+  it('keeps the message view open when Escape closes attachments', async () => {
+    const user = userEvent.setup()
+    mountWithMessage({
+      attachments: [makeAttachment({ file_name: 'report.pdf' })],
+    })
+    await screen.findByRole('heading', { name: 'Hello' })
+
+    const trigger = screen.getByRole('button', { name: 'Attachments (1)' })
+    await user.click(trigger)
+
+    screen.getByRole('link', { name: /report\.pdf/i }).focus()
+    await user.keyboard('{Escape}')
+
+    expect(screen.getByRole('heading', { name: 'Hello' })).toBeInTheDocument()
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+  })
   it('renders the no-HTML placeholder in HTML Check when message has no html', async () => {
     const user = userEvent.setup()
     mountWithMessage({ html: '' })

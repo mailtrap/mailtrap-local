@@ -22,7 +22,6 @@ import { HtmlCheck } from '../components/message/HtmlCheck'
 import { HtmlSource } from '../components/message/HtmlSource'
 import { MessageHeader } from '../components/message/MessageHeader'
 import { MessagePreview } from '../components/message/MessagePreview'
-import { Attachments } from '../components/message/Attachments'
 import { Strip } from '../components/ui/Strip'
 import { CodePane } from '../components/message/CodePane'
 import { TabRoot, TabList, Tab, TabPanel } from '../components/message/MessageTabs'
@@ -236,8 +235,6 @@ export function MessageView() {
           {actionSuccess}
         </Strip>
       )}
-
-      <Attachments messageId={msg.id} attachments={msg.attachments} />
 
       <TabRoot
         value={activeTab ?? (msg.html ? 'html' : 'text')}
