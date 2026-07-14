@@ -11,12 +11,16 @@
  *     surface their intended inline UI when clicked
  *   - delete-confirm hits deleteMessage and navigates away
  *   - tab switching makes the right pane content visible
+ *   - a 404 load / live 'destroyed' frame renders the friendly
+ *     deleted state (not the raw error) with a way back to the inbox
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { AxiosError, type AxiosResponse } from 'axios'
 import { renderWithProviders } from '../test/render'
 import { makeAttachment, makeMessage } from '../test/fixtures'
+import type { CableMessage } from '../lib/cable'
 
 // ---------------------------------------------------------------------
 // Mocks for everything MessageView reaches for.
@@ -68,17 +72,59 @@ vi.mock('../api/webhook', async () => ({
   testWebhookConnection: vi.fn(),
 }))
 
+// cable: capture the subscriber so tests can drive live updates.
+let cableSub: ((msg: CableMessage) => void) | null = null
+vi.mock('../lib/cable', () => ({
+  subscribe: (cb: (msg: CableMessage) => void) => {
+    cableSub = cb
+    return () => {
+      cableSub = null
+    }
+  },
+  subscribeReconnect: () => () => {},
+}))
+
 // SUT — imported AFTER the mocks.
 import { MessageView } from './MessageView'
 
 beforeEach(() => {
   vi.clearAllMocks()
+  cableSub = null
   getMessage.mockReset()
   getRawMessage.mockReset()
   getHeaders.mockReset()
   getHtmlCheck.mockReset()
   deleteMessage.mockReset()
 })
+
+/** Minimal AxiosError with a real HTTP response, as `api/client` sees it. */
+function makeHttpError(status: number, body?: { error?: string }) {
+  const response = {
+    status,
+    statusText: '',
+    headers: {},
+    config: {},
+    data: body,
+  } as AxiosResponse
+  return new AxiosError(
+    `Request failed with status code ${status}`,
+    'ERR_BAD_REQUEST',
+    undefined,
+    undefined,
+    response,
+  )
+}
+
+function mountWithFetchError(status: number, body?: { error?: string }) {
+  const err = makeHttpError(status, body)
+  getMessage.mockRejectedValue(err)
+  getRawMessage.mockRejectedValue(err)
+  getHeaders.mockRejectedValue(err)
+  return renderWithProviders(<MessageView />, {
+    initialEntries: ['/message/gone'],
+    routePath: '/message/:id',
+  })
+}
 
 function mountWithMessage(over = {}) {
   const m = makeMessage(over)
@@ -270,5 +316,64 @@ describe('MessageView', () => {
       screen.getByPlaceholderText('alice@example.com, bob@example.com'),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument()
+  })
+
+  it('shows the friendly deleted state when the message fetch 404s', async () => {
+    mountWithFetchError(404, { error: 'message not found' })
+
+    expect(
+      await screen.findByText(/This message was deleted/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Back to inbox' }),
+    ).toBeInTheDocument()
+    // The raw axios error string must not leak into the UI.
+    expect(screen.queryByText(/AxiosError/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/status code 404/)).not.toBeInTheDocument()
+  })
+
+  it("'Back to inbox' navigates away from the deleted message", async () => {
+    const user = userEvent.setup()
+    mountWithFetchError(404)
+    await screen.findByText(/This message was deleted/i)
+
+    await user.click(screen.getByRole('button', { name: 'Back to inbox' }))
+
+    // navigate('/') leaves the /message/:id route, unmounting the view.
+    expect(
+      screen.queryByText(/This message was deleted/i),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows readable copy (not the raw AxiosError) for non-404 failures', async () => {
+    mountWithFetchError(500, { error: 'storage unavailable' })
+
+    expect(
+      await screen.findByText(
+        /Failed to load this message: storage unavailable/,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/AxiosError/)).not.toBeInTheDocument()
+    // A non-404 failure is an error, not the deleted empty state.
+    expect(
+      screen.queryByText(/This message was deleted/i),
+    ).not.toBeInTheDocument()
+  })
+
+  it("swaps to the deleted state when a live 'destroyed' frame targets the open message", async () => {
+    mountWithMessage({ id: 'live-gone' })
+    await screen.findByRole('heading')
+
+    // A frame for some other message leaves the view alone.
+    act(() => {
+      cableSub?.({ type: 'destroyed', id: 'other-id' })
+    })
+    expect(screen.getByRole('heading')).toBeInTheDocument()
+
+    act(() => {
+      cableSub?.({ type: 'destroyed', id: 'live-gone' })
+    })
+    expect(screen.getByText(/This message was deleted/i)).toBeInTheDocument()
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument()
   })
 })

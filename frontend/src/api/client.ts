@@ -29,6 +29,16 @@ export function isAbortError(e: unknown): boolean {
 }
 
 /**
+ * Tests whether `e` is an HTTP 404 from the backend — the resource is
+ * gone (deleted by another client, the API, or retention eviction), not
+ * a transport or server failure. UI code uses this to render a "was
+ * deleted" empty state instead of a generic error.
+ */
+export function isNotFoundError(e: unknown): boolean {
+  return axios.isAxiosError(e) && e.response?.status === 404
+}
+
+/**
  * Pulls a human-readable message out of whatever shape a caught error has.
  * Prefers the backend's `{error: "..."}` JSON body when present, falls back
  * to the Error#message, and finally to a String coerce.
