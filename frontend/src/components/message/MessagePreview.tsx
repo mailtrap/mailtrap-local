@@ -21,7 +21,7 @@ const DEVICE_SIZE: Record<Device, { width: string; height: string }> = {
 
 const deviceBar = 'relative flex justify-center gap-1 pt-2 pb-3'
 
-const popoutPosition = 'absolute top-0 right-0'
+const popoutPosition = '!absolute right-0 top-1/2 -translate-y-1/2'
 
 // Device-frame chrome around the HTML preview iframe. The frame
 // reads its own `data-device` so device-driven styling lives on the

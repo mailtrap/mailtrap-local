@@ -6,7 +6,7 @@ import { forwardRef, type InputHTMLAttributes } from 'react'
  * track + thumb via ::after. Click anywhere on the `<label>` wrapper
  * toggles state.
  *
- * 32×18 track with a 14 thumb — fits inline with 13px dialog labels.
+ * 32×18 track with a 14px thumb — fits inline with 13px dialog labels.
  */
 interface Props
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'children'> {
@@ -42,7 +42,7 @@ export const Toggle = forwardRef<HTMLInputElement, Props>(function Toggle(
         aria-hidden="true"
         className={[
           // Track
-          'relative inline-block h-[18px] w-8 shrink-0 rounded-full border bg-surface-base',
+          'relative inline-block h-[18px] w-[32px] shrink-0 rounded-full border bg-surface-base',
           'border-border-base transition-[background-color,border-color] duration-150',
           // Track on label hover (group)
           'group-hover:border-fg-muted',
@@ -52,7 +52,7 @@ export const Toggle = forwardRef<HTMLInputElement, Props>(function Toggle(
           // Focus ring (bubbles up from the hidden input)
           'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-ring',
           // Thumb (::after) — idle position + colour
-          "after:absolute after:top-[1px] after:left-[2px] after:h-3.5 after:w-3.5 after:rounded-full after:bg-fg-icon after:transition-[left,background-color] after:duration-[180ms] after:content-['']",
+          "after:absolute after:top-[1px] after:left-[2px] after:h-[14px] after:w-[14px] after:rounded-full after:bg-fg-icon after:transition-[left,background-color] after:duration-[180ms] after:content-['']",
           // Thumb when checked
           'peer-checked:after:left-[14px] peer-checked:after:bg-fg',
         ].join(' ')}
