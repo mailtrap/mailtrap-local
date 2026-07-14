@@ -252,6 +252,25 @@ describe('MessageView', () => {
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
     expect(trigger).toHaveFocus()
   })
+
+  it('rewrites cid: inline-image refs to part URLs in the HTML preview', async () => {
+    mountWithMessage({
+      html: '<img src="cid:logo@example.test">',
+      inline: [
+        makeAttachment({ part_id: '2', content_id: 'logo@example.test' }),
+      ],
+    })
+    await screen.findByRole('heading')
+
+    // The preview iframe (default tab for an HTML message) receives the
+    // rewritten markup — cid: is gone, the backend part URL is in.
+    const iframe = screen.getByTitle('Message HTML')
+    expect(iframe.getAttribute('srcdoc')).toContain(
+      '/api/v1/message/msg-1/part/2',
+    )
+    expect(iframe.getAttribute('srcdoc')).not.toContain('cid:')
+  })
+
   it('renders the no-HTML placeholder in HTML Check when message has no html', async () => {
     const user = userEvent.setup()
     mountWithMessage({ html: '' })

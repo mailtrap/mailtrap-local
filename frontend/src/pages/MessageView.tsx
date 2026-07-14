@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   getMessage,
@@ -13,6 +13,7 @@ import {
   type Message,
 } from '../api/messages'
 import { noSupportIssueCount } from '../lib/htmlCheckStats'
+import { resolveCidUrls } from '../lib/inlineImages'
 import { sendMessageToCloud } from '../api/cloud'
 import { releaseMessage } from '../api/relay'
 import { useCloudConnection } from '../hooks/useCloudConnection'
@@ -142,6 +143,18 @@ export function MessageView() {
       if (destroyedId === id) setDeleted(true)
     },
   })
+
+  // Inline images arrive as MIME parts referenced by `cid:` URLs the
+  // browser can't resolve — rewrite them to backend part URLs for the
+  // preview iframe and its popout. The HTML Source tab intentionally
+  // keeps the original markup.
+  const previewHtml = useMemo(
+    () =>
+      msg?.html
+        ? resolveCidUrls(msg.html, msg.id, [...msg.inline, ...msg.attachments])
+        : '',
+    [msg],
+  )
 
   // Auto-dismiss the success strip after a few seconds.
   useEffect(() => {
@@ -289,7 +302,7 @@ export function MessageView() {
 
         {msg.html && (
           <TabPanel value="html">
-            <MessagePreview html={msg.html} />
+            <MessagePreview html={previewHtml} />
           </TabPanel>
         )}
 
