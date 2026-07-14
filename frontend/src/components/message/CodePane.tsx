@@ -23,16 +23,13 @@ export function CodePane({
   fallback,
 }: Props) {
   return (
-    <div className="relative">
+    <div>
       {onPopout && content && (
-        <IconButton
-          variant="toolbar"
-          className="absolute top-0 right-0"
-          title={popoutTitle}
-          onClick={onPopout}
-        >
-          <ExternalLinkIcon size={14} />
-        </IconButton>
+        <div className="flex justify-end pb-2">
+          <IconButton variant="toolbar" title={popoutTitle} onClick={onPopout}>
+            <ExternalLinkIcon size={14} />
+          </IconButton>
+        </div>
       )}
       <pre className={preStyle}>{content || fallback}</pre>
     </div>

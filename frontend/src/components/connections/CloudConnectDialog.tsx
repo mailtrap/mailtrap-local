@@ -182,12 +182,13 @@ function Body({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
         {!isLocked('sandbox_id') &&
           (sandboxUrl ? (
             <a
-              className={`${fieldHint} ${fieldHintLink}`}
+              className={`${fieldHint} ${fieldHintLink} inline-flex max-w-full items-center gap-1 self-start`}
               href={sandboxUrl}
               target="_blank"
               rel="noreferrer"
             >
-              {sandboxUrl} <ExternalLinkIcon size={11} />
+              <span className="truncate">{sandboxUrl}</span>
+              <ExternalLinkIcon size={11} className="shrink-0" />
             </a>
           ) : (
             <span className={fieldHint}>

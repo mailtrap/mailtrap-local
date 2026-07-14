@@ -4,8 +4,9 @@
  * AboutDialog). Keeps all dialogs visually locked to the same shell —
  * palette, spacing, and control styles flow from one place.
  *
- * Convention: shells (`content`, `field`, `lockedHint`, `configBanner`)
- * carry only the wrapper's own utilities. Per-element classes
+ * Convention: shells (`content`, `contentHeader`, `contentBody`,
+ * `field`, `lockedHint`, `configBanner`) carry only the wrapper's own
+ * utilities. Per-element classes
  * (`dialogTitle`, `dialogLead`, `fieldLabel`, `fieldInput`, etc.) are
  * applied directly to the elements they style at the dialog callsites.
  * This avoids parent-side `[&_…]:` selectors that route styles through
@@ -16,15 +17,17 @@ import { inputBase } from '../../lib/styles'
 
 export const overlay = 'fixed inset-0 z-50 bg-black/60'
 
-// Dialog shell — positioning + chrome only. Title/lead get their own
-// classes at the callsite.
+// Cap dialog height while keeping the title outside the scroll area.
 export const content = [
   'fixed top-1/2 left-1/2 z-[51] -translate-x-1/2 -translate-y-1/2',
-  'w-[460px] max-w-[calc(100vw-32px)]',
-  'rounded-[10px] border border-border-base bg-surface-raised text-fg',
-  'px-6 pt-[22px] pb-5',
+  'flex max-h-[85vh] w-[460px] max-w-[calc(100vw-32px)] flex-col',
+  'overflow-hidden rounded-[10px] border border-border-base bg-surface-raised text-fg',
   'shadow-[0_20px_60px_rgba(0,0,0,0.5)]',
 ].join(' ')
+
+export const contentHeader = 'shrink-0 px-6 pt-[22px]'
+
+export const contentBody = 'min-h-0 overflow-y-auto px-6'
 
 export const dialogTitle = 'm-0 mb-1.5 text-[17px] font-semibold'
 
@@ -80,7 +83,11 @@ export const errorBox = [
   'bg-danger-soft border-danger-border text-danger',
 ].join(' ')
 
-export const actions = 'mt-[18px] flex justify-end gap-2'
+// Keep actions reachable while the dialog body scrolls.
+export const actions = [
+  'sticky bottom-0 mt-2.5 flex justify-end gap-2',
+  'bg-surface-raised pt-2 pb-5',
+].join(' ')
 
 // Variant-driven button. Use as `className={btn}` and set
 // `data-variant="primary" | "outline" | "danger-text"` on the element

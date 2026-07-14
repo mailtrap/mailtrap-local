@@ -79,6 +79,7 @@ interface Props {
   messages: MessageSummary[] | null
   searchResults: MessageSummary[] | null
   searching: boolean
+  loadingMore: boolean
   query: string
   activeId: string | undefined
   error: string | null
@@ -88,6 +89,7 @@ export function MessageList({
   messages,
   searchResults,
   searching,
+  loadingMore,
   query,
   activeId,
   error,
@@ -121,12 +123,22 @@ export function MessageList({
   const displayed = searchResults ?? messages
   if (!displayed || displayed.length === 0) return null
   return (
-    <ul className="list-none p-0 m-0">
-      {displayed.map((m) => (
-        <li key={m.id} className="border-b border-border-base">
-          <MessageRow m={m} active={m.id === activeId} />
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="list-none p-0 m-0">
+        {displayed.map((m) => (
+          <li key={m.id} className="border-b border-border-base">
+            <MessageRow m={m} active={m.id === activeId} />
+          </li>
+        ))}
+      </ul>
+      {loadingMore && (
+        <div
+          role="status"
+          className="px-4 py-3 text-center text-[13px] text-fg-muted"
+        >
+          Loading more…
+        </div>
+      )}
+    </>
   )
 }

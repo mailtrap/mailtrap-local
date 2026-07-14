@@ -5,6 +5,7 @@
  */
 import type {
   Address,
+  AttachmentSummary,
   Message,
   MessageSummary,
 } from '../api/messages'
@@ -32,6 +33,20 @@ export function makeSummary(
     size: 1024,
     attachments: 0,
     snippet: 'first line preview',
+    ...over,
+  }
+}
+
+export function makeAttachment(
+  over: Partial<AttachmentSummary> = {},
+): AttachmentSummary {
+  return {
+    part_id: '2',
+    file_name: 'logo.png',
+    content_type: 'image/png',
+    content_id: 'logo@example.test',
+    size: 2048,
+    checksums: { md5: '', sha1: '', sha256: '' },
     ...over,
   }
 }
