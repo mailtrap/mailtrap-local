@@ -147,7 +147,7 @@ mailtrap-local/
 └── .github/workflows/       # ci.yml + release.yml
 ```
 
-The Homebrew formula lives in a separate tap repo (`mailtrap/homebrew-local`); `goreleaser` rewrites it on every tag.
+The Homebrew formula lives in a separate tap repo (`mailtrap/homebrew-local`); `goreleaser` opens a formula PR there on every tag.
 
 ## API
 

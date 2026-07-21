@@ -6,7 +6,7 @@ name: release
 #   2. Cross-compiles the binary for darwin/linux × amd64/arm64.
 #   3. Publishes a GitHub release with .tar.gz archives + checksums.
 #   4. Pushes images to ghcr.io/mailtrap/mailtrap-local + docker.io/mailtrap/mailtrap-local.
-#   5. Commits an updated Formula/mailtrap-local.rb to mailtrap/homebrew-local.
+#   5. Opens a PR in mailtrap/homebrew-local updating Formula/mailtrap-local.rb.
 
 on:
   push:
@@ -60,8 +60,6 @@ jobs:
           version: latest
           args: release --clean
         env:
-          # Default token covers GitHub Releases + content writes on
-          # *this* repo. The Homebrew tap lives in a sibling repo, which
-          # the default token cannot push to — hence HOMEBREW_TAP_TOKEN.
+          # Default token covers this repo. Tap updates need HOMEBREW_TAP_TOKEN.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
