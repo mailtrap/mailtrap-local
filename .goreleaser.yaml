@@ -2,12 +2,13 @@
 #
 # Channels published:
 #   1. GitHub Releases    — .tar.gz binary archives (darwin/linux × amd64/arm64)
-#   2. Homebrew tap       — Formula/mailtrap-local.rb in mailtrap/homebrew-local
+#   2. Homebrew tap       — PR updating Formula/mailtrap-local.rb in mailtrap/homebrew-local
 #   3. GHCR               — ghcr.io/mailtrap/mailtrap-local:{version,latest}
 #   4. Docker Hub         — mailtrap/mailtrap-local:{version,latest}
 #
 # The releaser needs:
-#   - GITHUB_TOKEN with write to mailtrap/mailtrap-local + mailtrap/homebrew-local
+#   - GITHUB_TOKEN with write to mailtrap/mailtrap-local
+#   - HOMEBREW_TAP_TOKEN for the homebrew-local formula PR
 #   - DOCKERHUB_USERNAME + DOCKERHUB_TOKEN for the docker push
 #   - ghcr.io auth via GITHUB_TOKEN (free, no extra secret)
 #
@@ -118,20 +119,20 @@ release:
     `xattr -d com.apple.quarantine ./mailtrap-local`
 
 # ---------------------------------------------------------------------
-# Homebrew tap — single formula, written into a separate repo on every
-# tagged release. Keeps the formula's `url` + `sha256` in sync with the
-# tarballs goreleaser just produced.
+# Homebrew tap — on every tagged release, open a PR that updates
+# Formula/mailtrap-local.rb in mailtrap/homebrew-local (main requires
+# PRs). Branch defaults to {{ .ProjectName }}-{{ .Version }} when
+# pull_request.enabled is true.
 # ---------------------------------------------------------------------
 brews:
   - name: mailtrap-local
     repository:
       owner: mailtrap
       name: homebrew-local
-      branch: main
-      # GH PAT with `contents: write` on mailtrap/homebrew-local. Must be
-      # different from GITHUB_TOKEN (which is scoped to the calling repo
-      # only and can't push cross-repo).
+      # Cross-repo token; GITHUB_TOKEN cannot write the tap.
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+      pull_request:
+        enabled: true
     directory: Formula
     homepage: "https://github.com/mailtrap/mailtrap-local"
     description: "Local email sandbox + catcher: SMTP + Web UI + JSON API in one binary"
