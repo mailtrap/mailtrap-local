@@ -1,0 +1,24 @@
+README.md
+  s_8ecad0435b7938::t_7c6b994e674a15 49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "11f102b49014faf11bc08b7660c6559f52977e5e",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_8ecad0435b7938": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "6cb70a1b-c9c2-4078-bb43-691938f1a16a",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
