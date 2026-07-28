@@ -46,6 +46,7 @@ Browse caught messages, preview rendered HTML, and inspect client compatibility 
 
 ```sh
 brew tap mailtrap/local
+brew trust --formula mailtrap/local/mailtrap-local
 brew install mailtrap-local
 brew services start mailtrap-local
 ```
