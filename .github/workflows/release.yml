@@ -5,7 +5,7 @@ name: release
 #      `before:` hooks in .goreleaser.yaml.
 #   2. Cross-compiles the binary for darwin/linux × amd64/arm64.
 #   3. Publishes a GitHub release with .tar.gz archives + checksums.
-#   4. Pushes images to ghcr.io/mailtrap/mailtrap-local + docker.io/mailtrap/mailtrap-local.
+#   4. Pushes images to docker.io/mailtrap/mailtrap-local + ghcr.io/mailtrap/mailtrap-local.
 #   5. Opens a PR in mailtrap/homebrew-local updating Formula/mailtrap-local.rb.
 
 on:

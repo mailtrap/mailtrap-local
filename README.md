@@ -59,10 +59,10 @@ Then open **http://127.0.0.1:3550** and point your app's SMTP client at **127.0.
 docker run --rm \
   -p 3535:3535 -p 3550:3550 \
   -v mailtrap-local:/var/lib/mailtrap-local \
-  ghcr.io/mailtrap/mailtrap-local:latest
+  mailtrap/mailtrap-local:latest
 ```
 
-The same image is mirrored to Docker Hub at `mailtrap/mailtrap-local:latest`.
+The same image is also published to GHCR at `ghcr.io/mailtrap/mailtrap-local:latest`.
 
 ### Prebuilt binary
 
@@ -144,7 +144,7 @@ mailtrap-local/
 ├── scripts/build.sh         # frontend build + go build → bin/mailtrap-local
 ├── Dockerfile               # multi-stage source build (Node → Go → distroless)
 ├── Dockerfile.goreleaser    # release-time wrapper (goreleaser-built binary → distroless)
-├── .goreleaser.yaml         # release pipeline: binaries + Homebrew tap + GHCR + Docker Hub
+├── .goreleaser.yaml         # release pipeline: binaries + Homebrew tap + Docker Hub + GHCR
 └── .github/workflows/       # ci.yml + release.yml
 ```
 
