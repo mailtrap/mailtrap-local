@@ -1,0 +1,12 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "ccd4fdf66bde7c02a97210d94f2c14cef4b80230",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
