@@ -144,7 +144,7 @@ mailtrap-local/
 ├── scripts/build.sh         # frontend build + go build → bin/mailtrap-local
 ├── Dockerfile               # multi-stage source build (Node → Go → distroless)
 ├── Dockerfile.goreleaser    # release-time wrapper (goreleaser-built binary → distroless)
-├── .goreleaser.yaml         # release pipeline: binaries + Homebrew tap + GHCR + Docker Hub
+├── .goreleaser.yaml         # release pipeline: binaries + Homebrew tap + Docker Hub + GHCR
 └── .github/workflows/       # ci.yml + release.yml
 ```
 

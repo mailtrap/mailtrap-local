@@ -110,7 +110,7 @@ jobs:
 
   docker:
     # Builds the image and boots it with its DEFAULT CMD — exactly what
-    # `docker run ghcr.io/mailtrap/mailtrap-local` does. The raw-binary
+    # `docker run mailtrap/mailtrap-local` does. The raw-binary
     # smoke above runs ./bin/mailtrap-local with explicit loopback flags,
     # so it can't catch image-level regressions: a broken CMD, or the
     # loopback guard rejecting the image's 0.0.0.0 bind (which once

@@ -40,7 +40,7 @@ Initial public release of Mailtrap Local — a local email sandbox and catcher f
 - Real-time inbox updates via WebSocket (`/cable`)
 - Sendmail-replacement mode (`sendmail`, `mailtrap-sendmail`, or `mailtrap-local sendmail`)
 - YAML config overlay for pinning connection settings
-- Distribution via Homebrew tap, Docker (GHCR + Docker Hub), and GitHub Releases binaries (macOS + Linux)
+- Distribution via Homebrew tap, Docker (Docker Hub + GHCR), and GitHub Releases binaries (macOS + Linux)
 
 [0.2.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.2.0
 [0.1.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.1.0
