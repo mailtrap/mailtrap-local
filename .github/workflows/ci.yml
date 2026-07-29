@@ -4,9 +4,10 @@ name: ci
 #   - go    — golangci-lint, go vet, go test (every package, race detector on)
 #   - frontend — TypeScript build + ESLint + vitest
 #   - build — `scripts/build.sh` smoke (proves the embed pipeline still works)
-#   - docker — builds the image and boots it on its DEFAULT CMD (proves
-#     `docker run <image>` works out of the box; the raw-binary smoke
-#     can't catch image-level regressions like a bad CMD)
+#   - docker — builds Dockerfile + Dockerfile.goreleaser and boots each
+#     on DEFAULT CMD (proves `docker run <image>` works out of the box;
+#     the raw-binary smoke can't catch image-level regressions like a
+#     bad CMD or a root-owned VOLUME mount point)
 #
 # OpenAPI drift is covered by the `go` job — internal/api/openapi_drift_test.go
 # walks the live router and fails if anything's out of sync with the spec.
@@ -109,20 +110,23 @@ jobs:
           kill "$PID"
 
   docker:
-    # Builds the image and boots it with its DEFAULT CMD — exactly what
-    # `docker run mailtrap/mailtrap-local` does. The raw-binary
+    # Builds both images and boots each with its DEFAULT CMD — exactly
+    # what `docker run mailtrap/mailtrap-local` does. The raw-binary
     # smoke above runs ./bin/mailtrap-local with explicit loopback flags,
-    # so it can't catch image-level regressions: a broken CMD, or the
+    # so it can't catch image-level regressions: a broken CMD, the
     # loopback guard rejecting the image's 0.0.0.0 bind (which once
-    # crash-looped the published image on boot).
+    # crash-looped the published image on boot), or a VOLUME mount
+    # point that is root-owned so nonroot cannot create db.sqlite3.
+    # Dockerfile.goreleaser is what goreleaser publishes; the source
+    # Dockerfile alone does not cover that path.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - name: docker build
+      - name: docker build (Dockerfile)
         run: docker build -t mailtrap-local:ci .
 
-      - name: boot on default CMD + curl
+      - name: boot Dockerfile image on default CMD + curl
         run: |
           docker run -d --name mtl -p 13550:3550 -p 13535:3535 mailtrap-local:ci
           ok=
@@ -138,3 +142,29 @@ jobs:
           fi
           curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
           docker rm -f mtl
+
+      # Reuse the binary from the source image so we do not rebuild the
+      # frontend/Go stages just to exercise the release Dockerfile.
+      - name: docker build (Dockerfile.goreleaser)
+        run: |
+          cid=$(docker create mailtrap-local:ci)
+          docker cp "$cid:/usr/local/bin/mailtrap-local" ./mailtrap-local
+          docker rm "$cid"
+          docker build -f Dockerfile.goreleaser -t mailtrap-local:ci-goreleaser .
+
+      - name: boot goreleaser image on default CMD + curl
+        run: |
+          docker run -d --name mtl-gr -p 13551:3550 -p 13536:3535 mailtrap-local:ci-goreleaser
+          ok=
+          for _ in $(seq 1 20); do
+            sleep 0.5
+            if curl -sf http://127.0.0.1:13551/api/v1/messages >/dev/null; then ok=1; break; fi
+          done
+          docker logs mtl-gr
+          if [ -z "$ok" ]; then
+            echo "::error::goreleaser image did not serve the API on its default CMD"
+            docker rm -f mtl-gr
+            exit 1
+          fi
+          curl -sf http://127.0.0.1:13551/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          docker rm -f mtl-gr

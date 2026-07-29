@@ -46,9 +46,9 @@ RUN CGO_ENABLED=0 GOOS=linux \
     go build -trimpath -ldflags="-s -w" \
     -o /out/mailtrap-local ./cmd/mailtrap-local
 
-# distroless lacks `mkdir`, so create the data dir owned by nonroot here
-# and copy it in. UID/GID 65532 = `nonroot` in distroless images.
-RUN mkdir -p /data-empty && chown -R 65532:65532 /data-empty
+# distroless lacks `mkdir`, so create an empty data dir here and copy
+# it in. COPY --chown=nonroot sets ownership (UID 65532).
+RUN mkdir -p /data-empty
 
 # ----- Stage 3: runtime ----------------------------------------------------
 FROM gcr.io/distroless/static-debian12:nonroot AS runtime
