@@ -1,0 +1,30 @@
+.github/workflows/ci.yml
+  s_a1b70a7f50020f::t_6dcbd591bf95b2 113-114,116,118-121,126,129,145-170
+  s_a1b70a7f50020f::t_8b014d3412867f 7-10
+Dockerfile.goreleaser
+  s_a1b70a7f50020f::t_2258074b6b3723 6,9,11,16
+  s_a1b70a7f50020f::t_046b08358e2df3 7-8,10
+Dockerfile
+  s_a1b70a7f50020f::t_eff8b3eed475af 49-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "c933c58f2f07eee5b73a7ca3e773413861b6c2bd",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_a1b70a7f50020f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5fea039f-cd9b-4459-8d7d-74b3808bd73b",
+        "model": "default"
+      },
+      "human_author": null
+    }
+  }
+}
