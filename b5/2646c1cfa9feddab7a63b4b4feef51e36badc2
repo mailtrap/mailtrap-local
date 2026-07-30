@@ -1,0 +1,28 @@
+.github/workflows/ci.yml
+  s_a1b70a7f50020f::t_34ee4be32393b2 129,144,156,171
+  s_a1b70a7f50020f::t_911f2c1bfb4a06 6-9
+  s_a1b70a7f50020f::t_149b0c1176a6b3 101,109
+scripts/smoke-smtp.sh
+  s_a1b70a7f50020f::t_cc9c7aa733d995 1-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "b52646c1cfa9feddab7a63b4b4feef51e36badc2",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_a1b70a7f50020f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5fea039f-cd9b-4459-8d7d-74b3808bd73b",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
