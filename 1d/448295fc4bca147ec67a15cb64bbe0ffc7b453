@@ -1,0 +1,42 @@
+.github/workflows/release.yml
+  s_9d7a8952a14a8d::t_55ca13764b30ea 10,59-61,68-69,71
+  s_5ddfbfa48e4590::t_5cf65372e5e0cb 23
+.goreleaser.yaml
+  s_9d7a8952a14a8d::t_b4fcaa3b9a628c 7-8
+  s_9d7a8952a14a8d::t_c052311dece968 116
+  s_5ddfbfa48e4590::t_b0a004e6f8ae24 181
+  s_9d7a8952a14a8d::t_55ca13764b30ea 6,12,135,158-180
+README.md
+  s_5ddfbfa48e4590::t_45674eb538711d 56-65
+  s_5ddfbfa48e4590::t_a776b3f3e19f9e 157,161
+  s_5ddfbfa48e4590::t_0ed5c5489d867f 41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "1d448295fc4bca147ec67a15cb64bbe0ffc7b453",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_5ddfbfa48e4590": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "64baf2c3-51b3-4957-bf02-2227bbaf8899",
+        "model": "default"
+      },
+      "human_author": null
+    },
+    "s_9d7a8952a14a8d": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2d2330cd-66c9-48f1-8d0e-65591fc9d7c8",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
