@@ -3,14 +3,17 @@
 # goreleaser cross-compiles the binary itself (see .goreleaser.yaml's
 # `builds:` section); this Dockerfile just wraps that binary in a
 # distroless layer. The full source-build is in `Dockerfile`.
+#
+# distroless lacks `mkdir`, so seed an empty data dir from alpine.
+# COPY --chown=nonroot sets ownership (UID 65532) for volume init.
+FROM alpine:3.21 AS data
+RUN mkdir -p /data-empty
+
 FROM gcr.io/distroless/static-debian12:nonroot
 
 # goreleaser puts the matching binary in the build context root.
 COPY mailtrap-local /usr/local/bin/mailtrap-local
-
-# Persistent storage volume. distroless has no `mkdir`, but the COPY
-# above + the VOLUME directive together create the mount point on first
-# `docker run` even though the directory is initially absent.
+COPY --from=data --chown=nonroot:nonroot /data-empty /var/lib/mailtrap-local
 VOLUME ["/var/lib/mailtrap-local"]
 
 # Keep the at-rest encryption key on the persisted volume. By default the
