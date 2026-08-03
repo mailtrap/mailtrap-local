@@ -1,0 +1,25 @@
+.github/workflows/release.yml
+  s_f374836d1f1964::t_6165ebd5603bad 11
+  s_f374836d1f1964::t_f1a4f71cf732a5 73-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "a9822dd5b11924c414a3f3f2c0f816ac97b4d2ac",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_f374836d1f1964": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "be73b17b-786c-48fe-bebf-5f8b03fcd135",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
