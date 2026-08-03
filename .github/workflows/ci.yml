@@ -3,11 +3,10 @@ name: ci
 # Runs on every push and PR. Four jobs that run in parallel:
 #   - go    — golangci-lint, go vet, go test (every package, race detector on)
 #   - frontend — TypeScript build + ESLint + vitest
-#   - build — `scripts/build.sh` smoke (proves the embed pipeline still works)
-#   - docker — builds Dockerfile + Dockerfile.goreleaser and boots each
-#     on DEFAULT CMD (proves `docker run <image>` works out of the box;
-#     the raw-binary smoke can't catch image-level regressions like a
-#     bad CMD or a root-owned VOLUME mount point)
+#   - build — `scripts/build.sh` smoke + SMTP send/confirm
+#   - docker — builds Dockerfile + Dockerfile.goreleaser, boots each on
+#     DEFAULT CMD, then SMTP send/confirm (catches bad CMD, root-owned
+#     VOLUME mount, or broken SMTP ingest path)
 #
 # OpenAPI drift is covered by the `go` job — internal/api/openapi_drift_test.go
 # walks the live router and fails if anything's out of sync with the spec.
@@ -99,7 +98,7 @@ jobs:
       - name: smoke (--version)
         run: ./bin/mailtrap-local --version
 
-      - name: smoke (boot + curl)
+      - name: smoke (boot + curl + SMTP)
         run: |
           ./bin/mailtrap-local --http-listen 127.0.0.1:13550 --smtp-listen 127.0.0.1:13535 --db :memory: &
           PID=$!
@@ -107,6 +106,8 @@ jobs:
           for _ in 1 2 3 4 5; do sleep 0.4; curl -sf http://127.0.0.1:13550/api/v1/messages && break; done
           curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
           curl -sf http://127.0.0.1:13550/ | grep -q '<div id="root"'
+          HTTP_BASE=http://127.0.0.1:13550 SMTP_URL=smtp://127.0.0.1:13535 \
+            node --experimental-strip-types scripts/smoke-smtp.ts
           kill "$PID"
 
   docker:
@@ -123,10 +124,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
       - name: docker build (Dockerfile)
         run: docker build -t mailtrap-local:ci .
 
-      - name: boot Dockerfile image on default CMD + curl
+      - name: boot Dockerfile image on default CMD + curl + SMTP
         run: |
           docker run -d --name mtl -p 13550:3550 -p 13535:3535 mailtrap-local:ci
           ok=
@@ -141,6 +146,8 @@ jobs:
             exit 1
           fi
           curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          HTTP_BASE=http://127.0.0.1:13550 SMTP_URL=smtp://127.0.0.1:13535 \
+            node --experimental-strip-types scripts/smoke-smtp.ts
           docker rm -f mtl
 
       # Reuse the binary from the source image so we do not rebuild the
@@ -152,7 +159,7 @@ jobs:
           docker rm "$cid"
           docker build -f Dockerfile.goreleaser -t mailtrap-local:ci-goreleaser .
 
-      - name: boot goreleaser image on default CMD + curl
+      - name: boot goreleaser image on default CMD + curl + SMTP
         run: |
           docker run -d --name mtl-gr -p 13551:3550 -p 13536:3535 mailtrap-local:ci-goreleaser
           ok=
@@ -167,4 +174,6 @@ jobs:
             exit 1
           fi
           curl -sf http://127.0.0.1:13551/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          HTTP_BASE=http://127.0.0.1:13551 SMTP_URL=smtp://127.0.0.1:13536 \
+            node --experimental-strip-types scripts/smoke-smtp.ts
           docker rm -f mtl-gr
