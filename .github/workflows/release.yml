@@ -7,6 +7,8 @@ name: release
 #   3. Publishes a GitHub release with .tar.gz archives + checksums.
 #   4. Pushes images to docker.io/mailtrap/mailtrap-local + ghcr.io/mailtrap/mailtrap-local.
 #   5. Opens a PR in mailtrap/homebrew-local updating Formula/mailtrap-local.rb.
+#   6. Opens a PR in mailtrap/mailtrap-nur updating pkgs/mailtrap-local/default.nix.
+#   7. Verifies Homebrew + NUR PRs exist (goreleaser soft-fails those errors).
 
 on:
   push:
@@ -19,6 +21,7 @@ permissions:
 
 jobs:
   release:
+    environment: release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -54,12 +57,43 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # nix-hash required by goreleaser's `nix:` publisher (NUR PR).
+      - uses: cachix/install-nix-action@v31
+
       - name: Run goreleaser
         uses: goreleaser/goreleaser-action@v7
         with:
           version: latest
           args: release --clean
         env:
-          # Default token covers this repo. Tap updates need HOMEBREW_TAP_TOKEN.
+          # Default token covers this repo. Cross-repo publishes (homebrew-local, mailtrap-nur, …)
+          # need GORELEASER_TOKEN with write to those repos.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          GORELEASER_TOKEN: ${{ secrets.GORELEASER_TOKEN }}
+
+      # Goreleaser package-manager pipes (brew, nix, …) ContinueOnError=true, so
+      # PR open failures only log. Fail loud if expected cross-repo PRs missing.
+      # Head branch defaults to {{ .ProjectName }}-{{ .Version }} when
+      # pull_request.enabled is true.
+      - name: Verify Homebrew and NUR package PRs opened
+        env:
+          GH_TOKEN: ${{ secrets.GORELEASER_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          head="mailtrap-local-${version}"
+          failed=0
+          for repo in mailtrap/homebrew-local mailtrap/mailtrap-nur; do
+            url=$(gh pr list -R "$repo" \
+              --head "$head" \
+              --state all \
+              --json url \
+              --jq '.[0].url // empty')
+            if [ -z "$url" ]; then
+              echo "::error::Expected PR with head '${head}' not found in ${repo} (goreleaser may have soft-failed)"
+              failed=1
+            else
+              echo "${repo} PR found: $url"
+            fi
+          done
+          exit "$failed"
