@@ -38,7 +38,7 @@ Browse caught messages, preview rendered HTML, and inspect client compatibility 
 | Storage | SQLite via [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite) (pure Go — no CGo) |
 | Web UI | React 19 + tailwindcss + Radix UI + Vite, embedded into the binary at build time via `//go:embed` |
 | Realtime | Plain WebSocket (`/cable`) |
-| Distribution | `brew install`, `docker run`, single static binary (macOS + Linux; Windows not yet) |
+| Distribution | `brew install`, `nix run`, `docker run`, single static binary (macOS + Linux; Windows not yet) |
 
 ## Quick start
 
@@ -52,6 +52,17 @@ brew services start mailtrap-local
 ```
 
 Then open **http://127.0.0.1:3550** and point your app's SMTP client at **127.0.0.1:3535**.
+
+### Nix
+
+```sh
+nix run github:mailtrap/mailtrap-nur#mailtrap-local
+# or
+nix profile add github:mailtrap/mailtrap-nur#mailtrap-local
+# Nix older than 2.25: nix profile install …
+```
+
+Package lives in [`mailtrap/mailtrap-nur`](https://github.com/mailtrap/mailtrap-nur); goreleaser opens a PR there on every tag (same flow as the Homebrew tap).
 
 ### Docker
 
@@ -144,11 +155,11 @@ mailtrap-local/
 ├── scripts/build.sh         # frontend build + go build → bin/mailtrap-local
 ├── Dockerfile               # multi-stage source build (Node → Go → distroless)
 ├── Dockerfile.goreleaser    # release-time wrapper (goreleaser-built binary → distroless)
-├── .goreleaser.yaml         # release pipeline: binaries + Homebrew tap + Docker Hub + GHCR
+├── .goreleaser.yaml         # release pipeline: binaries + Homebrew + NUR + Docker Hub + GHCR
 └── .github/workflows/       # ci.yml + release.yml
 ```
 
-The Homebrew formula lives in a separate tap repo (`mailtrap/homebrew-local`); `goreleaser` opens a formula PR there on every tag.
+The Homebrew formula lives in `mailtrap/homebrew-local`; the Nix package lives in `mailtrap/mailtrap-nur`. `goreleaser` opens a PR in each on every tag.
 
 ## API
 

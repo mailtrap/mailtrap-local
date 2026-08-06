@@ -3,12 +3,13 @@
 # Channels published:
 #   1. GitHub Releases    — .tar.gz binary archives (darwin/linux × amd64/arm64)
 #   2. Homebrew tap       — PR updating Formula/mailtrap-local.rb in mailtrap/homebrew-local
-#   3. Docker Hub         — mailtrap/mailtrap-local:{version,latest}
-#   4. GHCR               — ghcr.io/mailtrap/mailtrap-local:{version,latest}
+#   3. NUR                — PR updating pkgs/mailtrap-local/default.nix in mailtrap/mailtrap-nur
+#   4. Docker Hub         — mailtrap/mailtrap-local:{version,latest}
+#   5. GHCR               — ghcr.io/mailtrap/mailtrap-local:{version,latest}
 #
 # The releaser needs:
 #   - GITHUB_TOKEN with write to mailtrap/mailtrap-local
-#   - HOMEBREW_TAP_TOKEN for the homebrew-local formula PR
+#   - GORELEASER_TOKEN for cross-repo publishes (homebrew-local, mailtrap-nur, …)
 #   - DOCKERHUB_USERNAME + DOCKERHUB_TOKEN for the docker push
 #   - ghcr.io auth via GITHUB_TOKEN (free, no extra secret)
 #
@@ -112,6 +113,7 @@ release:
     ---
     **Channels:**
     - Homebrew: `brew install mailtrap/local/mailtrap-local`
+    - Nix:      `nix run github:mailtrap/mailtrap-nur#mailtrap-local`
     - Docker:   `docker run -p 3535:3535 -p 3550:3550 mailtrap/mailtrap-local:{{ .Tag }}`
     - Binary:   download the platform tarball above and `tar xzf`.
 
@@ -130,7 +132,7 @@ brews:
       owner: mailtrap
       name: homebrew-local
       # Cross-repo token; GITHUB_TOKEN cannot write the tap.
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+      token: "{{ .Env.GORELEASER_TOKEN }}"
       pull_request:
         enabled: true
     directory: Formula
@@ -152,6 +154,30 @@ brews:
       error_log_path "#{var}/log/mailtrap-local.log"
     test: |
       assert_match version.to_s, shell_output("#{bin}/mailtrap-local --version")
+
+# ---------------------------------------------------------------------
+# NUR — on every tagged release, open a PR that updates
+# pkgs/mailtrap-local/default.nix in mailtrap/mailtrap-nur (same pattern
+# as the Homebrew tap). Needs nix-hash on PATH (see release.yml).
+# ---------------------------------------------------------------------
+nix:
+  - name: mailtrap-local
+    ids: [mailtrap-local]
+    repository:
+      owner: mailtrap
+      name: mailtrap-nur
+      token: "{{ .Env.GORELEASER_TOKEN }}"
+      pull_request:
+        enabled: true
+    path: pkgs/mailtrap-local/default.nix
+    homepage: "https://github.com/mailtrap/mailtrap-local"
+    description: "Local email sandbox + catcher: SMTP + Web UI + JSON API in one binary"
+    license: mit
+    main_program: mailtrap-local
+    # Default install copies the binary; add sendmail-replacement symlink
+    # (same as Homebrew Formula).
+    extra_install: |
+      ln -s mailtrap-local $out/bin/mailtrap-sendmail
 
 # ---------------------------------------------------------------------
 # Docker images — built once per arch, then combined into a manifest
