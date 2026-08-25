@@ -1,0 +1,44 @@
+.github/workflows/release.yml
+  s_4e760c03c27e4a::t_bde4059556b92d 7,9-12
+  s_4e760c03c27e4a::t_e0eb3151454f89 64-68,79-80,82-83,109,111-123
+  s_4e760c03c27e4a::t_37c6087042d45d 108,110
+README.md
+  s_4e760c03c27e4a::t_83a2c0e8ae4602 168
+  s_4e760c03c27e4a::t_1499ad32a15733 41,56-62
+  s_4e760c03c27e4a::t_d01177749fd934 172
+  s_4e760c03c27e4a::t_22a6ecb6038532 63-64
+  s_4e760c03c27e4a::t_1a509e95d22082 164
+.github/workflows/ci.yml
+  s_4e760c03c27e4a::t_4f03edfbcffade 182-237
+  s_4e760c03c27e4a::t_9c6e2f9ba50df6 3,10-11
+.goreleaser.yaml
+  s_4e760c03c27e4a::t_8cb4853cc706c8 19-20
+  s_4e760c03c27e4a::t_ea77009d9ad5d0 121
+  s_4e760c03c27e4a::t_43a8bfff0775d5 9,15
+  s_4e760c03c27e4a::t_31b7a812dd4644 198,200-205,207-212,219-222,226-228
+  s_4e760c03c27e4a::t_84485770bc9de9 206
+  s_4e760c03c27e4a::t_d1aa177efb95ea 187-197,199,213-218,223-225,229-230
+snap/gui/icon.svg
+  s_4e760c03c27e4a::t_177a5fa4d4c3f8 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "426ac1baca285da6906a161332df009905c814a2",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_4e760c03c27e4a": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "8751e281-26df-408c-9a40-94a313fa3a16",
+        "model": "auto-smart"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
