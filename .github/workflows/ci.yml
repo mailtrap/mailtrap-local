@@ -1,12 +1,14 @@
 name: ci
 
-# Runs on every push and PR. Four jobs that run in parallel:
+# Runs on every push and PR. Five jobs that run in parallel:
 #   - go    — golangci-lint, go vet, go test (every package, race detector on)
 #   - frontend — TypeScript build + ESLint + vitest
 #   - build — `scripts/build.sh` smoke + SMTP send/confirm
 #   - docker — builds Dockerfile + Dockerfile.goreleaser, boots each on
 #     DEFAULT CMD, then SMTP send/confirm (catches bad CMD, root-owned
 #     VOLUME mount, or broken SMTP ingest path)
+#   - snap — goreleaser snapshot pack (no store upload) + install --dangerous
+#     + SMTP smoke (catches snap.yaml, plugs, SNAP_USER_COMMON db path)
 #
 # OpenAPI drift is covered by the `go` job — internal/api/openapi_drift_test.go
 # walks the live router and fails if anything's out of sync with the spec.
@@ -177,3 +179,59 @@ jobs:
           HTTP_BASE=http://127.0.0.1:13551 SMTP_URL=smtp://127.0.0.1:13536 \
             node --experimental-strip-types scripts/smoke-smtp.ts
           docker rm -f mtl-gr
+
+  snap:
+    # Packs linux snaps the same way the tag release does, but
+    # --snapshot implies --skip=publish (no Snap Store / GitHub Release).
+    # --skip=docker,nix,homebrew avoids the other publishers' toolchains.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+
+      - name: Pack snaps (snapshot, no publish)
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          version: latest
+          args: release --snapshot --clean --skip=docker,nix,homebrew
+        env:
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
+
+      - name: Install amd64 snap and smoke
+        run: |
+          set -euo pipefail
+          snapf=$(ls dist/*_linux_amd64.snap)
+          sudo snap install --dangerous "$snapf"
+          mailtrap-local --version
+          mailtrap-local --http-listen 127.0.0.1:13550 --smtp-listen 127.0.0.1:13535 &
+          PID=$!
+          ok=
+          for _ in 1 2 3 4 5 6 7 8; do
+            sleep 0.4
+            if curl -sf http://127.0.0.1:13550/api/v1/messages >/dev/null; then ok=1; break; fi
+          done
+          if [ -z "$ok" ]; then
+            echo "::error::snapped mailtrap-local did not serve the API"
+            kill "$PID" || true
+            exit 1
+          fi
+          curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          HTTP_BASE=http://127.0.0.1:13550 SMTP_URL=smtp://127.0.0.1:13535 \
+            node --experimental-strip-types scripts/smoke-smtp.ts
+          kill "$PID"
+          test -f "$HOME/snap/mailtrap-local/common/db.sqlite3"

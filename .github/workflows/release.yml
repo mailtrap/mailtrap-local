@@ -4,11 +4,12 @@ name: release
 #   1. Re-stages embed inputs (frontend build + openapi.yaml) via the
 #      `before:` hooks in .goreleaser.yaml.
 #   2. Cross-compiles the binary for darwin/linux × amd64/arm64.
-#   3. Publishes a GitHub release with .tar.gz archives + checksums.
+#   3. Publishes a GitHub release with .tar.gz archives + checksums + .snap.
 #   4. Pushes images to docker.io/mailtrap/mailtrap-local + ghcr.io/mailtrap/mailtrap-local.
-#   5. Opens a PR in mailtrap/homebrew-local updating Formula/mailtrap-local.rb.
-#   6. Opens a PR in mailtrap/mailtrap-nur updating pkgs/mailtrap-local/default.nix.
-#   7. Verifies Homebrew + NUR PRs exist (goreleaser soft-fails those errors).
+#   5. Uploads linux snaps to the Snap Store (stable).
+#   6. Opens a PR in mailtrap/homebrew-local updating Formula/mailtrap-local.rb.
+#   7. Opens a PR in mailtrap/mailtrap-nur updating pkgs/mailtrap-local/default.nix.
+#   8. Verifies Homebrew + NUR PRs and .snap assets exist (goreleaser soft-fails those pipes).
 
 on:
   push:
@@ -60,6 +61,11 @@ jobs:
       # nix-hash required by goreleaser's `nix:` publisher (NUR PR).
       - uses: cachix/install-nix-action@v31
 
+      # snapcraft required by goreleaser's `snapcrafts:` publisher.
+      # `pack` of a primed tree does not need LXD; keep builds on the runner.
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+
       - name: Run goreleaser
         uses: goreleaser/goreleaser-action@v7
         with:
@@ -70,9 +76,11 @@ jobs:
           # need GORELEASER_TOKEN with write to those repos.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_TOKEN: ${{ secrets.GORELEASER_TOKEN }}
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
 
-      # Goreleaser package-manager pipes (brew, nix, …) ContinueOnError=true, so
-      # PR open failures only log. Fail loud if expected cross-repo PRs missing.
+      # Goreleaser package-manager pipes (brew, nix, snapcraft, …) ContinueOnError=true, so
+      # PR/upload failures only log. Fail loud if expected artifacts missing.
       # Head branch defaults to {{ .ProjectName }}-{{ .Version }} when
       # pull_request.enabled is true.
       - name: Verify Homebrew and NUR package PRs opened
@@ -94,6 +102,22 @@ jobs:
               failed=1
             else
               echo "${repo} PR found: $url"
+            fi
+          done
+          exit "$failed"
+
+      - name: Verify Snap artifacts on GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          assets=$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name')
+          echo "$assets"
+          failed=0
+          for arch in amd64 arm64; do
+            if ! echo "$assets" | grep -F "_linux_${arch}.snap"; then
+              echo "::error::Expected linux/${arch} .snap missing from GitHub Release (goreleaser snapcraft may have soft-failed)"
+              failed=1
             fi
           done
           exit "$failed"
