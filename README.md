@@ -38,7 +38,7 @@ Browse caught messages, preview rendered HTML, and inspect client compatibility 
 | Storage | SQLite via [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite) (pure Go — no CGo) |
 | Web UI | React 19 + tailwindcss + Radix UI + Vite, embedded into the binary at build time via `//go:embed` |
 | Realtime | Plain WebSocket (`/cable`) |
-| Distribution | `brew install`, `nix run`, `docker run`, single static binary (macOS + Linux; Windows not yet) |
+| Distribution | `brew install`, `snap install`, `nix run`, `docker run`, single static binary (macOS + Linux; Windows not yet) |
 
 ## Quick start
 
@@ -52,6 +52,15 @@ brew services start mailtrap-local
 ```
 
 Then open **http://127.0.0.1:3550** and point your app's SMTP client at **127.0.0.1:3535**.
+
+### Snap (Ubuntu)
+
+```sh
+sudo snap install mailtrap-local
+mailtrap-local
+```
+
+Then open **http://127.0.0.1:3550** and point your app's SMTP client at **127.0.0.1:3535**. Caught mail is stored in `~/snap/mailtrap-local/common/` (survives snap refreshes).
 
 ### Nix
 
@@ -152,14 +161,15 @@ mailtrap-local/
 ├── docs/
 │   ├── api/openapi.yaml    # API spec (embedded + served at /api/v1/openapi.yaml)
 │   └── images/             # README screenshots + demo GIF
+├── snap/gui/icon.png        # Snap Store listing icon
 ├── scripts/build.sh         # frontend build + go build → bin/mailtrap-local
 ├── Dockerfile               # multi-stage source build (Node → Go → distroless)
 ├── Dockerfile.goreleaser    # release-time wrapper (goreleaser-built binary → distroless)
-├── .goreleaser.yaml         # release pipeline: binaries + Homebrew + NUR + Docker Hub + GHCR
+├── .goreleaser.yaml         # release pipeline: binaries + Homebrew + NUR + Snap + Docker Hub + GHCR
 └── .github/workflows/       # ci.yml + release.yml
 ```
 
-The Homebrew formula lives in `mailtrap/homebrew-local`; the Nix package lives in `mailtrap/mailtrap-nur`. `goreleaser` opens a PR in each on every tag.
+The Homebrew formula lives in `mailtrap/homebrew-local`; the Nix package lives in `mailtrap/mailtrap-nur`. `goreleaser` opens a PR in each on every tag, and also packs/uploads Snap Store packages.
 
 ## API
 

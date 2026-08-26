@@ -6,14 +6,18 @@
 #   3. NUR                — PR updating pkgs/mailtrap-local/default.nix in mailtrap/mailtrap-nur
 #   4. Docker Hub         — mailtrap/mailtrap-local:{version,latest}
 #   5. GHCR               — ghcr.io/mailtrap/mailtrap-local:{version,latest}
+#   6. Snap Store         — .snap for linux/amd64 + linux/arm64 (needs snapcraft)
 #
 # The releaser needs:
 #   - GITHUB_TOKEN with write to mailtrap/mailtrap-local
 #   - GORELEASER_TOKEN for cross-repo publishes (homebrew-local, mailtrap-nur, …)
 #   - DOCKERHUB_USERNAME + DOCKERHUB_TOKEN for the docker push
+#   - SNAPCRAFT_STORE_CREDENTIALS to upload snaps (`snapcraft` on PATH)
 #   - ghcr.io auth via GITHUB_TOKEN (free, no extra secret)
 #
 # Usage:
+#   goreleaser release --snapshot --clean --skip=docker,nix,homebrew
+#     # Linux + snapcraft: pack .snap files, no store/GitHub/Docker publish
 #   goreleaser release --snapshot --clean        # local dry-run, no publish
 #   GITHUB_TOKEN=... DOCKERHUB_TOKEN=... \       # real release on a tag
 #     goreleaser release --clean
@@ -114,6 +118,7 @@ release:
     **Channels:**
     - Homebrew: `brew install mailtrap/local/mailtrap-local`
     - Nix:      `nix run github:mailtrap/mailtrap-nur#mailtrap-local`
+    - Snap:     `sudo snap install mailtrap-local`
     - Docker:   `docker run -p 3535:3535 -p 3550:3550 mailtrap/mailtrap-local:{{ .Tag }}`
     - Binary:   download the platform tarball above and `tar xzf`.
 
@@ -178,6 +183,50 @@ nix:
     # (same as Homebrew Formula).
     extra_install: |
       ln -s mailtrap-local $out/bin/mailtrap-sendmail
+
+# ---------------------------------------------------------------------
+# Snap Store — packs the linux binaries goreleaser just built (no dump
+# from a GitHub tarball). snapcraft must be on PATH; see release.yml.
+# Channel list is stable-only; goreleaser's default also pushes edge/beta.
+# ---------------------------------------------------------------------
+snapcrafts:
+  - id: mailtrap-local
+    ids: [mailtrap-local]
+    name: mailtrap-local
+    title: Mailtrap Local
+    publish: true
+    summary: Local email sandbox + catcher for individual developers
+    description: |
+      Runs on your laptop, catches every email your app sends, and gives you
+      a web sandbox to browse, search, and inspect them in. One self-contained
+      binary.
+
+      Point any app at SMTP 127.0.0.1:3535. Open http://127.0.0.1:3550 to
+      search and inspect HTML, text, raw source, headers, and attachments.
+      The same port serves a REST API - existing clients only need a host
+      override. Includes HTML email-client compatibility checks, categories,
+      release to production SMTP, and outbound webhooks.
+
+      Not a team tool: no accounts, no auth, no shared sandboxes. SQLite only.
+      Localhost only. Complements hosted Mailtrap; it is not a Sandbox
+      replacement.
+    license: MIT
+    grade: stable
+    confinement: strict
+    base: core22
+    channel_templates:
+      - stable
+    icon: meta/gui/icon.png
+    extra_files:
+      - source: snap/gui/icon.png
+        destination: meta/gui/icon.png
+    apps:
+      mailtrap-local:
+        command: mailtrap-local
+        args: --db $SNAP_USER_COMMON/db.sqlite3
+        environment:
+          MAILTRAP_LOCAL_SECRET_KEY_FILE: $SNAP_USER_COMMON/secret.key
+        plugs: [home, network, network-bind]
 
 # ---------------------------------------------------------------------
 # Docker images — built once per arch, then combined into a manifest
