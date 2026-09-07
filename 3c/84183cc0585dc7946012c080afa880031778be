@@ -1,0 +1,20 @@
+CHANGELOG.md
+  s_284dd2b09cf1ec::t_92d41f370c1e11 72
+  s_284dd2b09cf1ec::t_83158de5b15b08 8-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "3c84183cc0585dc7946012c080afa880031778be",
+  "prompts": {},
+  "sessions": {
+    "s_284dd2b09cf1ec": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "389764cb-8d35-4641-82d0-67f949086a30",
+        "model": "auto-smart"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
