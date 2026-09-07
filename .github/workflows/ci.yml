@@ -106,7 +106,8 @@ jobs:
           PID=$!
           # give it a beat to bind sockets
           for _ in 1 2 3 4 5; do sleep 0.4; curl -sf http://127.0.0.1:13550/api/v1/messages && break; done
-          curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          curl -sf -o /tmp/mtl-openapi.yaml http://127.0.0.1:13550/api/v1/openapi.yaml
+          head -n 1 /tmp/mtl-openapi.yaml | grep -q '^openapi:'
           curl -sf http://127.0.0.1:13550/ | grep -q '<div id="root"'
           HTTP_BASE=http://127.0.0.1:13550 SMTP_URL=smtp://127.0.0.1:13535 \
             node --experimental-strip-types scripts/smoke-smtp.ts
@@ -147,7 +148,8 @@ jobs:
             docker rm -f mtl
             exit 1
           fi
-          curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          curl -sf -o /tmp/mtl-openapi.yaml http://127.0.0.1:13550/api/v1/openapi.yaml
+          head -n 1 /tmp/mtl-openapi.yaml | grep -q '^openapi:'
           HTTP_BASE=http://127.0.0.1:13550 SMTP_URL=smtp://127.0.0.1:13535 \
             node --experimental-strip-types scripts/smoke-smtp.ts
           docker rm -f mtl
@@ -175,7 +177,8 @@ jobs:
             docker rm -f mtl-gr
             exit 1
           fi
-          curl -sf http://127.0.0.1:13551/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          curl -sf -o /tmp/mtl-openapi.yaml http://127.0.0.1:13551/api/v1/openapi.yaml
+          head -n 1 /tmp/mtl-openapi.yaml | grep -q '^openapi:'
           HTTP_BASE=http://127.0.0.1:13551 SMTP_URL=smtp://127.0.0.1:13536 \
             node --experimental-strip-types scripts/smoke-smtp.ts
           docker rm -f mtl-gr
@@ -230,7 +233,8 @@ jobs:
             kill "$PID" || true
             exit 1
           fi
-          curl -sf http://127.0.0.1:13550/api/v1/openapi.yaml | head -1 | grep -q '^openapi:'
+          curl -sf -o /tmp/mtl-openapi.yaml http://127.0.0.1:13550/api/v1/openapi.yaml
+          head -n 1 /tmp/mtl-openapi.yaml | grep -q '^openapi:'
           HTTP_BASE=http://127.0.0.1:13550 SMTP_URL=smtp://127.0.0.1:13535 \
             node --experimental-strip-types scripts/smoke-smtp.ts
           kill "$PID"
