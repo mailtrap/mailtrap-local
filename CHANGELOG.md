@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-09-07
+
+### Fixed
+
+- Snap Store upload no longer fails schema validation: `snap.yaml` carries no `icon:` key, the icon ships as `meta/gui/icon.png`
+- Tagged releases attach the linux `.snap` files the release job verifies
+
 ## [0.4.0] - 2026-09-07
 
 ### Added
@@ -69,6 +76,7 @@ Initial public release of Mailtrap Local — a local email sandbox and catcher f
 - YAML config overlay for pinning connection settings
 - Distribution via Homebrew tap, Docker (Docker Hub + GHCR), and GitHub Releases binaries (macOS + Linux)
 
+[0.4.1]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.4.1
 [0.4.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.4.0
 [0.3.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.3.0
 [0.2.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.2.0
