@@ -1,0 +1,25 @@
+CHANGELOG.md
+  s_284dd2b09cf1ec::t_2efab787959a98 8-14
+  s_284dd2b09cf1ec::t_891b56e982fa73 79
+.github/workflows/ci.yml
+  s_284dd2b09cf1ec::t_3adfaffb3606b4 242-255
+.goreleaser.yaml
+  s_284dd2b09cf1ec::t_069b4cbd58de8b 223-226
+  s_284dd2b09cf1ec::t_6efa5edf484ab3 127-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "31ce6f1c7f5a5bec36dbc37ddfda61f340a017b2",
+  "prompts": {},
+  "sessions": {
+    "s_284dd2b09cf1ec": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "389764cb-8d35-4641-82d0-67f949086a30",
+        "model": "auto-smart"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
