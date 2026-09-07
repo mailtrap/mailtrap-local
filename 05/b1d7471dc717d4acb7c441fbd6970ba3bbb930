@@ -1,0 +1,19 @@
+.goreleaser.yaml
+  s_284dd2b09cf1ec::t_d7a275e34517e7 223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "05b1d7471dc717d4acb7c441fbd6970ba3bbb930",
+  "prompts": {},
+  "sessions": {
+    "s_284dd2b09cf1ec": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "389764cb-8d35-4641-82d0-67f949086a30",
+        "model": "auto-smart"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
