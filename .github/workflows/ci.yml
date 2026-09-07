@@ -239,3 +239,19 @@ jobs:
             node --experimental-strip-types scripts/smoke-smtp.ts
           kill "$PID"
           test -f "$HOME/snap/mailtrap-local/common/db.sqlite3"
+
+      # `snap install --dangerous` accepts metadata the Snap Store rejects, so
+      # schema breakage only surfaces on a tag (v0.4.0 died on an `icon:` key
+      # in snap.yaml). review-tools is what the store runs on upload — run the
+      # same checks here, on both arches, while a fix is still cheap.
+      - name: Review snaps with review-tools
+        run: |
+          set -euo pipefail
+          sudo snap install review-tools
+          # Strictly confined; needs the home interface to read the workspace.
+          sudo snap connect review-tools:home || true
+          for snapf in dist/*_linux_*.snap; do
+            snap-review "$snapf"
+          done
+          # Store listing icon travels as meta/gui/icon.png, not a snap.yaml key.
+          test -f /snap/mailtrap-local/current/meta/gui/icon.png

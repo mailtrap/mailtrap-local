@@ -124,6 +124,10 @@ release:
 
     On macOS, an unsigned binary needs a one-time Gatekeeper bypass:
     `xattr -d com.apple.quarantine ./mailtrap-local`
+  # Snap artifacts are store-publishable, not release-uploadable, so
+  # goreleaser leaves them out of the GitHub release unless asked.
+  extra_files:
+    - glob: ./dist/*.snap
 
 # ---------------------------------------------------------------------
 # Homebrew tap — on every tagged release, open a PR that updates
@@ -216,7 +220,10 @@ snapcrafts:
     base: core22
     channel_templates:
       - stable
-    icon: meta/gui/icon.png
+    # No `icon:` here on purpose — goreleaser would write it into snap.yaml,
+    # and the Snap Store schema rejects that key ("Additional properties are
+    # not allowed ('icon' was unexpected)"). The store reads the icon from
+    # meta/gui/icon.png inside the snap instead, which extra_files stages.
     extra_files:
       - source: snap/gui/icon.png
         destination: meta/gui/icon.png
