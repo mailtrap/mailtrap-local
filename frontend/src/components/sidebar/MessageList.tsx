@@ -106,13 +106,17 @@ export function MessageList({
       )
     }
   } else if (messages && messages.length === 0) {
+    const host =
+      typeof window !== 'undefined' && window.location.hostname
+        ? window.location.hostname
+        : '127.0.0.1'
     return (
       <div className={emptyState}>
         <p>No messages yet.</p>
         <p>
           Send to{' '}
           <code className="rounded bg-accent/10 text-accent px-1.5 py-0.5 text-xs">
-            127.0.0.1:3535
+            {host}:3535
           </code>
           .
         </p>

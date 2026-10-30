@@ -67,7 +67,9 @@ interface Props {
 }
 
 export function CodeSamples({
-  host = '127.0.0.1',
+  host = typeof window !== 'undefined' && window.location.hostname
+    ? window.location.hostname
+    : '127.0.0.1',
   port = 3535,
   fromEmail = 'sender@example.test',
   toEmail = 'rcpt@example.test',
