@@ -1,0 +1,25 @@
+internal/config/config.go
+  s_9759b73c19a6f8::t_2d2d7fc0e6d68b 172
+internal/config/config_test.go
+  s_9759b73c19a6f8::t_11e2c6068a3dec 40
+Dockerfile
+  s_9759b73c19a6f8::t_54c2eac50af961 79-84
+Dockerfile.goreleaser
+  s_9759b73c19a6f8::t_d9e092f339da15 38-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6efeb04512d54440d679ecc9d2581ecf41383a96",
+  "prompts": {},
+  "sessions": {
+    "s_9759b73c19a6f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a31c9625-6dd9-4a79-ac86-9d39f32f95c0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marcin Klocek <marcin.klocek@railsware.com>"
+    }
+  }
+}
