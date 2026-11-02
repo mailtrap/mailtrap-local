@@ -27,6 +27,7 @@ import (
 	"github.com/mailtrap/mailtrap-local/internal/config"
 	"github.com/mailtrap/mailtrap-local/internal/jobs"
 	"github.com/mailtrap/mailtrap-local/internal/live"
+	"github.com/mailtrap/mailtrap-local/internal/peer"
 	"github.com/mailtrap/mailtrap-local/internal/relay"
 	"github.com/mailtrap/mailtrap-local/internal/secrets"
 	"github.com/mailtrap/mailtrap-local/internal/smtpd"
@@ -93,6 +94,13 @@ func main() {
 		unsafeNonLoopback = flag.Bool("unsafe-non-loopback", false,
 			"Allow binding to non-loopback addresses. The server has no auth/TLS/rate-limiting; "+
 				"only use on trusted networks.")
+		allowFromFlag = flag.String("allow-from", "",
+			"Comma-separated IPs or CIDR ranges allowed to connect besides loopback, "+
+				"e.g. the Docker network the host's traffic arrives from.")
+		allowAttached = flag.Bool("allow-attached-networks", false,
+			"Also allow the subnets of this machine's non-loopback interfaces. Meant for containers, "+
+				"where these are the container's own networks; on a host it admits the LAN. "+
+				"Read at startup, so restart after connecting the container to another network.")
 		logLevelFlag = flag.String("log-level", "info",
 			"Log level: debug, info, warn, error.")
 	)
@@ -125,6 +133,21 @@ func main() {
 				fatal("listen check", err, "hint", "pass --unsafe-non-loopback to override; the server has no auth or TLS")
 			}
 		}
+	}
+
+	allowFrom, err := peer.Parse(*allowFromFlag)
+	if err != nil {
+		fatal("parse --allow-from", err)
+	}
+	if *allowAttached {
+		attached, err := peer.AttachedNetworks()
+		if err != nil {
+			fatal("read attached networks", err)
+		}
+		allowFrom = append(allowFrom, attached...)
+	}
+	if len(allowFrom) > 0 {
+		slog.Info("allowing connections besides loopback", slog.Any("ranges", allowFrom))
 	}
 
 	slog.Info("mailtrap-local starting",
@@ -194,11 +217,13 @@ func main() {
 			Commit:    commit,
 			BuildDate: buildDate,
 		},
-		OnIngest: dispatcher.AfterIngest,
+		OnIngest:  dispatcher.AfterIngest,
+		AllowFrom: allowFrom,
 	}
 
 	srv := &smtpd.Server{
 		Listen: *smtpListen, Store: st,
+		AllowFrom:   allowFrom,
 		AfterInsert: dispatcher.AfterIngest,
 	}
 	if err := srv.Start(); err != nil {

@@ -26,15 +26,22 @@
 //	  url: https://hooks.example.com/inbox
 //	  secret: ${WEBHOOK_SECRET}
 //	  enabled: true
+//	allowed_hosts:          # extra hostnames the UI/API may be opened with
+//	  - john.dev
 //
 // `${VAR}` references resolve to the named environment variable. Unset
 // vars resolve to nil (treated the same as omitting the key).
 package config
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"sync"
 
 	"gopkg.in/yaml.v3"
@@ -82,6 +89,11 @@ type Loaded struct {
 	Relay      Relay
 	Webhook    Webhook
 	SourcePath string // empty if no file was found
+
+	// AllowedHosts are hostnames, beyond localhost and *.localhost, that
+	// browser requests may name in Host/Origin (e.g. a custom
+	// /etc/hosts entry). Not a DB-backed setting, so nothing to pin.
+	AllowedHosts []string
 }
 
 // Loader is the cached config holder. Use Get/Reload from handlers.
@@ -101,26 +113,42 @@ func (l *Loader) Get() *Loaded {
 		return l.loaded
 	}
 	l.mu.RUnlock()
-	return l.Reload()
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.loaded == nil {
+		l.loaded = load()
+	}
+	return l.loaded
 }
 
 // Reload re-reads the config file from disk and replaces the cache.
-// Always succeeds — IO errors are logged via the returned Loaded's
-// SourcePath being empty (the same shape as "no file found").
+// Always succeeds: a file that can't be read or parsed is logged and
+// ignored as a whole, leaving every section unpinned.
 func (l *Loader) Reload() *Loaded {
+	out := load()
+	l.mu.Lock()
+	l.loaded = out
+	l.mu.Unlock()
+	return out
+}
+
+func load() *Loaded {
 	out := &Loaded{}
 
 	path := resolvePath()
 	if path != "" {
-		if data, err := os.ReadFile(path); err == nil { //nolint:gosec // path from user config or XDG default
+		data, err := os.ReadFile(path) //nolint:gosec // path from user config or XDG default
+		switch {
+		case err == nil:
 			out.SourcePath = path
-			parse(data, out)
+			if err := parse(data, out); err != nil {
+				slog.Warn("ignoring config file", slog.String("path", path), slog.Any("err", err))
+			}
+		case !errors.Is(err, fs.ErrNotExist):
+			slog.Warn("ignoring config file", slog.String("path", path), slog.Any("err", err))
 		}
 	}
-
-	l.mu.Lock()
-	l.loaded = out
-	l.mu.Unlock()
 	return out
 }
 
@@ -143,21 +171,29 @@ func resolvePath() string {
 }
 
 // parse fills `out` from raw YAML bytes. ${ENV} interpolation is
-// applied during decode.
-func parse(data []byte, out *Loaded) {
+// applied during decode. On error `out` is left untouched.
+func parse(data []byte, out *Loaded) error {
 	var raw struct {
 		Storage Storage `yaml:"storage"`
 		Cloud   Cloud   `yaml:"cloud"`
 		Relay   Relay   `yaml:"relay"`
 		Webhook Webhook `yaml:"webhook"`
+
+		AllowedHosts []string `yaml:"allowed_hosts"` //nolint:tagliatelle // config.yml uses snake_case
 	}
 	if err := yaml.Unmarshal(data, &raw); err != nil {
-		return
+		return fmt.Errorf("parse yaml: %w", err)
 	}
 	out.Storage = raw.Storage
 	out.Cloud = interpolateCloud(raw.Cloud)
 	out.Relay = interpolateRelay(raw.Relay)
 	out.Webhook = interpolateWebhook(raw.Webhook)
+	for _, h := range raw.AllowedHosts {
+		if h = strings.TrimSuffix(strings.ToLower(envExpand(strings.TrimSpace(h))), "."); h != "" {
+			out.AllowedHosts = append(out.AllowedHosts, h)
+		}
+	}
+	return nil
 }
 
 func interpolateString(p *string) *string {

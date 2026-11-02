@@ -5,14 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mailtrap/mailtrap-local/internal/config"
 	"github.com/mailtrap/mailtrap-local/internal/live"
+	"github.com/mailtrap/mailtrap-local/internal/peer"
 	"github.com/mailtrap/mailtrap-local/internal/relay"
 	"github.com/mailtrap/mailtrap-local/internal/store"
 	"github.com/mailtrap/mailtrap-local/internal/webhook"
@@ -38,6 +42,9 @@ type Server struct {
 	OpenAPI  []byte
 	Build    BuildInfo
 
+	// AllowFrom lists peer addresses accepted besides loopback.
+	AllowFrom peer.AllowList
+
 	// OnIngest fires after a successful POST /api/v1/ingest. Wired by
 	// main.go to trigger the dispatcher (cloud mirror / relay mirror /
 	// webhook delivery / retention / live broadcast).
@@ -52,6 +59,11 @@ func (s *Server) Router() http.Handler {
 	// content (caught email bodies + attachments), so browsers must not
 	// be allowed to MIME-sniff a part's bytes into an executable type.
 	r.Use(securityHeaders)
+
+	// Refuse requests from other machines, and browser requests made on
+	// behalf of a page that isn't served from this machine, before any
+	// handler (or CORS preflight) runs.
+	r.Use(s.localOnly)
 
 	// CORS, scoped to loopback origins only. The SPA is same-origin so it
 	// needs no CORS; this exists only so raw fetches from a developer's
@@ -235,6 +247,61 @@ func corsLoopback(next http.Handler) http.Handler {
 	})
 }
 
+// localOnly rejects:
+//
+//   - Connections from another machine — a peer address that is neither
+//     loopback nor in AllowFrom.
+//   - A foreign Origin. A page on another site runs in the developer's
+//     own browser, so its requests do come from loopback; CORS only hides
+//     the response, and a cross-site "simple" POST (text/plain body, no
+//     preflight) still reaches the handler.
+//   - A foreign Host. A DNS-rebinding page is same-origin with itself,
+//     so its GETs carry no Origin, but its Host header still names the
+//     attacker's domain.
+func (s *Server) localOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !s.AllowFrom.Allows(r.RemoteAddr) {
+			// RemoteAddr comes from the socket, not the client.
+			slog.Warn("rejected HTTP request from another machine", //nolint:gosec // see above
+				slog.String("remote", r.RemoteAddr))
+			writeError(w, http.StatusForbidden, "mailtrap-local only accepts connections from this machine")
+			return
+		}
+		if origin := r.Header.Get("Origin"); origin != "" && !s.allowedOrigin(origin) {
+			writeError(w, http.StatusForbidden, "requests from other origins are not allowed")
+			return
+		}
+		if !isLocalHost(r.Host, s.allowedHosts()) {
+			writeError(w, http.StatusForbidden, "mailtrap-local only accepts requests addressed to localhost")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// allowedHosts returns the user's extra hostnames from config.yml.
+func (s *Server) allowedHosts() []string {
+	if s.Config == nil {
+		return nil
+	}
+	return s.Config.Get().AllowedHosts
+}
+
+// allowedOrigin reports whether a request sent on behalf of a page at
+// origin is admitted: loopback, or one of the configured allowed_hosts.
+// It doesn't grant CORS; corsLoopback still limits cross-origin reads to
+// loopback pages, so an allowed_hosts page calls the API same-origin.
+func (s *Server) allowedOrigin(origin string) bool {
+	if isLoopbackOrigin(origin) {
+		return true
+	}
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	return slices.Contains(s.allowedHosts(), strings.TrimSuffix(strings.ToLower(u.Hostname()), "."))
+}
+
 // isLoopbackOrigin reports whether an Origin header value
 // (e.g. "http://127.0.0.1:3540") points at a loopback host.
 func isLoopbackOrigin(origin string) bool {
@@ -242,12 +309,45 @@ func isLoopbackOrigin(origin string) bool {
 	if err != nil {
 		return false
 	}
-	host := u.Hostname()
-	if host == "localhost" {
+	return isLoopbackHostname(u.Hostname())
+}
+
+// isLoopbackHostname accepts loopback IPs, "localhost", and
+// "*.localhost" (RFC 6761 reserves both names for loopback), including
+// their fully qualified forms with a trailing dot.
+func isLoopbackHostname(host string) bool {
+	host = strings.TrimSuffix(strings.ToLower(host), ".")
+	if host == "localhost" || strings.HasSuffix(host, ".localhost") {
 		return true
 	}
 	ip := net.ParseIP(host)
 	return ip != nil && ip.IsLoopback()
+}
+
+// isLocalHost reports whether a Host header names this machine. Beyond
+// loopback names and the configured allowed hosts it accepts dotless
+// names (Docker Compose service names such as "mailtrap-local") and
+// "*.internal" (host.docker.internal), so containers can call the API
+// without config. Neither resolves through public DNS, which rules out
+// rebinding from an ordinary website; an attacker who controls name
+// resolution on the local network could still serve a page from one.
+func isLocalHost(hostport string, allowed []string) bool {
+	host := hostport
+	if h, _, err := net.SplitHostPort(hostport); err == nil {
+		host = h
+	}
+	host = strings.ToLower(strings.TrimSuffix(strings.TrimPrefix(host, "["), "]"))
+	if host == "" {
+		return false
+	}
+	if isLoopbackHostname(host) || slices.Contains(allowed, strings.TrimSuffix(host, ".")) {
+		return true
+	}
+	if net.ParseIP(host) != nil {
+		return false
+	}
+	// No trailing-dot form here: "name." is a public top-level domain.
+	return !strings.Contains(host, ".") || strings.HasSuffix(host, ".internal")
 }
 
 // spaHandler serves the SPA dist with a single-page fallback: any path

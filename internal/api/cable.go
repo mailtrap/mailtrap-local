@@ -18,18 +18,21 @@ const (
 	wsWriteDeadline   = 10 * time.Second
 )
 
-// upgrader accepts WebSocket upgrades only from loopback origins (or
-// requests with no Origin, e.g. non-browser clients). A malicious site a
-// developer visits would otherwise be able to open /cable cross-origin
-// and stream every caught email as it arrives — the WebSocket equivalent
-// of the cross-origin inbox read the HTTP CORS policy already blocks.
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  wsReadBufferSize,
-	WriteBufferSize: wsWriteBufferSize,
-	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-		return origin == "" || isLoopbackOrigin(origin)
-	},
+// upgrader accepts WebSocket upgrades only from loopback or configured
+// allowed_hosts origins (or requests with no Origin, e.g. non-browser
+// clients). A malicious site a developer visits would otherwise be able
+// to open /cable cross-origin and stream every caught email as it
+// arrives — the WebSocket equivalent of the cross-origin inbox read the
+// HTTP CORS policy already blocks.
+func (s *Server) upgrader() *websocket.Upgrader {
+	return &websocket.Upgrader{
+		ReadBufferSize:  wsReadBufferSize,
+		WriteBufferSize: wsWriteBufferSize,
+		CheckOrigin: func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+			return origin == "" || s.allowedOrigin(origin)
+		},
+	}
 }
 
 // cable handles GET /cable. Upgrades to a WebSocket and registers the
@@ -38,7 +41,7 @@ var upgrader = websocket.Upgrader{
 // The protocol is minimal: server pushes JSON frames `{type, message}` /
 // `{type, id}`. Clients send nothing (or pings, which we ack).
 func (s *Server) cable(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := s.upgrader().Upgrade(w, r, nil)
 	if err != nil {
 		// Upgrade already wrote an error response.
 		return

@@ -6,9 +6,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/mailtrap/mailtrap-local/internal/config"
 	"github.com/mailtrap/mailtrap-local/internal/live"
 	"github.com/mailtrap/mailtrap-local/internal/relay"
 	"github.com/mailtrap/mailtrap-local/internal/store"
@@ -476,6 +479,70 @@ func TestCORSEchoesOnlyLoopbackOrigins(t *testing.T) {
 	assert.Equal(t, "http://127.0.0.1:3540", do("http://127.0.0.1:3540"))
 	assert.Equal(t, "http://localhost:3540", do("http://localhost:3540"))
 	assert.Empty(t, do("https://evil.example"))
+}
+
+func TestRejectsCrossSiteSimplePost(t *testing.T) {
+	t.Parallel()
+	_, ts := newTestServer(t)
+
+	payload := mustJSON(t, store.IngestPayload{SMTPFrom: "a@x", SMTPTo: []string{"b@y"}, Raw: []byte("x")})
+	req, _ := http.NewRequest(http.MethodPost, ts.URL+"/api/v1/ingest", bytes.NewReader(payload))
+	req.Header.Set("Content-Type", "text/plain")
+	req.Header.Set("Origin", "https://evil.example")
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+
+	var list MessagesResponse
+	require.Equal(t, http.StatusOK, getJSON(t, ts.URL+"/api/v1/messages", &list))
+	assert.Empty(t, list.Messages)
+}
+
+func TestRejectsForeignHost(t *testing.T) {
+	t.Parallel()
+	_, ts := newTestServer(t)
+
+	status := func(host string) int {
+		req, _ := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/messages", nil)
+		req.Host = host
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		_ = resp.Body.Close()
+		return resp.StatusCode
+	}
+
+	assert.Equal(t, http.StatusForbidden, status("evil.example:3550"))
+	assert.Equal(t, http.StatusForbidden, status("192.168.1.5:3550"))
+	assert.Equal(t, http.StatusOK, status("localhost:3550"))
+	assert.Equal(t, http.StatusOK, status("app.localhost:3550"))
+	assert.Equal(t, http.StatusOK, status("mailtrap-local:3550"))
+	assert.Equal(t, http.StatusForbidden, status("john.dev:3550"))
+}
+
+// Not parallel: points MAILTRAP_LOCAL_CONFIG at a temp file.
+func TestAllowedHostsFromConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yml")
+	require.NoError(t, os.WriteFile(path, []byte("allowed_hosts:\n  - john.dev\n"), 0o600))
+	t.Setenv("MAILTRAP_LOCAL_CONFIG", path)
+
+	srv, ts := newTestServer(t)
+	srv.Config = config.NewLoader()
+
+	status := func(host, origin string) int {
+		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/messages", strings.NewReader(`{"ids":[],"read":true}`))
+		req.Host = host
+		req.Header.Set("Origin", origin)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		_ = resp.Body.Close()
+		return resp.StatusCode
+	}
+
+	assert.NotEqual(t, http.StatusForbidden, status("john.dev:3550", "http://john.dev:3550"))
+	assert.Equal(t, http.StatusForbidden, status("jane.dev:3550", "http://jane.dev:3550"))
+	assert.Equal(t, http.StatusForbidden, status("localhost:3550", "http://jane.dev:3550"))
 }
 
 func TestPartServedAsSanitizedAttachmentWithCSP(t *testing.T) {
