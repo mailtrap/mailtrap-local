@@ -1,0 +1,19 @@
+README.md
+  s_9759b73c19a6f8::t_777f9a770e2ed9 87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "206d732c62eaff3568aba745b043e12f94768fd7",
+  "prompts": {},
+  "sessions": {
+    "s_9759b73c19a6f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a31c9625-6dd9-4a79-ac86-9d39f32f95c0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marcin Klocek <marcin.klocek@railsware.com>"
+    }
+  }
+}
