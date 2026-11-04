@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-04
+
 ### Added
 
 - `--allow-from` flag: comma-separated IPs or CIDR ranges allowed to connect besides loopback
@@ -96,6 +98,7 @@ Initial public release of Mailtrap Local — a local email sandbox and catcher f
 - YAML config overlay for pinning connection settings
 - Distribution via Homebrew tap, Docker (Docker Hub + GHCR), and GitHub Releases binaries (macOS + Linux)
 
+[0.5.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.5.0
 [0.4.1]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.4.1
 [0.4.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.4.0
 [0.3.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.3.0
