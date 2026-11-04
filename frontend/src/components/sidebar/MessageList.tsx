@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { type MessageSummary } from '../../api/messages'
+import { smtpAddress, smtpHost } from '../../lib/smtpHost'
 import { CategoryBadge } from '../ui/CategoryBadge'
 
 function relativeTime(iso: string): string {
@@ -106,17 +107,13 @@ export function MessageList({
       )
     }
   } else if (messages && messages.length === 0) {
-    const host =
-      typeof window !== 'undefined' && window.location.hostname
-        ? window.location.hostname
-        : '127.0.0.1'
     return (
       <div className={emptyState}>
         <p>No messages yet.</p>
         <p>
           Send to{' '}
           <code className="rounded bg-accent/10 text-accent px-1.5 py-0.5 text-xs">
-            {host}:3535
+            {smtpAddress(smtpHost(), 3535)}
           </code>
           .
         </p>

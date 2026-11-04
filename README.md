@@ -77,10 +77,14 @@ Package lives in [`mailtrap/mailtrap-nur`](https://github.com/mailtrap/mailtrap-
 
 ```sh
 docker run --rm \
-  -p 3535:3535 -p 3550:3550 \
+  -p 127.0.0.1:3535:3535 -p 127.0.0.1:3550:3550 \
   -v mailtrap-local:/var/lib/mailtrap-local \
   mailtrap/mailtrap-local:latest
 ```
+
+mailtrap-local only accepts connections from your own machine. The image allows the container's own networks (`--allow-attached-networks`), since your machine's traffic reaches the container from the network's gateway and other containers come from inside it; publishing on `127.0.0.1` keeps the ports off your LAN. Don't run the image with `--network host` or on a macvlan or ipvlan network: the container's own subnet is then your LAN, so the LAN counts as an attached network.
+
+With Docker Desktop and other VM-based engines (OrbStack, Colima, Podman Machine, …), ports published on all interfaces (`-p 3550:3550`) are refused even from your own machine: every connection, local or from the LAN, reaches the container from the VM's gateway, so the two can't be told apart. Publish on `127.0.0.1` as shown above.
 
 The same image is also published to GHCR at `ghcr.io/mailtrap/mailtrap-local:latest`.
 
@@ -109,7 +113,7 @@ bin/mailtrap-local
 
 `go install github.com/mailtrap/mailtrap-local/cmd/mailtrap-local@latest` also works for Go developers, but installs the build-time placeholder UI instead of the real React SPA — Vite isn't part of `go install`. Use one of the channels above for the real UI.
 
-`bin/mailtrap-local` listens on `127.0.0.1:3535` (SMTP) and `127.0.0.1:3550` (HTTP+UI+API) by default. Pass `--http-listen`, `--smtp-listen`, `--db`, or `--version` to override.
+`bin/mailtrap-local` listens on `127.0.0.1:3535` (SMTP) and `127.0.0.1:3550` (HTTP+UI+API) by default. Pass `--http-listen`, `--smtp-listen`, `--db`, or `--version` to override. Connections from other machines are refused; `--allow-from` (comma-separated IPs or CIDR ranges) admits extra source addresses, and `--allow-attached-networks` admits the subnets of this machine's network interfaces.
 
 ### Sendmail-replacement mode
 
@@ -183,6 +187,7 @@ Optional YAML config at `$XDG_CONFIG_HOME/mailtrap-local/config.yml` (or `~/.con
 - `cloud` — Mailtrap sandbox API token + sandbox ID for the "Send to Cloud" button.
 - `relay` — outbound SMTP relay credentials for the "Release" button.
 - `webhook` — outbound webhook URL + signing secret.
+- `allowed_hosts` — extra hostnames you open the UI/API with on this machine (e.g. `john.dev` from `/etc/hosts`). `localhost` and `*.localhost` always work.
 
 Values support `${ENV_VAR}` interpolation. Keys present in the config file override the equivalent values stored in the SQLite DB; pinned fields are read-only in the UI.
 

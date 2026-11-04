@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ChevronDownIcon, CheckIcon } from '@radix-ui/react-icons'
+import { smtpHost } from '../../lib/smtpHost'
 import { CodeBlock } from './CodeBlock'
 import {
   SNIPPET_GROUPS,
@@ -67,9 +68,7 @@ interface Props {
 }
 
 export function CodeSamples({
-  host = typeof window !== 'undefined' && window.location.hostname
-    ? window.location.hostname
-    : '127.0.0.1',
+  host = smtpHost(),
   port = 3535,
   fromEmail = 'sender@example.test',
   toEmail = 'rcpt@example.test',

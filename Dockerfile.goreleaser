@@ -35,7 +35,14 @@ ENTRYPOINT ["/usr/local/bin/mailtrap-local"]
 # container: the binary refuses non-loopback binds without it. Safe here —
 # the container's network namespace is isolated, and host exposure is
 # governed by the operator's `docker run -p` mapping, not by this bind.
+# --allow-attached-networks admits every subnet on the container's
+# interfaces. On a bridge network that's the host's traffic, which
+# arrives from the gateway rather than loopback, and sibling containers;
+# LAN clients keep their own address and are refused. With
+# --network host, macvlan or ipvlan the attached subnet is the LAN, so
+# the LAN gets in.
 CMD ["--unsafe-non-loopback", \
+     "--allow-attached-networks", \
      "--http-listen", "0.0.0.0:3550", \
      "--smtp-listen", "0.0.0.0:3535", \
      "--db", "/var/lib/mailtrap-local/db.sqlite3"]

@@ -20,6 +20,7 @@ import (
 
 	"github.com/emersion/go-smtp"
 	"github.com/jhillyerd/enmime/v2"
+	"github.com/mailtrap/mailtrap-local/internal/peer"
 	"github.com/mailtrap/mailtrap-local/internal/store"
 )
 
@@ -31,6 +32,8 @@ const (
 	defaultMaxMessageBytes = 25 * 1024 * 1024
 	defaultReadTimeout     = 5 * time.Minute
 	maxSnippetLen          = 250
+
+	codeTransactionFailed = 554
 )
 
 type Server struct {
@@ -45,6 +48,9 @@ type Server struct {
 	MaxMessageBytes int64
 
 	Store *store.Store
+
+	// AllowFrom lists client addresses accepted besides loopback.
+	AllowFrom peer.AllowList
 
 	// AfterInsert fires after a successful SMTP-driven Insert so the
 	// outer process can dispatch background jobs / live broadcasts.
@@ -65,7 +71,7 @@ func (s *Server) Start() error {
 		s.MaxMessageBytes = defaultMaxMessageBytes
 	}
 
-	be := &backend{store: s.Store, afterInsert: s.AfterInsert}
+	be := &backend{store: s.Store, afterInsert: s.AfterInsert, allowFrom: s.AllowFrom}
 	srv := smtp.NewServer(be)
 	srv.Domain = "mailtrap-local"
 	srv.ReadTimeout = defaultReadTimeout
@@ -125,9 +131,22 @@ func (s *Server) Close() {
 type backend struct {
 	store       *store.Store
 	afterInsert func(string)
+	allowFrom   peer.AllowList
 }
 
-func (b *backend) NewSession(_ *smtp.Conn) (smtp.Session, error) {
+// errOtherMachine answers HELO/EHLO from another machine. Without a
+// session the client can't issue MAIL/RCPT/DATA, so nothing is accepted.
+var errOtherMachine = &smtp.SMTPError{
+	Code:         codeTransactionFailed,
+	EnhancedCode: smtp.EnhancedCode{5, 7, 1},
+	Message:      "mailtrap-local only accepts connections from this machine",
+}
+
+func (b *backend) NewSession(c *smtp.Conn) (smtp.Session, error) {
+	if remote := c.Conn().RemoteAddr().String(); !b.allowFrom.Allows(remote) {
+		slog.Warn("rejected SMTP connection from another machine", slog.String("remote", remote))
+		return nil, errOtherMachine
+	}
 	return &session{store: b.store, afterInsert: b.afterInsert}, nil
 }
 

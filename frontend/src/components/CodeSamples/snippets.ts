@@ -4,6 +4,8 @@
 // Snippets are grouped by language: each tab is a language;
 // multi-framework groups expose a dropdown chevron.
 
+import { smtpAddress } from '../../lib/smtpHost'
+
 export interface SnippetParams {
   host: string
   port: number
@@ -132,7 +134,7 @@ end`,
         label: 'Symfony Mailer',
         lang: 'php',
         paragraph: 'Set MAILER_DSN in your .env file.',
-        code: ({ host, port }) => `MAILER_DSN="smtp://${host}:${port}"`,
+        code: ({ host, port }) => `MAILER_DSN="smtp://${smtpAddress(host, port)}"`,
       },
       {
         id: 'php_phpmailer',
@@ -168,13 +170,10 @@ $mail->send();`,
         paragraph: 'Standard-library net/smtp — no auth.',
         code: ({ host, port, fromEmail, toEmail }) => `package main
 
-import (
-	"fmt"
-	"net/smtp"
-)
+import "net/smtp"
 
 func main() {
-	addr := fmt.Sprintf("${host}:%d", ${port})
+	addr := "${smtpAddress(host, port)}"
 	msg := []byte("From: ${fromEmail}\\r\\n" +
 		"To: ${toEmail}\\r\\n" +
 		"Subject: Hello from mailtrap-local\\r\\n\\r\\n" +
@@ -243,7 +242,7 @@ client.Send(message);`,
         label: 'cURL',
         lang: 'bash',
         paragraph: 'Quick smoke-test from a terminal.',
-        code: ({ host, port, fromEmail, toEmail }) => `curl --url 'smtp://${host}:${port}' \\
+        code: ({ host, port, fromEmail, toEmail }) => `curl --url 'smtp://${smtpAddress(host, port)}' \\
   --mail-from '${fromEmail}' \\
   --mail-rcpt '${toEmail}' \\
   --upload-file - <<EOF
@@ -262,7 +261,7 @@ EOF`,
         code: ({ host, port, fromEmail, toEmail }) => `swaks \\
   --to ${toEmail} \\
   --from ${fromEmail} \\
-  --server ${host}:${port} \\
+  --server '${smtpAddress(host, port)}' \\
   --header 'Subject: Hello from mailtrap-local' \\
   --body 'It works.'`,
       },

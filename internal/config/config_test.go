@@ -32,6 +32,28 @@ storage:
 	assert.Equal(t, 100, *got.Storage.MaxMessages)
 }
 
+func TestLoadAllowedHosts(t *testing.T) {
+	t.Setenv("DEV_HOST", "Box.Test")
+	got := loadFromFile(t, `
+allowed_hosts:
+  - John.Dev
+  - " "
+  - mail.test.
+  - ${DEV_HOST}
+  - ${UNSET_DEV_HOST}
+`)
+	assert.Equal(t, []string{"john.dev", "mail.test", "box.test"}, got.AllowedHosts)
+}
+
+func TestParseRejectsScalarAllowedHosts(t *testing.T) {
+	t.Parallel()
+	var got Loaded
+	err := parse([]byte("relay:\n  host: smtp.example.test\nallowed_hosts: john.dev\n"), &got)
+	require.Error(t, err)
+	assert.Nil(t, got.Relay.Host)
+	assert.Empty(t, got.AllowedHosts)
+}
+
 func TestLoadCloudFields(t *testing.T) {
 	got := loadFromFile(t, `
 cloud:

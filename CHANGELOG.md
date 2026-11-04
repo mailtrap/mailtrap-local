@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `--allow-from` flag: comma-separated IPs or CIDR ranges allowed to connect besides loopback
+- `--allow-attached-networks` flag: also allow the subnets of the machine's own network interfaces (meant for containers)
+- `allowed_hosts` in `config.yml` for custom hostnames (e.g. a `/etc/hosts` entry) on this machine
+- UI, API, and live updates accept `*.localhost` hostnames
+
+### Changed
+
+- **Breaking:** HTTP and SMTP refuse connections that don't come from this machine (`403` / `554 5.7.1`), even with `--unsafe-non-loopback`; `--allow-from` and `--allow-attached-networks` admit extra source addresses
+- **Breaking:** the UI and API reject requests whose `Host` or `Origin` isn't `localhost`, `*.localhost`, a loopback IP, or a listed `allowed_hosts` entry (`Host` may also be a dotless or `*.internal` name, for Docker Compose service names); custom hostnames like `john.dev` now need `allowed_hosts`
+- Docker image passes `--allow-attached-networks` so the host and other containers on the container's networks can still connect; README publishes ports on `127.0.0.1`. **Breaking** on Docker Desktop and other VM-based engines: ports published on all interfaces (`-p 3550:3550`) are now refused even from the host; publish on `127.0.0.1` instead
+- Sandbox hint, empty inbox, and code samples show the hostname the UI was opened with instead of `127.0.0.1` (IPv6 addresses unbracketed where client APIs expect it)
+
+### Fixed
+
+- Cross-site "simple" POSTs (e.g. `text/plain` to `/api/v1/ingest`) no longer reach the API
+
 ## [0.4.1] - 2026-09-07
 
 ### Fixed
