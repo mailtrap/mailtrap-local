@@ -1,0 +1,33 @@
+CHANGELOG.md
+  s_9d7a8952a14a8d::t_7afb305679fe2f 43
+README.md
+  s_9d7a8952a14a8d::t_02645de191d150 147
+.goreleaser.yaml
+  s_9d7a8952a14a8d::t_71da30578fb76f 6-7
+  s_9d7a8952a14a8d::t_4184500fecf04e 115
+.github/workflows/ci.yml
+  s_9d7a8952a14a8d::t_52246d20bd43f3 113
+.github/workflows/release.yml
+  s_9d7a8952a14a8d::t_0d507d662d5bae 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "182d9582facb52bc851392401f1ee6d2d1af10c8",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_9d7a8952a14a8d": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2d2330cd-66c9-48f1-8d0e-65591fc9d7c8",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}

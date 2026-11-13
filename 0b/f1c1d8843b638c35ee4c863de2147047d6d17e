@@ -1,0 +1,20 @@
+CHANGELOG.md
+  s_9759b73c19a6f8::t_34b2107892dbfa 10-11
+  s_9759b73c19a6f8::t_5ef39b167e2c10 101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0bf1c1d8843b638c35ee4c863de2147047d6d17e",
+  "prompts": {},
+  "sessions": {
+    "s_9759b73c19a6f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a31c9625-6dd9-4a79-ac86-9d39f32f95c0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marcin Klocek <marcin.klocek@railsware.com>"
+    }
+  }
+}

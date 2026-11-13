@@ -1,0 +1,32 @@
+.goreleaser.yaml
+  s_79b1531e82ea6a::t_df8a40f38a7862 10-11
+  s_79b1531e82ea6a::t_fdb4499a808ca6 122-125,134-135
+  s_79b1531e82ea6a::t_bf2f0878105adf 132
+  s_79b1531e82ea6a::t_ea3a2f0ba99dcd 5
+.github/workflows/release.yml
+  s_79b1531e82ea6a::t_a1b1ccecf22259 63
+  s_79b1531e82ea6a::t_04c25f4a173bbe 9
+README.md
+  s_79b1531e82ea6a::t_35604910fd0996 150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "15052606614e13c354d86be3d5bf9f84e2d87adc",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_79b1531e82ea6a": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "09b871c2-bcfe-4156-bea5-32b865e5b467",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}

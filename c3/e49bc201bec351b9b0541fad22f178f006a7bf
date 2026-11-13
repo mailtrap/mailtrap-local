@@ -1,0 +1,30 @@
+Dockerfile.goreleaser
+  s_b0e6729a8099bf::t_dc2a1e14f99364 40-42
+Dockerfile
+  s_b0e6729a8099bf::t_942b5407dde76c 81-83
+internal/peer/peer.go
+  s_b0e6729a8099bf::t_bde3ef82986cfa 18-25
+  s_b0e6729a8099bf::t_984dfa86a9cc74 47-53
+  s_b0e6729a8099bf::t_f8efee4c1941c9 54
+internal/api/api.go
+  s_b0e6729a8099bf::t_68e20b214744e5 327-330
+internal/peer/peer_test.go
+  s_b0e6729a8099bf::t_eda6faaff86ac4 51
+  s_b0e6729a8099bf::t_32555729a4246e 33-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c3e49bc201bec351b9b0541fad22f178f006a7bf",
+  "prompts": {},
+  "sessions": {
+    "s_b0e6729a8099bf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c148e56c-f448-4aab-9850-0745b776db19",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marcin Klocek <marcin.klocek@railsware.com>"
+    }
+  }
+}

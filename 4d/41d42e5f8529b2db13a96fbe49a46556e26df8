@@ -1,0 +1,32 @@
+.github/workflows/ci.yml
+  s_a1b70a7f50020f::t_34ee4be32393b2 134,162
+  s_a1b70a7f50020f::t_317b54ddec07cb 177-178
+  s_a1b70a7f50020f::t_149b0c1176a6b3 101
+  s_a1b70a7f50020f::t_4aafd66e0daab9 127-130
+  s_a1b70a7f50020f::t_acaa7a7d87422f 109-110,149-150
+  s_a1b70a7f50020f::t_911f2c1bfb4a06 6-9
+scripts/smoke-smtp.ts
+  s_a1b70a7f50020f::t_2ce12a8ecbb6a3 1-2,4-15,17-45,48-50,90-107,111-115,117-122,124-130
+  s_a1b70a7f50020f::t_465d3f4775a5ef 3,16,46-47,51-89,108-110,116,123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "4d41d42e5f8529b2db13a96fbe49a46556e26df8",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_a1b70a7f50020f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5fea039f-cd9b-4459-8d7d-74b3808bd73b",
+        "model": "default"
+      },
+      "human_author": null
+    }
+  }
+}

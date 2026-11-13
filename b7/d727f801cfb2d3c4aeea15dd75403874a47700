@@ -1,0 +1,24 @@
+CHANGELOG.md
+  s_36effe9ad71055::t_025ab2d688a97e 8-26,45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "b7d727f801cfb2d3c4aeea15dd75403874a47700",
+  "prompts": {},
+  "humans": {
+    "h_7c2b146005c25d": {
+      "author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  },
+  "sessions": {
+    "s_36effe9ad71055": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "832afa70-ce43-4b87-9f92-05506d5fa690",
+        "model": "default"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}

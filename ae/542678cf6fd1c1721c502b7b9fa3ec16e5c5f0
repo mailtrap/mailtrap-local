@@ -1,0 +1,20 @@
+.github/workflows/ci.yml
+  s_284dd2b09cf1ec::t_da856c2fc48f12 109-110,151-152,236-237
+  s_284dd2b09cf1ec::t_ce565f69997fb7 180-181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "ae542678cf6fd1c1721c502b7b9fa3ec16e5c5f0",
+  "prompts": {},
+  "sessions": {
+    "s_284dd2b09cf1ec": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "389764cb-8d35-4641-82d0-67f949086a30",
+        "model": "auto-smart"
+      },
+      "human_author": "Leonid Shevtsov <leonid@shevtsov.me>"
+    }
+  }
+}
