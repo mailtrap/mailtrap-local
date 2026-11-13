@@ -1,0 +1,25 @@
+frontend/public/favicon.svg
+  s_b0593c5e3ab59c::t_3983d278ac28d9 1
+frontend/src/assets/mailtrap-icon.svg
+  s_b0593c5e3ab59c::t_a00d3b68747281 1
+frontend/src/assets/mailtrap-logo.svg
+  s_b0593c5e3ab59c::t_03ed883518895e 1
+snap/gui/icon.svg
+  s_b0593c5e3ab59c::t_11ead726cc83ac 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b0590027fcaf3776ccff51d73dd93d48c88508c0",
+  "prompts": {},
+  "sessions": {
+    "s_b0593c5e3ab59c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0a88d1f7-afa5-4004-91aa-93bb0bf982ef",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kyrylo Yevdokymov <kyrylo.yevdokymov@railsware.com>"
+    }
+  }
+}
