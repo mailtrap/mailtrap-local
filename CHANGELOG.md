@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-16
+
+### Changed
+
+- New Mailtrap Local logo, browser tab icon, iOS home screen icon, and Snap Store icon from the rebranding
+
 ## [0.5.0] - 2026-11-04
 
 ### Added
@@ -98,6 +104,7 @@ Initial public release of Mailtrap Local — a local email sandbox and catcher f
 - YAML config overlay for pinning connection settings
 - Distribution via Homebrew tap, Docker (Docker Hub + GHCR), and GitHub Releases binaries (macOS + Linux)
 
+[0.5.1]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.5.1
 [0.5.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.5.0
 [0.4.1]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.4.1
 [0.4.0]: https://github.com/mailtrap/mailtrap-local/releases/tag/v0.4.0
