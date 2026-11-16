@@ -1,0 +1,19 @@
+CHANGELOG.md
+  s_b0593c5e3ab59c::t_28d9f22adb6ac3 10-15,107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3cca18761715907864d2c7458f4832481b4465f3",
+  "prompts": {},
+  "sessions": {
+    "s_b0593c5e3ab59c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0a88d1f7-afa5-4004-91aa-93bb0bf982ef",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kyrylo Yevdokymov <kyrylo.yevdokymov@railsware.com>"
+    }
+  }
+}
